@@ -1,209 +1,135 @@
-# PROMPT_TEMPLATES: 학생들을 위한 바이브 코딩 실전 프롬프트 모음
+# PROMPT_TEMPLATES: 공간 꾸러미 바이브 코딩 실전 프롬프트 모음
 
-> **💡 핵심 안내:**
-> 생성형 AI(ChatGPT, Claude, Gemini 웹 등)는 현재 여러분 컴퓨터에 있는 프로젝트 파일 내용을 직접 읽을 수 없습니다!
-> 따라서 단순히 "스마트팜으로 바꿔줘"라고만 하면 AI가 엉뚱한 코드를 만들어냅니다.
-> 아래 프롬프트들은 **[시스템 규칙 + 현재 원본 코드 + 변경 요구사항]**이 하나로 결합된 **완전체 프롬프트(Self-Contained Prompt)**이므로, 전체를 복사해서 AI에 붙여넣기만 하면 100% 정상 작동하는 코드를 얻을 수 있습니다!
-
-## ⭐ [학생 실습] 나만의 팀별 프로젝트 Context 문장 작성 가이드
-
-### 1. 생성형 AI를 움직이는 '4단계 Context 구조 설계 공식'
-1. **블록 1 (역할 & 플랫폼 선언)**: "당신은 Next.js 14 + R3F + Zustand + Raspberry Pi Pico 2 W(CircuitPython 9.x) 스마트홈 3D IoT 플랫폼 전문 개발자입니다. `PLATFORM_FULL_CONTEXT.md`를 기반으로 개발 중입니다."
-2. **블록 2 (주제 & 하드웨어 핀맵)**: "우리 팀의 주제는 [_____]이며, 신규 센서 [센서명, GP핀, 측정값], 액추에이터 [SG90 서보모터 GP16 용도, RGB LED GP18~20 역할]을 사용합니다."
-3. **블록 3 (3D 가상 공간 & UI 패널)**: "3D 공간은 [방 콘셉트, 설비/가구 메쉬]로 변경하고, 서보 각도에 따른 R3F 애니메이션을 연동하며, `SensorOutputPanel.tsx`에 게이지를 추가해주세요."
-4. **블록 4 (파일 변경 경계)**: "Zustand 스토어(`useIoTStore.ts`) 규칙을 준수하며, `code.py`, `types/iot.ts`, `MockIoTAdapter.ts`, `3D 룸 컴포넌트` 4개 파일의 전체 완성 코드를 제공해주세요."
+> **💡 핵심 안내**
+> 생성형 AI(ChatGPT, Claude, Gemini 등)는 우리 플랫폼 코드를 직접 볼 수 없습니다.
+> 그래서 **[플랫폼 컨텍스트] + [우리 팀 공간 정보] + [요청]** 을 한 번에 보내야 엉뚱한 코드가 나오지 않습니다.
+>
+> 가장 쉬운 방법: 공간 메뉴(⋮) → **코드 업로드 · 관리** → 아이디어를 적고 **[AI 프롬프트 복사]** 버튼을 누르세요.
+> 플랫폼 컨텍스트(`context/PLATFORM_FULL_CONTEXT.md`)와 우리 공간 ID가 자동으로 들어간 프롬프트가 복사됩니다.
+> 아래 템플릿은 그 프롬프트의 **[우리 팀 아이디어]** 칸에 넣을 문장, 또는 수정 요청을 할 때 쓰는 문장입니다.
 
 ---
 
-### 2. [빈칸 채우기] 우리 팀 맞춤형 Context 완성 템플릿
-```markdown
-당신은 Next.js 14 + R3F(Three.js) + Zustand + CircuitPython(Raspberry Pi Pico 2 W) 기반 스마트홈 3D IoT 플랫폼 전문 개발자입니다.
-우리는 `PLATFORM_FULL_CONTEXT.md` 아키텍처를 기반으로 팀 프로젝트를 진행 중인 고등학생 팀입니다.
+## ⭐ 1. 아이디어 문장 작성 공식 (4블록)
 
-우리 팀 프로젝트 주제: [프로젝트 주제명 입력: 예: 스마트 펫케어 급식기 / 스마트 빗물 재활용 시스템 / 스마트 무인 도서관]
+| 블록 | 쓸 내용 | 예시 |
+| :--- | :--- | :--- |
+| ① 주제 | 무엇을 해결하는 공간인가 | "반려동물이 혼자 있을 때 사료를 챙겨 주는 스마트 펫룸" |
+| ② 기본 4종 재해석 | DHT11 · Cds · SG90 · RGB LED 를 우리 주제에서 무엇으로 쓸까 | "SG90 = 사료통 뚜껑(0° 닫힘 / 90° 열림), RGB LED = 상태등(초록 정상 / 빨강 사료 부족)" |
+| ③ 확장 장치 (선택) | 추가 센서/부품, 핀, 단위, 범위 | "사료 무게 센서 food_weight(g, 0~500), 핀 GP27" |
+| ④ 3D 장면 | 바닥/가구/오브젝트, 움직임, 클릭 동작 | "펫룸 바닥에 사료통과 강아지 집. 사료통을 클릭하면 feed 명령으로 뚜껑이 열린다" |
 
-### [1. 우리 팀 하드웨어 핀맵 명세]
-1. 신규 센서:
-   - 센서명: [센서 이름 예: 초음파 거리 센서 / 토양 수분 센서 / 불꽃 감지 센서]
-   - 핀 번호: [Pico 2 W 핀: 예: GP27 (ADC1)]
-   - 측정 범위 및 단위: [예: 0~100cm / 0~100% / 정상·경보 0, 1]
-2. 액추에이터 동작:
-   - SG90 서보모터 (GP16): [서보모터가 움직일 역할 예: 사료 투출 밸브 0도->60도 / 환기 돔 개폐 0도->90도 / 차단봉 0도->90도]
-   - RGB LED (GP18, GP19, GP20): [LED가 나타낼 상태 예: 녹색(정상), 노란색(동작 중), 빨간색(주의/경보)]
-   - 기존 센서 활용: [Cds 조도 센서 GP26 / DHT11 온습도 GP15 중 유지할 항목]
-
-### [2. 3D 가상 공간 및 대시보드 UI 연동 요구사항]
-1. 3D 가상 공간 (R3F):
-   - 공간 콘셉트: [예: 펫룸 / 농업 온실 / 도서관 열람실 / 공장 생산라인]
-   - 배치할 3D 메쉬 오브젝트: [예: 사료통, 급수 그릇 / 스마트 베드 / 책상과 의자 / 컨베이어 벨트]
-   - 서보모터 연동 R3F 애니메이션: [서보 각도 변화에 따라 3D 오브젝트가 회전하거나 열리는 동작]
-2. 대시보드 UI 패널:
-   - `SensorOutputPanel.tsx`에 신규 센서 게이지(값, 단위, 정상/주의 범위)를 추가해주세요.
-   - CSV 파일 내보내기 시 신규 센서 계측 데이터 열을 포함해주세요.
-
-### [3. 요청 파일 및 개발 규칙]
-Zustand 단일 스토어(`useIoTStore.ts`)의 2-Phase Acknowledgment 규칙과 타입을 준수하며, 다음 4개 파일의 완성된 전체 코드를 작성해주세요:
-1. `firmware/circuitpython/code.py`: 신규 센서 계측 및 `/api/status` JSON 반환, 서보/LED 제어
-2. `src/core/types/iot.ts`: 신규 센서 데이터 인터페이스 및 updateSensor 유니온 타입 추가
-3. `src/core/adapter/MockIoTAdapter.ts`: 하드웨어 부재 시에도 동작할 자연스러운 난수 시뮬레이터 로직
-4. `src/components/3d/TeamCustomRoom.tsx`: 우리 팀 전용 3D 씬 컴포넌트 전체 코드
+### 빈칸 템플릿 (복사해서 채우기)
+```text
+[주제] 우리 팀은 ______________________ 를 만듭니다.
+[기본 장치 역할]
+- SG90 서보(GP16): ______________ (0°일 때 ______, 90°일 때 ______)
+- RGB LED(GP18~20): ______________ (색상 규칙: ______________)
+- DHT11(GP15) / Cds(GP26): ______________ 에 사용 (사용하지 않으면 "표시만")
+[확장 센서] key: ________ / 이름: ________ / 단위: ____ / 범위: ____~____ / 핀: GP__
+[확장 동작] 3D 화면에서 ________ 를 클릭하면 sendCommand('______', ____) 로 ________ 한다.
+[3D 장면] 바닥: ________ / 주요 오브젝트: ________ / 움직임: ________
+[mock 규칙] 하드웨어가 없을 때 확장 센서 값은 ________ 처럼 변한다.
 ```
 
 ---
 
-## [프롬프트 1] 스마트홈을 스마트팜(온실)으로 테마 변경하기 (Full Context 포함)
+## 2. 주제별 아이디어 예시 (그대로 붙여 넣어도 됩니다)
 
-```markdown
-당신은 Next.js 14 + React 18 + React Three Fiber (R3F) + Zustand + CircuitPython으로 구동되는 '스마트홈 3D IoT 공통 플랫폼'의 전문 개발자입니다.
-우리는 이 플랫폼을 [스마트팜(Smart Farm)] 주제로 개조하려고 합니다.
+### 2-1. 스마트 팜 온실
+```text
+[주제] 토양이 마르면 자동으로 물을 주는 스마트 팜 온실
+[기본 장치 역할] SG90 = 온실 환기 돔(0° 닫힘 ~ 180° 최대 개방), RGB LED = 식물 생장등, DHT11 = 온실 온습도
+[확장 센서] key: soil_moisture / 토양 수분 / % / 0~100 / 핀 GP27 (ADC1), 35% 미만이면 경고
+[확장 센서] key: pump_on / 관수 펌프 상태 / 0·1 / 핀 GP21 (릴레이)
+[확장 동작] 펌프를 클릭하면 sendCommand('water', true/false) 로 펌프를 켜고 끈다
+[3D 장면] 유리 온실, 화분 배드와 식물 5그루, 환기 돔, 관수 펌프. 수분이 낮으면 흙 색이 밝아지고 잎이 누렇게 변한다
+[mock 규칙] 수분은 천천히 줄고, 펌프가 켜지면 빠르게 오르며 80% 이상이면 펌프가 자동으로 꺼진다
+```
+> 이 예시로 만든 완성본이 `context/examples/smart_farm/` 에 있습니다.
 
-### [1. 변경 목표]
-1. 하드웨어/센서:
-   - DHT11 온습도 센서 대신 [토양 수분 센서(Soil Moisture)]를 Pico 2 W의 GP27(ADC1) 핀에 추가합니다.
-   - Cds 조도 센서(GP26)와 RGB LED(GP18,19,20 - 식물 성장 조명)는 그대로 유지합니다.
-   - SG90 서보모터(GP16)는 방문 대신 '온실 상단 환기 돔 개폐기'로 용도를 변경합니다.
-2. 3D 가상 공간:
-   - 스마트홈 방 대신 흙 바닥과 투명 유리 프레임이 있는 '온실 돔'을 만들고 중앙에 식물 화분 배드를 배치합니다.
-   - 서보모터 각도(0~180도)에 따라 온실 환기 돔 지붕이 부드럽게 열리고 닫히는 애니메이션을 연동합니다.
-
----
-
-### [2. 현재 플랫폼의 원본 코드 참고 자료]
-
-#### (A) 현재 Pico 2 W 펌웨어 (firmware/circuitpython/code.py 일부):
-```python
-import board, analogio, pwmio, wifi, socketpool
-from adafruit_motor import servo
-from adafruit_httpserver import Server, Request, JSONResponse, GET, POST, OPTIONS
-
-cds = analogio.AnalogIn(board.GP26)
-servo_pwm = pwmio.PWMOut(board.GP16, duty_cycle=2 ** 15, frequency=50)
-my_servo = servo.Servo(servo_pwm)
-
-@server.route("/api/status", [GET, OPTIONS])
-def handle_status(request: Request):
-    return JSONResponse(request, {
-        "status": "online",
-        "temperature": 24.0,
-        "humidity": 50.0,
-        "light_adc": cds.value,
-        "servo_angle": current_servo_angle,
-        "rgb_color": current_rgb_color,
-        "rgb_state": current_rgb_state
-    })
+### 2-2. 스마트 팩토리 분류 라인
+```text
+[주제] 컨베이어 위 불량품을 밀어내는 스마트 팩토리
+[기본 장치 역할] SG90 = 불량품 푸셔 암(0° 대기 / 60° 밀어내기), RGB LED = 타워 램프(초록 가동 / 노랑 대기 / 빨강 정지), Cds = 물품 통과 감지
+[확장 센서] key: product_count / 생산 수량 / 개 / 0~999 (센서 없음: code.py 에서 Cds 값이 갑자기 낮아질 때 1 증가)
+[확장 동작] 비상정지 버튼을 클릭하면 sendCommand('estop', true) → RGB 빨강, 컨베이어 정지
+[3D 장면] 금속 컨베이어 벨트 위를 상자가 계속 지나가고, 푸셔 암이 서보 각도에 맞춰 움직인다
+[mock 규칙] 2초마다 product_count 가 0~2 증가, estop 중에는 증가하지 않음
 ```
 
-#### (B) 현재 센서/액추에이터 타입 (src/core/types/iot.ts 일부):
-```typescript
-export interface SensorData {
-  deviceId: string;
-  name: string;
-  value: number;
-  unit: string;
-  updatedAt: number;
-  isStale: boolean;
-}
-
-export interface IoTPlatformState {
-  sensors: {
-    dht11_temp: SensorData;
-    dht11_humi: SensorData;
-    cds_light: SensorData;
-  };
-  actuators: {
-    sg90_door: ServoActuatorData;
-    rgb_light: RgbActuatorData;
-  };
-}
+### 2-3. 스마트 주차장 (초음파 거리 센서)
+```text
+[주제] 빈자리를 알려 주는 스마트 주차장
+[기본 장치 역할] SG90 = 차단기(0° 닫힘 / 90° 열림), RGB LED = 만차 표시(초록 빈자리 / 빨강 만차)
+[확장 센서] key: distance_cm / 차량 거리 / cm / 0~200 / 핀 GP13(Echo), GP14(Trig)  ※ adafruit_hcsr04 라이브러리 필요 → 선생님께 확인
+[확장 센서] key: occupied / 주차 여부 / 0·1 (distance_cm 30 미만이면 1)
+[확장 동작] 차단기를 클릭하면 sendCommand('gate', true)
+[3D 장면] 주차칸 3개, 차량 박스가 거리 값에 따라 앞뒤로 이동, 차단기 막대 회전
+[mock 규칙] 차량이 10초 주기로 들어왔다 나간다 (state.t 사용)
 ```
 
-#### (C) 현재 시뮬레이터 (src/core/adapter/MockIoTAdapter.ts 일부):
-```typescript
-// 2초마다 센서 난수 갱신
-useIoTStore.getState().updateSensor('dht11_temp', newTemp);
-useIoTStore.getState().updateSensor('dht11_humi', newHumi);
-useIoTStore.getState().updateSensor('cds_light', newLight);
+### 2-4. 화재 · 방재 안전실
+```text
+[주제] 온도가 오르면 경보를 울리고 비상문을 여는 방재 안전실
+[기본 장치 역할] DHT11 = 실내 온도, SG90 = 비상 탈출문, RGB LED = 경보등(평상시 흰색, 35℃ 이상 빨강 점멸 느낌)
+[확장 센서] key: flame / 불꽃 감지 / 0·1 / 핀 GP17 (디지털 입력)
+[확장 동작] 경보 해제 버튼 클릭 → sendCommand('reset', true)
+[3D 장면] 복도와 비상문, 천장 스프링클러, 불꽃 감지 시 빨간 파티클(작은 구체 여러 개)
+[mock 규칙] 30초에 한 번 flame 이 1이 되었다가 reset 명령이 오면 0
+```
+
+### 2-5. 스마트 펫룸
+```text
+[주제] 반려동물 자동 급식 펫룸
+[기본 장치 역할] SG90 = 사료통 뚜껑, RGB LED = 사료 상태등, Cds = 밤/낮 판단(밤이면 무드등)
+[확장 센서] key: food_weight / 사료 무게 / g / 0~500 / 핀 GP27, 50g 미만 경고
+[확장 동작] 사료통 클릭 → sendCommand('feed', true) → 뚜껑 90° 3초 후 닫기(handle 에서 time.sleep 금지 → 다음 read 에서 닫기)
+[3D 장면] 원목 바닥, 강아지 집, 사료통과 그릇, 무게에 따라 그릇 안 사료 높이 변화
+[mock 규칙] 무게는 천천히 줄고 feed 명령마다 +50g
+```
+
+### 2-6. 헬스케어 휴게실
+```text
+[주제] 쾌적도를 알려 주는 학교 휴게실
+[기본 장치 역할] DHT11 = 온습도, Cds = 조도, RGB LED = 쾌적도 표시(초록 쾌적 / 주황 보통 / 빨강 불쾌), SG90 = 환기창
+[확장 센서] key: comfort / 불쾌지수 / 점 / 50~90 (센서 없음: 온도·습도로 계산 → mock.js 와 code.py 모두 같은 공식)
+[3D 장면] 소파, 테이블, 화분, 창문이 서보 각도에 맞춰 열림
+[mock 규칙] comfort = 0.81 × 온도 + 0.01 × 습도 × (0.99 × 온도 − 14.3) + 46.3
 ```
 
 ---
 
-### [3. 요청 사항]
-위 원본 코드를 기반으로, 학생들이 파일에 바로 덮어쓸 수 있도록 다음 4개 파일의 수정 코드를 명확한 파일 경로와 함께 단계별로 작성해주세요:
-1. `firmware/circuitpython/code.py`: 토양수분(GP27) 측정 및 환기 돔 서보모터 제어 반영
-2. `src/core/types/iot.ts`: `soil_moisture` 센서 및 스마트팜 액추에이터 타입 정의
-3. `src/core/adapter/MockIoTAdapter.ts`: 토양수분(30%~80%) 변동 시뮬레이션 로직 추가
-4. `src/components/3d/SmartFarmRoom.tsx`: 온실 돔, 화분 식물, 환기 돔 개폐 애니메이션 3D 컴포넌트 신규 작성 코드
+## 3. 수정 · 디버깅 프롬프트
+
+### 3-1. 업로드 오류 해결
+```text
+[플랫폼 컨텍스트]를 지키면서 아래 오류를 고쳐 주세요. 수정한 파일 하나의 **전체 코드**만 다시 보내 주세요.
+
+[오류 메시지] (업로드 창 또는 3D 화면의 빨간 배지 내용을 그대로 붙여넣기)
+[문제 파일 이름] Scene.tsx / mock.js / room.json / code.py
+[현재 코드]
+(파일 전체 붙여넣기)
 ```
 
----
-
-## [프롬프트 2] 스마트팩토리(컨베이어 벨트 & 경고등)로 변경하기 (Full Context)
-
-```markdown
-당신은 Next.js 14 + R3F + CircuitPython 기반 스마트홈 플랫폼의 전문 개발자입니다.
-우리는 이 플랫폼을 [스마트팩토리(Smart Factory)] 주제로 개조하려고 합니다.
-
-### [1. 변경 목표]
-1. 하드웨어:
-   - Pico 2 W의 GP14 핀에 물품 감지용 센서를 추가하거나 Cds 조도 센서를 '생산 라인 통과 감지 센서'로 활용합니다.
-   - 서보모터 SG90(GP16)은 컨베이어 벨트 위 불량품을 밀어내는 '스마트 푸셔(Pusher)' 암으로 역할을 바꿉니다.
-   - RGB LED(GP18,19,20)는 공장 상태를 알리는 '3단 타워 램프'로 동작합니다 (초록: 정상 가동, 노랑: 대기, 빨강: 비상 정지).
-2. 3D 공간:
-   - 금속 질감의 컨베이어 벨트 메쉬를 만들고, 그 위에 작은 상자(물품)가 지나가며 서보모터 푸셔가 움직이는 애니메이션을 구현합니다.
-
-### [2. 요청 사항]
-기존 Zustand 스토어(`useIoTStore.ts`)와 R3F 씬 구조를 깨뜨리지 않으면서,
-1. `src/components/3d/SmartFactoryRoom.tsx` (컨베이어 벨트 및 푸셔 암 3D 컴포넌트)
-2. `firmware/circuitpython/code.py` (푸셔 제어 및 타워 램프 상태 코드)
-를 학생들이 바로 복사해 넣을 수 있는 완성형 코드로 작성해주세요.
+### 3-2. 확장 센서 값이 '수신 대기' 로만 나올 때
+```text
+room.json customSensors 의 key 와 mock.js tick() · code.py read() 가 반환하는 key 가 같은지 확인하고,
+다르면 세 파일을 같은 key 로 맞춰서 수정된 파일 전체를 보내 주세요.
+(room.json / mock.js / code.py 전체 붙여넣기)
 ```
 
----
-
-## [프롬프트 3] 새로운 초음파 거리 센서(HC-SR04) 추가하기 (Full Context)
-
-```markdown
-당신은 Pico 2 W + CircuitPython 및 Next.js IoT 플랫폼 개발자입니다.
-Pico 2 W에 거리 측정을 위한 초음파 센서(HC-SR04)를 추가하고 웹 대시보드에 연동하려고 합니다.
-
-- 회로 연결: Trig = board.GP14, Echo = board.GP13
-- 2초마다 거리를 측정하여 cm 단위로 반환
-
-현재 시스템의 code.py에는 `@server.route("/api/status")`가 구현되어 있고,
-프론트엔드에는 `src/core/types/iot.ts`와 `MockIoTAdapter.ts`가 있습니다.
-
-다음 작업의 구체적인 수정 코드를 파일별로 작성해주세요:
-1. `firmware/circuitpython/code.py`: `adafruit_hcsr04.HCSR04`를 사용하여 거리를 측정하고 `/api/status` JSON에 `"distance_cm"` 필드 추가
-2. `src/core/types/iot.ts`: `sensors.distance_cm` 타입 추가
-3. `src/core/adapter/MockIoTAdapter.ts`: 10~150cm 사이의 거리 시뮬레이션 난수 생성
-4. `src/components/ui/SensorOutputPanel.tsx`: 측정된 거리를 실시간 게이지 바로 표시하고 CSV 항목에 추가
+### 3-3. 3D 장면만 바꾸고 싶을 때
+```text
+[플랫폼 컨텍스트]의 Scene.tsx 규칙을 지키면서 아래 Scene.tsx 를 수정해 주세요.
+- 바꿀 내용: (예: 강아지 집을 더 크게, 사료통 색을 주황색으로, 뚜껑이 열릴 때 살짝 튀는 애니메이션)
+- room.json, mock.js, code.py 는 바꾸지 마세요.
+(현재 Scene.tsx 전체 붙여넣기)
 ```
 
----
-
-## [프롬프트 4] 스마트 도어를 창문 블라인드로 변경하기 (Full Context)
-
-```markdown
-스마트홈 3D 씬의 `src/components/3d/DoorObject.tsx`를 창문 블라인드(`WindowBlindObject.tsx`)로 교체하고 싶습니다.
-서보모터 reportedAngle(0° ~ 180°) 값에 따라:
-- 0°일 때: 블라인드가 완전히 내려와 닫힌 상태
-- 90°일 때: 블라인드 날개들이 수평으로 회전하여 햇빛이 들어오는 상태
-- 180°일 때: 블라인드가 위로 완전히 올라간 상태
-를 부드러운 Drei/R3F `useFrame` 애니메이션으로 구현한 완성된 `WindowBlindObject.tsx` 코드를 작성해주세요.
-```
-
----
-
-## [프롬프트 5] AI에게 코드 디버깅 및 에러 해결 요청하기
-
-```markdown
-우리는 Next.js 14 + React Three Fiber + Zustand 기반 IoT 플랫폼을 수정하고 있는 고등학생 팀입니다.
-새로운 센서를 추가하는 도중 아래와 같은 에러가 발생했습니다:
-
-[여기에 터미널 에러 메시지 또는 브라우저 콘솔 로그를 붙여넣으세요]
-
-내가 수정한 파일의 코드는 다음과 같습니다:
-[여기에 수정한 파일 내용 붙여넣기]
-
-어느 부분에서 데이터 흐름(어댑터 -> 스토어 -> 컴포넌트)이 어긋났는지 원인을 짚어주고, 올바르게 수정한 파일 코드를 제시해주세요.
+### 3-4. Pico 2 W 실물에서만 오류가 날 때
+```text
+통합 펌웨어의 팀 모듈 규칙(setup/read/handle, 무한 루프·긴 sleep 금지, 기본 핀 재초기화 금지)을 지키면서
+아래 code.py 를 고쳐 주세요. http://<Pico IP>/api/teams 에 나온 오류: (붙여넣기)
+(현재 code.py 전체 붙여넣기)
 ```

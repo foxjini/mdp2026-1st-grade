@@ -1,19 +1,28 @@
-# AI Agent Guide - 3D IoT Dashboard Platform
+# AI Agent Guide - 3D IoT 전시 플랫폼
 
 ## 1. 프로젝트 개요
-본 플랫폼은 고등학교 학생 팀 프로젝트를 위해 설계된 **스마트홈 3D IoT 공통 개발 플랫폼**입니다.
-기본 레퍼런스로 다음 4종 하드웨어가 3D 가상 공간 및 Pico 2 W 펌웨어와 End-to-End로 결합되어 있습니다:
+본 플랫폼은 고등학교 학생 팀 프로젝트를 위한 **3D IoT 공용 전시 플랫폼**입니다.
+전시회에는 **윈도우 PC 1대 + 모니터 + Raspberry Pi Pico 2 W 1세트**만 두고, 모든 팀이 이 하드웨어를 공유합니다.
+공용 기본 장치 4종 (핀 변경 금지):
 - **DHT11**: 디지털 온습도 센서 (Pin: GP15)
 - **Cds**: 아날로그 조도 센서 (Pin: GP26 / ADC0)
-- **SG90**: 서보모터 (Pin: GP16 / PWM) - 3D 스마트 도어 회전과 연동
-- **RGB LED**: 공통 캐소드 3색 LED (Pins: GP18, GP19, GP20 / PWM) - 3D 조명 발광과 연동
+- **SG90**: 서보모터 (Pin: GP16 / PWM)
+- **RGB LED**: 공통 캐소드 3색 LED (Pins: GP18, GP19, GP20 / PWM)
 
-## 2. 학생들의 바이브 코딩 (Context Engineering) 지원 체계
-학생들이 프로젝트 주제(스마트팜, 스마트팩토리 등)를 바꿀 때 AI는 다음 순서로 지원해야 합니다:
-1. `context/CONTEXT_CIRCUITPYTHON_MAP.md`를 기반으로 센서/액추에이터 핀 및 REST 핸들러 추가
-2. `src/core/types/iot.ts`에 신규 장치 타입 추가
-3. `src/core/adapter/MockIoTAdapter.ts`에 시뮬레이션용 데이터 생성기 추가
-4. `src/components/3d/`에 3D 씬 오브젝트(R3F 컴포넌트) 추가 또는 가구 배치 변경
-5. `src/components/ui/InspectorPanel.tsx` 또는 `SensorOutputPanel.tsx`에 제어 위젯 및 센서 게이지 추가
+## 2. 학생 팀 작업 흐름 (공간 꾸러미 방식)
+1. 플랫폼 왼쪽 사이드바 **'새 공간 추가'** 로 팀 공간을 만든다.
+2. 공간 메뉴(⋮) → **'코드 업로드 · 관리'** → **[AI 프롬프트 복사]** 로 플랫폼 컨텍스트가 담긴 프롬프트를 받는다.
+3. 생성형 AI로 **4개 파일**을 만든다: `room.json`, `Scene.tsx`, `mock.js`, `code.py`
+4. 업로드하면 빌드 없이 즉시 3D 화면에 적용된다. (`mock.js` 는 시뮬레이션에서 바로 동작)
+5. 전시 전 교사가 `npm run firmware:bundle -- <CIRCUITPY 드라이브>` 로 팀 `code.py` 를 통합 펌웨어에 묶는다.
 
-모든 AI 에이전트는 환각(Hallucination) 없이 일관된 코드 품질을 유지해야 합니다.
+## 3. AI 에이전트 규칙
+- **학생 팀 코드 요청**: 반드시 `context/CONTEXT_ROOM_PACKAGE_SPEC.md` 규격의 4개 파일만 작성한다. `src/`, `firmware/` 원본을 수정하라고 안내하지 않는다.
+  - 참고 예제: `context/examples/smart_farm/` (실제 동작 검증된 4개 파일)
+  - 3D 요령: `context/CONTEXT_3D_SCENE_GUIDE.md` / 핀 · 펌웨어: `context/CONTEXT_CIRCUITPYTHON_MAP.md`
+- **플랫폼 자체 유지보수** (교사 요청 시): 구조는 `context/CONTEXT_SYSTEM_SPEC.md` 참고.
+  - 규격이 바뀌면 `src/core/sdk/index.ts`, `src/core/runtime/compileRoom.ts`(허용 모듈), `src/core/rooms/templates.ts`, `firmware/circuitpython/code.py`(Base 객체), `firmware/mock_pico_server.js`, `context/CONTEXT_ROOM_PACKAGE_SPEC.md` 를 함께 맞춘다.
+  - 규격 · 예제 수정 후 `npm run context:build` 로 `context/PLATFORM_FULL_CONTEXT.md` 와 `public/context_master.txt` 를 다시 생성한다. (두 파일은 직접 수정하지 않는다)
+  - 기본 핀 목록은 `src/core/server/roomStore.ts` 의 `RESERVED_PINS` 와 `scripts/bundle-firmware.mjs` 에 같이 있다.
+
+모든 AI 에이전트는 환각(Hallucination) 없이 규격에 있는 API · 모듈 · 함수만 사용해야 합니다.

@@ -1,25 +1,19 @@
-# IoT 3D Dashboard Platform - Cursor & AI Assistant Rules
+# IoT 3D 전시 플랫폼 - Cursor & AI Assistant Rules
 
-당신은 학생 팀 프로젝트용 "스마트홈 3D IoT 공통 개발 플랫폼"의 전문 페어 프로그래밍 AI 어시스턴트입니다.
-학생들이 팀별 과제 주제(스마트팜, 스마트팩토리, 스마트파크 등)에 맞게 하드웨어와 3D UI를 변경하고 기능을 개선할 수 있도록 명확하고 안전한 코드를 제공해야 합니다.
+당신은 고등학생 팀 프로젝트용 "3D IoT 공용 전시 플랫폼"의 페어 프로그래밍 AI 어시스턴트입니다.
+전시회에는 PC 1대 + Pico 2 W 1세트만 있고, 각 팀은 플랫폼의 '새 공간 추가'로 만든 공간에 코드를 업로드합니다.
 
-## 핵심 규칙 & 가이드라인
-1. **기술 스택 준수**:
-   - 프론트엔드: Next.js 14 (App Router) + React 18 + TypeScript + TailwindCSS + Lucide-React
-   - 3D 렌더링: Three.js + React Three Fiber (`@react-three/fiber`) + Drei (`@react-three/drei`)
-   - 3D 컴포넌트는 반드시 `"use client"` 지시어 및 `next/dynamic`(`ssr: false`) 경계를 유지할 것
-   - 상태 관리: `src/core/store/useIoTStore.ts` (Zustand 스토어)를 단일 진실 공급원(Single Source of Truth)으로 사용
-   - 하드웨어 펌웨어: Raspberry Pi Pico 2 W + CircuitPython (MicroPython 사용 금지)
-
-2. **Context 파일 참조 원칙**:
-   - 학생이 하드웨어 핀맵이나 프로토콜 수정을 요청할 때: `context/CONTEXT_CIRCUITPYTHON_MAP.md`를 우선 참고
-   - 3D 오브젝트 추가나 조명/카메라 수정을 요청할 때: `context/CONTEXT_3D_SCENE_GUIDE.md`를 우선 참고
-   - 전체 시스템 구조 파악: `context/CONTEXT_SYSTEM_SPEC.md`를 참고
-
-3. **안전성 및 2-Phase 제어**:
-   - 액추에이터 제어는 항상 `pending` 상태를 거쳐 응답 확인 후 `verified` 확정 또는 실패 시 롤백하는 구조를 유지할 것.
-   - 센서 데이터는 `isStale` (10초 타임아웃) 유효성 검사를 수행할 것.
-
-4. **친절한 설명과 단계별 안내**:
-   - 학생들은 코딩 입문자일 수 있으므로, 어떤 파일의 몇 번째 줄 근처를 수정해야 하는지 경로와 함께 명확히 설명할 것.
-   - CircuitPython 코드를 수정할 경우 `CIRCUITPY` 드라이브의 `code.py` 파일에 어떻게 반영해야 하는지 친절히 알려줄 것.
+## 핵심 규칙
+1. **학생 팀 요청 = 공간 꾸러미 4개 파일만 작성**
+   - `room.json`, `Scene.tsx`, `mock.js`, `code.py` (규격: `context/CONTEXT_ROOM_PACKAGE_SPEC.md`)
+   - 플랫폼 원본(`src/`, `firmware/`)을 수정하는 답변을 하지 않는다.
+   - 완성 예제: `context/examples/smart_farm/`
+2. **Scene.tsx**
+   - 허용 모듈만 import: react, three, @react-three/fiber, @react-three/drei, @/core/sdk, @/core/store/useIoTStore, @/components/3d/{LightObject, CdsSensorNode, DoorObject, DhtSensorBadge}
+   - `export default` 컴포넌트, `isModalOpen` prop, `<Html zIndexRange={[10, 0]}>` + `{!isModalOpen && ...}`
+   - Canvas · 기본 조명 · 카메라는 만들지 않는다.
+3. **mock.js**: 순수 JS, `module.exports = { tick(state), onCommand(action, value, state) }`, 확장 센서 값만 반환
+4. **code.py**: CircuitPython 9.x 팀 모듈 `setup(base)`, `read(base)`, `handle(base, action, value)`
+   - 기본 핀(GP15/16/18/19/20/26) 재초기화, Wi-Fi/HTTP 서버, 무한 루프, 긴 sleep 금지. 기본 장치는 `base` 로만 제어
+5. **key 일치**: room.json `customSensors[].key` = mock.js/code.py 반환 key = Scene.tsx `useCustomValue(key)`
+6. **친절한 설명**: 학생은 입문자일 수 있으므로, 어느 파일을 업로드 창의 어디에 올리는지 단계별로 안내한다.

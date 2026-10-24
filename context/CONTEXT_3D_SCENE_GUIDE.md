@@ -1,59 +1,70 @@
-# CONTEXT_3D_SCENE_GUIDE: 3D 가상 공간 및 R3F 컴포넌트 개발 가이드
+# CONTEXT_3D_SCENE_GUIDE: 팀 Scene.tsx 3D 공간 만들기 가이드
 
-이 문서는 AI에게 React Three Fiber (R3F) 씬 구성 및 3D 오브젝트 조작 규칙을 제공하는 Context 문서입니다.
+> 규칙의 기준은 `CONTEXT_ROOM_PACKAGE_SPEC.md` 3장입니다. 이 문서는 보기 좋은 3D 장면을 만드는 요령입니다.
 
-## 1. 3D 씬 계층 구조
-3D 씬은 `src/components/3d/SceneCanvas.tsx` 내부의 `<Canvas>` 컴포넌트 안에 렌더링됩니다.
-
+## 1. 플랫폼이 이미 만들어 둔 것 (Scene.tsx 에서 만들지 않음)
 ```tsx
-<Canvas shadows camera={{ position: [7, 6, 8], fov: 45 }}>
-  {/* 조명 및 환경 */}
-  <ambientLight intensity={ambientIntensity} />
-  <directionalLight position={[10, 15, 10]} castShadow />
-  
-  {/* 카메라 컨트롤러 */}
-  <OrbitControls enableDamping maxPolarAngle={Math.PI / 2 - 0.05} />
-  
-  {/* 스마트홈 메인 룸 */}
-  <SmartHomeRoom>
-    <DoorObject />       {/* SG90 서보모터 연동 */}
-    <LightObject />      {/* RGB LED 연동 */}
-    <DhtSensorBadge />   {/* DHT11 온습도 연동 */}
-    <CdsSensorNode />    {/* Cds 조도센서 연동 */}
-  </SmartHomeRoom>
+<Canvas shadows camera={{ position: [6.8, 5.2, 7.2], fov: 38 }}>
+  <hemisphereLight />               {/* RGB LED 색에 따라 은은하게 물듦 */}
+  <ambientLight />                  {/* Cds 조도 값에 따라 밝기 변화 */}
+  <directionalLight castShadow />   {/* 그림자 범위: -6 ~ 6 */}
+  <Scene isModalOpen={...} />       {/* ← 팀 Scene.tsx 가 여기에 들어감 */}
+  <CameraRig />                     {/* OrbitControls + 조감도 전환 */}
 </Canvas>
 ```
 
-## 2. 하드웨어-3D 오브젝트 연동 구현 패턴
+## 2. 장면 구성 요령
+- **크기:** 바닥은 원점 중심 7 × 7 이내, 높이 0 ~ 3. 카메라가 이 범위를 비추도록 맞춰져 있습니다.
+- **기본 도형 조합:** `boxGeometry`, `cylinderGeometry`, `sphereGeometry`, `planeGeometry` 를 `<group>` 으로 묶어 가구/설비를 만듭니다.
+- **그림자:** 물체에는 `castShadow`, 바닥에는 `receiveShadow`.
+- **재질:** `meshStandardMaterial` 의 `color`, `roughness`, `metalness`, `transparent + opacity`(유리), `emissive`(발광).
+- **외부 모델/텍스처 금지:** `useGLTF`, `useTexture` 는 전시 PC 에 파일이 없어 오류가 납니다.
 
-### 2.1 SG90 스마트 도어 (`DoorObject.tsx`)
-- 서보모터 각도(`0° ~ 180°`)에 따라 Y축 회전값을 부드럽게 보간(Lerp)합니다.
+## 3. 하드웨어 연동 패턴
+
+### 3.1 SG90 각도 → 회전/이동 애니메이션
 ```tsx
-const targetRotationY = (reportedAngle * Math.PI) / 180;
+const { angle } = useServo();
+const ref = useRef<THREE.Group>(null);
 useFrame((_, delta) => {
-  if (doorRef.current) {
-    doorRef.current.rotation.y = THREE.MathUtils.damp(
-      doorRef.current.rotation.y,
-      targetRotationY,
-      8,
-      delta
-    );
+  if (ref.current) {
+    ref.current.rotation.y = THREE.MathUtils.damp(ref.current.rotation.y, (angle / 180) * Math.PI, 6, delta);
   }
 });
 ```
 
-### 2.2 RGB LED 스마트 조명 (`LightObject.tsx`)
-- 스토어의 `rgb_color` (예: `#FF5500`)와 `rgb_state`('ON'/'OFF')에 따라:
-  - `<pointLight color={color} intensity={isOn ? 2.5 : 0} />`
-  - 전등갓 매쉬의 `emissive` 색상과 `emissiveIntensity`를 실시간 갱신합니다.
+### 3.2 RGB LED → 발광 재질 + 조명
+```tsx
+const { color, on } = useRgb();
+<meshStandardMaterial color={on ? color : '#94A3B8'} emissive={on ? color : '#000'} emissiveIntensity={on ? 1.5 : 0} />
+{on && <pointLight color={color} intensity={1.2} distance={6} />}
+```
+천장 조명이 필요하면 플랫폼 부품 `<LightObject isModalOpen={isModalOpen} />` 를 그대로 써도 됩니다.
 
-### 2.3 Cds 조도 센서 (`CdsSensorNode.tsx`)
-- 센서값(`light_adc`: 0 ~ 65535)을 0.1 ~ 0.9 범위의 `ambientIntensity`로 정규화하여 씬 전체 밝기에 동적으로 반영합니다.
+### 3.3 센서 값 → 크기 · 색 · 높이
+```tsx
+const level = useCustomValue('water_level', 50);       // 0~100
+<mesh position={[0, level / 100, 0]} scale={[1, level / 50, 1]} />
+const warmColor = new THREE.Color('#38BDF8').lerp(new THREE.Color('#EF4444'), (temp - 15) / 20);
+```
 
-### 2.4 DHT11 온습도 플로팅 배지 (`DhtSensorBadge.tsx`)
-- `@react-three/drei`의 `<Html center distanceFactor={10}>` 컴포넌트를 사용하여 3D 방 벽면이나 가구 위에 실시간 온도와 습도를 미려한 반투명 카드 배지로 띄웁니다.
+### 3.4 클릭 → 확장 명령
+```tsx
+<mesh onClick={(e) => { e.stopPropagation(); sendCommand('feed', true); }}>
+```
 
-## 3. 새로운 3D 오브젝트 추가 규칙 (AI 안내)
-- 외부 GLTF/GLB 모델을 사용할 경우: `useGLTF('/models/파일명.glb')`를 사용하세요.
-- 기본 프리미티브(Box, Cylinder, Sphere)로 조합할 때는 메쉬 그룹(`group`)으로 묶고, 그림자(`castShadow`, `receiveShadow`)를 활성화하세요.
-- 오브젝트 클릭 시 해당 장치가 선택되도록 `onClick={(e) => { e.stopPropagation(); setSelectedDevice(id); }}`를 설정하세요.
+### 3.5 Html 배지 (모달 가림 방지 필수)
+```tsx
+{!isModalOpen && (
+  <Html position={[0, 2, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
+    <div className="px-3 py-1.5 rounded-xl bg-slate-900/90 text-white text-xs whitespace-nowrap pointer-events-none">
+      토양 수분 {soil.toFixed(1)}%
+    </div>
+  </Html>
+)}
+```
+
+## 4. 성능 주의
+- `useFrame` 안에서 `new THREE.Color()` · `new THREE.Vector3()` 를 매 프레임 만들지 마세요. (`useMemo` 또는 컴포넌트 밖 상수)
+- 반복 오브젝트는 50개 이하로. 많이 필요하면 `[...Array(n)].map()` 으로 간단한 도형만 사용.
+- `useFrame` 에서 `setState` 를 호출하지 마세요. (ref 로 직접 위치/회전 변경)
