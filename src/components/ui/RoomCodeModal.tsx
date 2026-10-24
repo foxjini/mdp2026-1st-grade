@@ -254,6 +254,10 @@ export function RoomCodeModal({
             placeholder="예: 반려동물 급식기. 서보모터가 사료통 뚜껑을 열고, 조도가 어두우면 RGB LED를 주황색으로 켠다. 추가 센서로 사료 무게(load_weight, g)를 표시한다."
             className="w-full px-3 py-2 rounded-xl bg-white border border-indigo-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 select-text"
           />
+          <p className="text-[10px] text-indigo-800">
+            💡 장면(위치 · 크기 · 색) · 숫자(기준값 · 각도 · 주기) · "만약 ~이면 ~한다" 규칙 · 상태별 변화 · 클릭 동작 · mock 시나리오를 적을수록
+            작품이 좋아집니다. 자세한 작성법과 예시문: 매뉴얼 STEP 06 · 07
+          </p>
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleCopyPrompt}

@@ -645,7 +645,7 @@
       <div class="slide-step-badge" id="header-step-indicator">
         <span>STEP 01</span>
         <span style="color:var(--meta-slate);">/</span>
-        <span>09</span>
+        <span>11</span>
       </div>
 
       <button class="mode-toggle-btn" onclick="toggleScrollMode()" id="scroll-toggle-btn" title="슬라이드 발표 ↔ 전체 문서 연속 스크롤 전환">
@@ -717,12 +717,12 @@
           <tr><th>단계</th><th>할 일</th><th>어디서</th></tr>
         </thead>
         <tbody>
-          <tr><td><strong>① 주제 정하기</strong></td><td>해결할 문제, 어떤 기본 장치를 쓸지, 필요한 확장 부품 정리</td><td>팀 회의 (STEP 05 공식 · STEP 06 예시 참고)</td></tr>
+          <tr><td><strong>① 주제 정하기</strong></td><td>해결할 문제, 어떤 기본 장치를 쓸지, 필요한 확장 부품 정리</td><td>팀 회의 (STEP 05~07 작성법 · STEP 08 예시 참고)</td></tr>
           <tr><td><strong>② 새 공간 추가</strong></td><td>공간 이름 · 팀 이름 · 아이콘 · 사용할 기본 장치 · (선택) Pico IP → 공간 ID 발급</td><td>대시보드 왼쪽 <strong>+ 새 공간 추가</strong></td></tr>
           <tr><td><strong>③ AI 프롬프트 복사</strong></td><td>아이디어 작성 → <strong>[AI 프롬프트 복사]</strong> (플랫폼 컨텍스트 + 공간 ID 자동 포함)</td><td>코드 업로드 창 ①</td></tr>
           <tr><td><strong>④ 바이브 코딩</strong></td><td>ChatGPT · Claude · Gemini 에 붙여넣기 → 4개 파일 받기</td><td>생성형 AI</td></tr>
           <tr><td><strong>⑤ 업로드 · 확인</strong></td><td>파일 끌어다 놓기 또는 코드 붙여넣기 → 3D 화면 확인 → 오류는 AI 에게 다시 질문</td><td>코드 업로드 창 ③</td></tr>
-          <tr><td><strong>⑥ 우리 팀 Pico 연결</strong></td><td>우리 공간 펌웨어를 우리 Pico 에 설치하고, 그 IP 를 <strong>Pico 연결 설정</strong>에 저장</td><td>STEP 08</td></tr>
+          <tr><td><strong>⑥ 우리 팀 Pico 연결</strong></td><td>우리 공간 펌웨어를 우리 Pico 에 설치하고, 그 IP 를 <strong>Pico 연결 설정</strong>에 저장</td><td>STEP 10</td></tr>
         </tbody>
       </table>
     </article>
@@ -806,7 +806,7 @@
         <div class="meta-box">
           <h3>2️⃣ 코드 업로드 창 (2/2)</h3>
           <ol>
-            <li><strong>① 아이디어 작성</strong> 칸에 STEP 05 공식대로 우리 팀 아이디어 입력</li>
+            <li><strong>① 아이디어 작성</strong> 칸에 STEP 05~07 작성법대로 우리 팀 아이디어 입력</li>
             <li><strong>[AI 프롬프트 복사]</strong> → AI 채팅창에 붙여넣기 (마스터 컨텍스트 + 공간 ID 자동 포함)</li>
             <li>AI 답변의 코드 블록 4개를 파일로 저장 (<code>room.json · Scene.tsx · mock.js · code.py</code>)</li>
             <li><strong>③ 업로드</strong>에 파일을 끌어다 놓기 · 또는 <strong>직접 붙여넣기</strong>에서 파일 종류 선택 후 붙여넣기</li>
@@ -1002,6 +1002,10 @@ def handle(base, action, value):
         </tbody>
       </table>
 
+      <div class="meta-box success" style="margin-top:16px;">
+        <h3>📚 더 잘 쓰고 싶다면 → STEP 06 · 07 아이디어 작성 마스터 클래스</h3>
+        <p>8가지 원칙, 3D 연출 표현 사전, 나쁜 예 vs 좋은 예, 3단계 다듬기 템플릿, 완성 예시문 4선을 정리해 두었습니다.</p>
+      </div>
       <div class="prompt-box" style="margin-top:16px;">
         <div class="prompt-header">
           <div class="prompt-title-text"><span>빈칸 템플릿</span><span class="prompt-badge">아이디어 칸에 붙여넣기</span></div>
@@ -1021,7 +1025,7 @@ def handle(base, action, value):
     </article>
 
     <!-- =========================================================
-         SLIDE 6: 주제별 아이디어 예시
+         SLIDE 6: 아이디어 작성 마스터 클래스 ① 원칙 · 팁 · 표현 사전
          ========================================================= -->
     <article class="slide-card" id="slide-6">
       <div class="slide-header">
@@ -1029,9 +1033,323 @@ def handle(base, action, value):
           <div class="slide-num-pill">
             <span>STEP 06</span>
             <span>·</span>
+            <span>IDEA WRITING ① PRINCIPLES</span>
+          </div>
+          <h2>6. 아이디어 작성 마스터 클래스 ① — 8가지 원칙과 3D 연출 표현 사전</h2>
+          <p class="slide-desc">작품의 수준은 아이디어 칸에 쓴 글이 정합니다. AI 는 우리가 쓴 글만 보고 4개 파일을 한 번에 만들기 때문에, 이 글이 곧 작품의 <strong>설계도</strong>입니다.</p>
+        </div>
+      </div>
+
+      <table class="meta-table">
+        <thead><tr><th></th><th>AI 에이전트 방식 (Cursor, Claude Code 등)</th><th>우리 방식: 컨텍스트 엔지니어링</th></tr></thead>
+        <tbody>
+          <tr><td><strong>AI 가 아는 것</strong></td><td>프로젝트 파일을 직접 열어 보고 실행해 보며 스스로 알아냄</td><td><strong>우리가 붙여 넣은 글만</strong> 압니다 (플랫폼 컨텍스트 + 공간 정보 + 아이디어)</td></tr>
+          <tr><td><strong>고치는 방법</strong></td><td>오류가 나면 AI 가 스스로 다시 실행하고 수정</td><td>우리가 화면을 보고 <strong>다음 요청을 글로</strong> 써야 함</td></tr>
+          <tr><td><strong>글을 대충 쓰면</strong></td><td>AI 가 질문하거나 코드를 뒤져 보완</td><td>AI 가 빈칸을 <strong>평범한 상상</strong>으로 채움 → 상자 몇 개짜리 밋밋한 작품</td></tr>
+          <tr><td><strong>그래서</strong></td><td>짧게 시켜도 됨</td><td><strong>장면 · 숫자 · 규칙 · 이야기</strong>를 처음부터 자세히 적어야 함</td></tr>
+        </tbody>
+      </table>
+
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="meta-box highlight">
+          <h3>① 장면을 사진처럼 묘사하기</h3>
+          <p>무엇이 <strong>어디에(왼쪽 뒤 · 가운데 · 오른쪽 앞)</strong>, <strong>얼마나 크게</strong>, <strong>무슨 색 · 재질</strong>로 있는지 적습니다.</p>
+          <p>❌ 수족관을 만들어 줘<br>✅ 바닥 가운데에 가로 3 · 세로 1.5 · 높이 1.8 크기의 투명한 하늘색 유리 수조, 안에 주황색 물고기 5마리와 초록 수초 4개, 오른쪽에 회색 여과기</p>
+        </div>
+        <div class="meta-box">
+          <h3>② 숫자로 말하기</h3>
+          <p>각도 · 기준값 · 주기 · 개수 · 범위를 숫자로 쓰면 AI 가 추측하지 않습니다.</p>
+          <p>❌ 더우면 창문을 연다<br>✅ 온도가 <strong>28℃ 이상</strong>이면 SG90 을 <strong>90°</strong> 로 열고, <strong>25℃ 이하</strong>로 내려가면 <strong>0°</strong> 로 닫는다</p>
+        </div>
+        <div class="meta-box">
+          <h3>③ "만약 ~이면 ~한다" 규칙 문장</h3>
+          <p>센서 → 판단 → 동작을 한 문장씩 나눠 씁니다. 규칙이 여러 개면 번호를 붙입니다.</p>
+          <p>✅ 규칙 1: 수위가 20% 미만이면 RGB 빨강 + 배지에 "물 보충 필요"<br>✅ 규칙 2: 수온이 26℃ 를 넘으면 냉각팬(확장) 작동, 팬 날개가 3D 에서 회전</p>
+        </div>
+        <div class="meta-box">
+          <h3>④ 상태마다 눈에 보이는 변화</h3>
+          <p>관람객은 숫자보다 <strong>색 · 움직임</strong>을 먼저 봅니다. 정상 / 주의 / 위험 3단계를 정하고 각각 어떻게 보일지 적습니다.</p>
+          <p>✅ 정상: 초록 + 물고기가 천천히 헤엄 / 주의: 노랑 + 물고기 속도 2배 / 위험: 빨강 깜빡임 + 물고기 멈춤</p>
+        </div>
+        <div class="meta-box">
+          <h3>⑤ 클릭 행동과 결과를 짝짓기</h3>
+          <p>3D 화면에서 <strong>무엇을 클릭</strong>하면 <strong>어떤 명령</strong>이 가고 <strong>무엇이 바뀌는지</strong> 한 줄로 씁니다.</p>
+          <p>✅ 먹이통을 클릭하면 sendCommand('feed', true) → 먹이 알갱이 10개가 위에서 떨어지고, 3초 뒤 사라짐</p>
+        </div>
+        <div class="meta-box">
+          <h3>⑥ mock 시나리오 = 관람객이 1분 안에 볼 이야기</h3>
+          <p>전시장에서 Pico 없이도 작품이 살아 보이려면, 시뮬레이션 값이 <strong>시간에 따라 어떻게 변할지</strong> 이야기처럼 적습니다.</p>
+          <p>✅ 처음 20초는 정상 → 20초부터 수위가 점점 내려가 30초에 경고 → 펌프 명령을 보내면 다시 회복 (40초 주기로 반복)</p>
+        </div>
+        <div class="meta-box warning">
+          <h3>⑦ 하지 말 것 · 안 쓰는 것 적기</h3>
+          <p>AI 가 엉뚱하게 넣는 것을 미리 막습니다.</p>
+          <p>✅ DHT11 은 연결하지 않음(baseDevices 에서 제외) · 외부 3D 모델/이미지 파일 사용 금지 · 글자는 Html 배지로만 · 오브젝트는 20개 이하</p>
+        </div>
+        <div class="meta-box success">
+          <h3>⑧ 욕심 조절 — 한 번에 다 하지 않기</h3>
+          <p>처음부터 모든 연출을 요구하면 오류가 나기 쉽습니다. <strong>1차 뼈대 → 2차 모양 다듬기 → 3차 연출</strong> 순서로 3번에 나눠 요청합니다. (STEP 07)</p>
+          <p>✅ 1차 요청에는 핵심 오브젝트 5~8개와 규칙 2~3개만</p>
+        </div>
+      </div>
+
+      <h3 style="margin:22px 0 10px; font-size:16px;">🎬 3D 연출 표현 사전 (이 표현을 그대로 아이디어에 넣으세요)</h3>
+      <table class="meta-table">
+        <thead><tr><th>연출</th><th>어울리는 대상</th><th>아이디어에 쓸 문장 예</th></tr></thead>
+        <tbody>
+          <tr><td><strong>회전</strong></td><td>문 · 뚜껑 · 차단기 · 팬 날개 · 로봇 팔</td><td>"SG90 각도(0~90°)만큼 뚜껑이 <strong>뒤쪽 모서리를 축으로</strong> 부드럽게 열린다" · "팬 날개가 계속 회전, 작동 중일 때만"</td></tr>
+          <tr><td><strong>이동</strong></td><td>컨베이어 상자 · 차량 · 엘리베이터 · 커튼</td><td>"상자가 컨베이어 왼쪽 끝에서 오른쪽 끝까지 4초 동안 이동하고 다시 처음부터"</td></tr>
+          <tr><td><strong>크기 · 높이 변화</strong></td><td>물 높이 · 식물 성장 · 사료 양 · 그래프 막대</td><td>"수위(%)에 따라 물 기둥의 높이가 0~1.5 사이로 변한다"</td></tr>
+          <tr><td><strong>색 변화</strong></td><td>온도 표시 · 토양 · 신호등 · 상태등</td><td>"온도 15℃ 는 파랑, 35℃ 는 빨강, 그 사이는 자연스럽게 섞인 색"</td></tr>
+          <tr><td><strong>발광 · 깜빡임</strong></td><td>경고등 · 전광판 · 버튼</td><td>"위험 상태에서는 경고등이 빨갛게 빛나며(emissive) 1초에 2번 깜빡인다"</td></tr>
+          <tr><td><strong>파티클 (작은 구체 여러 개)</strong></td><td>불꽃 · 물방울 · 연기 · 먹이 알갱이 · 별</td><td>"펌프가 켜지면 하늘색 물방울 15개가 노즐에서 아래로 떨어지기를 반복"</td></tr>
+          <tr><td><strong>흔들림 · 진동</strong></td><td>동물 꼬리 · 나뭇잎 · 경보 부저</td><td>"사료가 있으면 강아지 꼬리가 좌우로 흔들린다"</td></tr>
+          <tr><td><strong>숫자 배지 (Html)</strong></td><td>센서 값 · 상태 문구 · 남은 시간</td><td>"수조 위에 '수온 24.5℃ · 수위 80%' 배지, 경고일 때 배지 배경이 빨강"</td></tr>
+          <tr><td><strong>조명</strong></td><td>RGB LED · 생장등 · 무드등</td><td>"천장 조명 색이 RGB LED 색과 같고, 꺼지면 공간이 어두워진다"</td></tr>
+        </tbody>
+      </table>
+
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="meta-box highlight">
+          <h3>✅ [AI 프롬프트 복사] 누르기 전 체크리스트</h3>
+          <ol>
+            <li>주제 한 줄 + 누구의 어떤 문제를 해결하는지 썼다</li>
+            <li>사용할 기본 장치와 <strong>안 쓰는 기본 장치</strong>를 적었다</li>
+            <li>확장 센서마다 key · 이름 · 단위 · 범위 · 핀을 적었다</li>
+            <li>규칙을 "만약 ~이면 ~한다" + <strong>숫자</strong>로 썼다</li>
+            <li>정상 / 주의 / 위험이 3D 에서 어떻게 보이는지 썼다</li>
+            <li>클릭할 오브젝트와 명령 이름(action)을 정했다</li>
+            <li>주요 오브젝트의 위치 · 크기 · 색을 썼다</li>
+            <li>mock 이 시간에 따라 어떻게 변할지 이야기로 썼다</li>
+            <li>하지 말 것을 적었다</li>
+            <li>1차 요청에 너무 많은 것을 넣지 않았다</li>
+          </ol>
+        </div>
+        <div class="meta-box">
+          <h3>💬 자주 하는 실수</h3>
+          <ul>
+            <li><strong>"멋있게 · 예쁘게 · 알아서"</strong> → AI 마다 기준이 달라 결과가 들쭉날쭉. 대신 색 · 크기 · 개수를 쓰세요.</li>
+            <li><strong>센서 이름만 적기</strong> ("초음파 센서 사용") → 값이 무엇에 쓰이는지, 3D 에서 무엇이 바뀌는지가 빠짐.</li>
+            <li><strong>key 를 매번 다르게 부르기</strong> (수위 · water · level) → key 하나(<code>water_level</code>)로 통일.</li>
+            <li><strong>현실에 없는 부품</strong>을 마음대로 추가 → 선생님과 정한 부품 · 핀만 적기.</li>
+            <li><strong>전체 다시 만들어 달라고 하기</strong> → 잘 되던 부분까지 바뀜. 수정은 "이 부분만 바꿔 줘"로.</li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         SLIDE 7: 아이디어 작성 마스터 클래스 ② 비교 · 3단계 다듬기 · 완성 예시문
+         ========================================================= -->
+    <article class="slide-card" id="slide-7">
+      <div class="slide-header">
+        <div class="slide-header-left">
+          <div class="slide-num-pill">
+            <span>STEP 07</span>
+            <span>·</span>
+            <span>IDEA WRITING ② EXAMPLES</span>
+          </div>
+          <h2>7. 아이디어 작성 마스터 클래스 ② — 나쁜 예 vs 좋은 예 · 3단계 다듬기 · 완성 예시문</h2>
+          <p class="slide-desc">같은 주제라도 아이디어 글에 따라 작품이 완전히 달라집니다. 비교해 보고, 3단계로 다듬고, 완성 예시문을 우리 팀에 맞게 바꿔 쓰세요.</p>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>❌ 나쁜 예</span><span class="prompt-badge">결과: 상자 몇 개 + 숫자</span></div>
+          </div>
+          <pre class="code-block">스마트 수족관을 만들고 싶어요.
+온도 센서랑 수위 센서를 쓰고, 물이 부족하면 알려 주세요.
+3D 로 멋있게 만들어 주세요.</pre>
+          <p style="font-size:12px; color:var(--meta-slate); margin-top:6px;">무엇이 어디에 있는지, 어떤 기준으로 "부족"인지, 어떻게 "알려" 주는지, 센서 핀과 key 가 모두 빠져 있어 AI 가 상상으로 채웁니다.</p>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>✅ 좋은 예 (같은 주제)</span><span class="prompt-badge">결과: 살아 있는 수족관</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-good', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-good">[주제] 집을 비워도 물고기를 지켜 주는 스마트 수족관
+[사용 기본 장치] dht11(수조 옆 실내 온도), sg90(먹이통 뚜껑), rgb(수조 조명) / cds 는 연결 안 함
+[확장 센서] key: water_level / 수위 / % / 0~100 / GP27 (ADC1), 20% 미만 경고
+[규칙]
+1. 수위가 20% 미만이면 RGB 빨강, 배지에 "물 보충 필요"
+2. 수위가 20~50% 이면 RGB 노랑, 50% 이상이면 RGB 하늘색
+3. 먹이통을 클릭하면 sendCommand('feed', true) → SG90 90° 로 3초 열렸다 닫힘
+[3D 장면]
+- 바닥 가운데: 가로 3 · 높이 1.8 · 깊이 1.5 투명 하늘색 유리 수조 (opacity 0.25)
+- 수조 안: 수위만큼 높이가 변하는 파란 물 덩어리, 주황 물고기 5마리(타원 몸통 + 삼각 꼬리)가 원을 그리며 헤엄
+- 수조 바닥: 모래색 바닥과 초록 수초 4개(위아래로 살랑살랑)
+- 수조 위 오른쪽: 노란 원통 먹이통 + 뚜껑(SG90), 열리면 갈색 먹이 알갱이 10개가 떨어짐
+- 수조 위: "수위 80% · 실내 24℃" Html 배지, 경고면 배경 빨강
+[mock 규칙] 수위는 100% 에서 시작해 1초에 1%씩 증발, 30% 아래가 되면 15초 뒤 다시 100% 로 채워짐(물 보충)
+[하지 말 것] 외부 3D 모델·이미지 금지, 오브젝트 25개 이하, Cds 사용 금지</pre>
+        </div>
+      </div>
+
+      <h3 style="margin:22px 0 10px; font-size:16px;">🪜 3단계로 나눠 다듬기 (같은 AI 대화창에서 이어서 요청)</h3>
+      <div class="grid-3">
+        <div class="meta-box highlight">
+          <h3>1차 · 뼈대</h3>
+          <p>목표: <strong>업로드가 한 번에 통과</strong>하고 센서 값 · 클릭 · mock 이 동작하는 것.</p>
+          <ul>
+            <li>핵심 오브젝트 5~8개, 규칙 2~3개</li>
+            <li>[AI 프롬프트 복사] 로 플랫폼 컨텍스트와 함께 보내기</li>
+            <li>4개 파일 업로드 → 시뮬레이션 확인</li>
+          </ul>
+        </div>
+        <div class="meta-box">
+          <h3>2차 · 모양 다듬기</h3>
+          <p>목표: <strong>보기 좋은 장면</strong>. 배치 · 크기 · 색 · 소품 추가.</p>
+          <ul>
+            <li>Scene.tsx 만 수정 요청</li>
+            <li>"무엇을 어떻게" 3~5개 항목으로</li>
+            <li>현재 Scene.tsx 전체를 함께 붙여 넣기</li>
+          </ul>
+        </div>
+        <div class="meta-box success">
+          <h3>3차 · 연출</h3>
+          <p>목표: <strong>관람객이 감탄하는 순간</strong>. 애니메이션 · 경고 연출 · 배지.</p>
+          <ul>
+            <li>표현 사전(STEP 06)의 문장을 골라 넣기</li>
+            <li>mock 시나리오를 전시용으로 다듬기</li>
+            <li>한 번에 연출 1~2개씩</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>2차 요청 템플릿</span><span class="prompt-badge">Scene.tsx 만</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-round2', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-round2">앞에서 만든 4개 파일 중 Scene.tsx 만 수정해 주세요. room.json, mock.js, code.py 는 그대로 둡니다.
+[플랫폼 컨텍스트]의 Scene.tsx 규칙(허용 모듈, export default, Html zIndexRange, isModalOpen)을 지켜 주세요.
+
+바꿀 점:
+1. (예: 수조를 바닥 가운데에서 약간 왼쪽(x=-0.5)으로 옮기고 크기를 1.2배로)
+2. (예: 수조 뒤 벽에 바다 그림 대신 진한 파랑 벽면과 하얀 선반 추가)
+3. (예: 물고기 색을 주황 · 노랑 · 빨강으로 섞기)
+유지할 점: 센서 값 연결, 먹이통 클릭 명령, 배지 내용
+
+현재 Scene.tsx:
+(여기에 전체 붙여넣기)</pre>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>3차 요청 템플릿</span><span class="prompt-badge">연출 추가</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-round3', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-round3">지금 동작은 그대로 두고 아래 연출만 추가해 주세요. 바꾼 파일의 전체 코드만 보내 주세요.
+
+연출 1: (예: 수위 경고일 때 수조 조명이 빨갛게 1초에 2번 깜빡이고, 물고기가 수조 바닥 쪽으로 내려가 천천히 움직임)
+연출 2: (예: 먹이를 줄 때 먹이 알갱이 10개가 위에서 떨어지고, 물고기들이 먹이 쪽으로 모였다가 3초 뒤 흩어짐)
+mock 시나리오 (전시용): (예: 40초 주기 — 0~20초 정상, 20~30초 수위 감소 경고, 30초 물 보충으로 회복)
+주의: useFrame 안에서 setState 금지, 반복 오브젝트 50개 이하
+
+현재 Scene.tsx / mock.js:
+(여기에 전체 붙여넣기)</pre>
+        </div>
+      </div>
+
+      <h3 style="margin:22px 0 10px; font-size:16px;">📝 완성 예시문 4선 (주제만 바꿔 써도 수준 높은 결과)</h3>
+      <div class="grid-2">
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>A. 스마트 교실 에너지 지킴이</span><span class="prompt-badge">센서 2 · 규칙 4</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-idea-a', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-idea-a">[주제] 아무도 없는 교실의 전기 낭비를 막는 에너지 지킴이
+[사용 기본 장치] cds(창밖 밝기), sg90(블라인드 각도), rgb(천장 조명) / dht11 연결 안 함
+[확장 센서] key: people / 재실 인원 / 명 / 0~30 / GP14 (PIR 동작 감지, 감지 횟수로 추정)
+[확장 센서] key: power_w / 사용 전력 / W / 0~2000 (센서 없음: 조명·블라인드 상태로 계산)
+[규칙]
+1. people 이 0 이면 10초 뒤 조명 OFF, 배지에 "빈 교실 · 절전 중"
+2. 창밖이 밝으면(cds 40000 이상) 조명을 따뜻한 흰색 50% 느낌의 연한 노랑, 어두우면 밝은 흰색
+3. 햇빛이 아주 강하면(cds 55000 이상) 블라인드 SG90 60° 로 내림
+4. 칠판 옆 스위치를 클릭하면 sendCommand('lights', true/false)
+[3D 장면] 책상 3줄×4개(갈색) · 의자 · 앞쪽 초록 칠판 · 오른쪽 창문 3개와 블라인드 날개 8개(SG90 각도만큼 회전)
+· 사람이 있는 책상에는 파란 원기둥 학생 모형 · 칠판 위 "사용 전력 420W" 배지(1000W 넘으면 빨강)
+[mock 규칙] 수업(30초, 인원 20~28명) → 쉬는 시간(10초, 인원 0~3명) → 빈 교실(15초, 0명) 반복
+[하지 말 것] 외부 모델 금지, 학생 모형은 단순 도형, 오브젝트 40개 이하(책상은 map 으로 반복)</pre>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>B. 스마트 무인 택배함</span><span class="prompt-badge">클릭 상호작용 중심</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-idea-b', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-idea-b">[주제] 아파트 공동현관의 무인 택배함 (도난 방지 + 보관 알림)
+[사용 기본 장치] sg90(택배함 문 잠금장치), rgb(칸 상태등) / dht11 · cds 연결 안 함
+[확장 센서] key: box_1, box_2, box_3 / 칸별 보관 여부 / 0·1 / GP13 · GP14 · GP15 (적외선 감지, GP15 는 DHT11 미사용이라 사용 가능)
+[확장 센서] key: wait_min / 가장 오래 보관된 시간 / 분 / 0~120, 60 이상 경고
+[규칙]
+1. 택배가 있는 칸은 앞면 작은 표시등이 초록, 빈 칸은 회색
+2. 보관 60분 이상이면 RGB 주황 + 배지 "오래된 택배가 있어요"
+3. 택배함 문을 클릭하면 sendCommand('open', 칸번호) → SG90 90° 로 열리고 3초 뒤 닫힘
+[3D 장면] 벽에 붙은 철제 택배함(진회색, 가로 3칸) · 칸마다 문(왼쪽 경첩 회전) · 칸 안의 갈색 상자
+· 택배함 위 작은 화면 모양 Html 배지(보관 개수 · 가장 오래된 시간) · 바닥은 아파트 로비 타일(밝은 회색 체크무늬)
+[mock 규칙] 15초마다 빈 칸에 택배가 하나 들어오고, wait_min 은 1초에 2분씩 증가, open 명령을 받은 칸은 비워짐
+[하지 말 것] 글자는 Html 배지로만, 외부 이미지 금지</pre>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>C. 스마트 횡단보도 안전 지킴이</span><span class="prompt-badge">이동 애니메이션 중심</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-idea-c', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-idea-c">[주제] 스마트폰을 보며 건너는 보행자를 지켜 주는 횡단보도
+[사용 기본 장치] cds(밤/낮), rgb(바닥 LED 라인 색) / dht11 · sg90 연결 안 함
+[확장 센서] key: pedestrian / 대기 보행자 / 0·1 / GP17 (PIR)
+[확장 센서] key: car_near / 차량 접근 / 0·1 / GP13 (적외선)
+[규칙]
+1. 보행자 신호(초록)일 때 바닥 LED 라인 초록, 빨간 신호일 때 빨강
+2. 빨간 신호인데 pedestrian 이 1 이면 바닥 LED 가 빨갛게 깜빡이고 배지 "멈추세요!"
+3. 밤(cds 15000 미만)에는 LED 라인이 더 밝게 빛남(emissive 2배)
+4. 신호등 버튼을 클릭하면 sendCommand('request', true) → 5초 뒤 보행자 신호로 바뀜
+[3D 장면] 왕복 2차선 도로(진회색) · 흰 줄무늬 횡단보도 6줄 · 양쪽 인도와 신호등 기둥 2개
+· 횡단보도 양끝 바닥에 길게 빛나는 LED 라인 · 차량(빨강 박스) 이 왼쪽에서 오른쪽으로 지나감, 보행자 신호면 정지선에서 멈춤
+· 보행자(원기둥 + 구 머리) 가 인도에서 기다리다 초록 신호에 건넘
+[mock 규칙] 20초 주기 신호 (빨강 14초 · 초록 6초), 빨강 중간에 보행자가 나타나 4초 동안 대기
+[하지 말 것] 외부 모델 금지, 차량·사람은 단순 도형</pre>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>D. 스마트 반려식물 카페</span><span class="prompt-badge">기본 장치 4종 모두</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-idea-d', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-idea-d">[주제] 식물마다 기분을 표정으로 알려 주는 반려식물 카페
+[사용 기본 장치] dht11(실내 온습도), cds(햇빛), sg90(자동 물뿌리개 팔), rgb(카페 무드 조명) — 4종 모두
+[확장 센서] key: soil_1, soil_2 / 화분 1·2 토양 수분 / % / 0~100 / GP27 · GP28 (ADC), 30% 미만 경고
+[규칙]
+1. 토양 수분 60% 이상 😊(웃는 얼굴), 30~60% 😐, 30% 미만 😢 — 화분 앞 Html 배지로 표시
+2. 😢 인 화분을 클릭하면 sendCommand('water', 화분번호) → SG90 물뿌리개 팔이 그 화분 쪽으로 회전(1번 45°, 2번 135°) 후 물방울 파티클
+3. 햇빛이 약하면(cds 20000 미만) 식물 생장등 느낌으로 RGB 보라
+4. 습도 40% 미만이면 배지에 "건조 주의"
+[3D 장면] 원목 카페 바닥 · 큰 창문(낮/밤 색) · 나무 테이블 2개 위 화분 2개(테라코타 화분 + 잎 개수가 수분에 따라 3~7개)
+· 가운데 기둥에 회전하는 물뿌리개 팔(SG90) · 천장 펜던트 조명(RGB 색)
+[mock 규칙] 화분 1 은 빨리(1초 1%), 화분 2 는 천천히(1초 0.4%) 마르고, water 명령을 받은 화분은 90% 로 회복
+[하지 말 것] 외부 모델 금지, 잎은 구/원뿔로, 오브젝트 40개 이하</pre>
+        </div>
+      </div>
+
+      <div class="meta-box warning" style="margin-top:16px;">
+        <h3>🔍 AI 답변을 받은 뒤 바로 확인할 것</h3>
+        <p>① 코드 블록이 <strong>4개</strong>인가 (room.json · Scene.tsx · mock.js · code.py) ② room.json 의 key 와 Scene.tsx 의 <code>useCustomValue('key')</code> 가 같은가 ③ baseDevices 에 없는 장치를 쓰지 않았나 ④ 내가 쓴 <strong>숫자(기준값 · 각도 · 주기)</strong>가 코드에 그대로 들어갔나 — 다르면 "규칙 2 의 기준값이 코드에 반영되지 않았어요" 처럼 짚어서 다시 요청하세요.</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         SLIDE 8: 주제별 아이디어 예시
+         ========================================================= -->
+    <article class="slide-card" id="slide-8">
+      <div class="slide-header">
+        <div class="slide-header-left">
+          <div class="slide-num-pill">
+            <span>STEP 08</span>
+            <span>·</span>
             <span>TOPIC EXAMPLES</span>
           </div>
-          <h2>6. 주제별 아이디어 예시 6선 (복사해서 아이디어 칸에)</h2>
+          <h2>8. 주제별 아이디어 예시 6선 (복사해서 아이디어 칸에)</h2>
           <p class="slide-desc">그대로 써도 되고, 우리 팀 상황에 맞게 고쳐 써도 됩니다. 완성본 4종이 <code>context/examples/</code> 에 있습니다: 스마트 팜(1번) · 펫 급식기(<code>smart_pet_feeder</code>, 5번) · 주차장(<code>smart_parking</code>, 3번 변형: 적외선 센서) · 화재 방재(<code>fire_safety</code>, 4번).</p>
         </div>
       </div>
@@ -1120,17 +1438,17 @@ def handle(base, action, value):
     </article>
 
     <!-- =========================================================
-         SLIDE 7: 오류 해결 & 수정 프롬프트
+         SLIDE 9: 오류 해결 & 수정 프롬프트
          ========================================================= -->
-    <article class="slide-card" id="slide-7">
+    <article class="slide-card" id="slide-9">
       <div class="slide-header">
         <div class="slide-header-left">
           <div class="slide-num-pill">
-            <span>STEP 07</span>
+            <span>STEP 09</span>
             <span>·</span>
             <span>DEBUG & FIX</span>
           </div>
-          <h2>7. 업로드 오류 해결 & 수정 프롬프트</h2>
+          <h2>9. 업로드 오류 해결 & 수정 프롬프트</h2>
           <p class="slide-desc">오류 메시지는 고장이 아니라 AI 에게 줄 힌트입니다. 메시지를 그대로 복사해서 아래 프롬프트와 함께 보내세요.</p>
         </div>
       </div>
@@ -1198,17 +1516,17 @@ def handle(base, action, value):
     </article>
 
     <!-- =========================================================
-         SLIDE 8: 우리 팀 Pico 2 W 연결하기 (공간마다 1대)
+         SLIDE 10: 우리 팀 Pico 2 W 연결하기 (공간마다 1대)
          ========================================================= -->
-    <article class="slide-card" id="slide-8">
+    <article class="slide-card" id="slide-10">
       <div class="slide-header">
         <div class="slide-header-left">
           <div class="slide-num-pill">
-            <span>STEP 08</span>
+            <span>STEP 10</span>
             <span>·</span>
             <span>CONNECT OUR PICO</span>
           </div>
-          <h2>8. 우리 팀 Pico 2 W 연결하기 (공간마다 1대)</h2>
+          <h2>10. 우리 팀 Pico 2 W 연결하기 (공간마다 1대)</h2>
           <p class="slide-desc">주제마다 센서가 다르므로 팀마다 Pico 를 따로 씁니다. Pico 마다 IP 를 다르게 정하고, 플랫폼의 우리 공간에 그 IP 를 저장하면 공간을 고를 때 자동으로 연결됩니다.</p>
         </div>
       </div>
@@ -1265,17 +1583,17 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
     </article>
 
     <!-- =========================================================
-         SLIDE 9: 전시 당일 체크리스트 & FAQ
+         SLIDE 11: 전시 당일 체크리스트 & FAQ
          ========================================================= -->
-    <article class="slide-card" id="slide-9">
+    <article class="slide-card" id="slide-11">
       <div class="slide-header">
         <div class="slide-header-left">
           <div class="slide-num-pill">
-            <span>STEP 09</span>
+            <span>STEP 11</span>
             <span>·</span>
             <span>EXHIBITION DAY</span>
           </div>
-          <h2>9. 전시 당일 체크리스트 (교사용) & FAQ</h2>
+          <h2>11. 전시 당일 체크리스트 (교사용) & FAQ</h2>
           <p class="slide-desc">PC 1대에 모든 팀 공간을 모으고, 공간마다 Pico 2 W 1대를 연결합니다. Pico 마다 IP 가 달라야 합니다.</p>
         </div>
       </div>
@@ -1339,10 +1657,12 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
       <div class="dock-dot" onclick="goToSlide(7)">7</div>
       <div class="dock-dot" onclick="goToSlide(8)">8</div>
       <div class="dock-dot" onclick="goToSlide(9)">9</div>
+      <div class="dock-dot" onclick="goToSlide(10)">10</div>
+      <div class="dock-dot" onclick="goToSlide(11)">11</div>
     </div>
 
     <div class="dock-info" id="dock-page-counter">
-      1 / 9
+      1 / 11
     </div>
 
     <button class="dock-btn" id="next-btn" onclick="changeSlide(1)">
@@ -1359,7 +1679,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
   <!-- 4. Client Presentation Controller Script -->
   <script>
     let currentSlide = 1;
-    const totalSlides = 9;
+    const totalSlides = 11;
     let isScrollMode = false;
 
     function updateSlideView() {
@@ -1378,7 +1698,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
       // Update Top Header Counter
       const headerIndicator = document.getElementById('header-step-indicator');
       if (headerIndicator) {
-        headerIndicator.innerHTML = `<span>STEP 0${currentSlide}</span><span style="color:var(--meta-slate);">/</span><span>0${totalSlides}</span>`;
+        headerIndicator.innerHTML = `<span>STEP ${String(currentSlide).padStart(2, '0')}</span><span style="color:var(--meta-slate);">/</span><span>${String(totalSlides).padStart(2, '0')}</span>`;
       }
 
       // Update Top Progress Bar

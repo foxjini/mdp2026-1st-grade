@@ -170,13 +170,13 @@ npm run dev          # http://localhost:3001
 
 ## 📚 매뉴얼 · AI 컨텍스트 파일
 
-- **인터랙티브 매뉴얼**: [http://localhost:3001/manual.html](http://localhost:3001/manual.html) (학생 · 교사용 9장 슬라이드: 전시 구조 → 기본 장치 · 핀 → 공간 추가 · 업로드 → 규격 → 아이디어 공식 → 예시 → 오류 해결 → 우리 팀 Pico 연결 → 전시 당일)
+- **인터랙티브 매뉴얼**: [http://localhost:3001/manual.html](http://localhost:3001/manual.html) (학생 · 교사용 11장 슬라이드: 전시 구조 → 기본 장치 · 핀 → 공간 추가 · 업로드 → 규격 → 아이디어 공식 → **아이디어 작성 마스터 클래스 ①원칙 · ②예시** → 주제별 예시 → 오류 해결 → 우리 팀 Pico 연결 → 전시 당일)
 - **AI 마스터 컨텍스트**: [`context/PLATFORM_FULL_CONTEXT.md`](context/PLATFORM_FULL_CONTEXT.md) — 코드 업로드 창의 [AI 프롬프트 복사] 가 자동으로 포함합니다.
 
 | 파일 | 내용 |
 | :--- | :--- |
 | `context/CONTEXT_ROOM_PACKAGE_SPEC.md` | 공간 꾸러미 규격 (학생 · AI 필수) |
-| `context/PROMPT_TEMPLATES.md` | 아이디어 작성 공식, 주제별 예시 6선, 디버깅 프롬프트 |
+| `context/PROMPT_TEMPLATES.md` | 아이디어 작성 공식 · 8원칙, 주제별 예시 6선 + 완성 예시문 4선, 3단계 다듬기, 디버깅 프롬프트 |
 | `context/CONTEXT_3D_SCENE_GUIDE.md` | Scene.tsx 3D 장면 만들기 요령 |
 | `context/CONTEXT_CIRCUITPYTHON_MAP.md` | 핀맵, 확장 핀, Pico IP 정하기, 펌웨어 REST API |
 | `context/CONTEXT_SYSTEM_SPEC.md` | 플랫폼 내부 구조 (교사 · 유지보수용) |
