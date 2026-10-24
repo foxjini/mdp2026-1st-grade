@@ -152,6 +152,9 @@ export class CircuitPythonAdapter implements IIoTAdapter {
 
       clearTimeout(timeout);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      // 연결하지 않은 장치 등 펌웨어가 거부하면 { success: false, error } 로 응답
+      const ack = await res.json().catch(() => ({}));
+      if (ack && ack.success === false) throw new Error(ack.error || 'Pico 가 명령을 거부했습니다.');
 
       store.confirmServoAck(angle);
       return true;
@@ -195,6 +198,8 @@ export class CircuitPythonAdapter implements IIoTAdapter {
 
       clearTimeout(timeout);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const ack = await res.json().catch(() => ({}));
+      if (ack && ack.success === false) throw new Error(ack.error || 'Pico 가 명령을 거부했습니다.');
 
       store.confirmRgbAck(color, state);
       return true;

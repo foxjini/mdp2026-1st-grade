@@ -46,6 +46,8 @@ export function InspectorPanel({
   const roomPackage = useIoTStore((s) => s.activeRoomPackage);
   const useSg90 = !roomPackage || roomPackage.meta.baseDevices.includes('sg90');
   const useRgbLed = !roomPackage || roomPackage.meta.baseDevices.includes('rgb');
+  const useDht = !roomPackage || roomPackage.meta.baseDevices.includes('dht11');
+  const useCds = !roomPackage || roomPackage.meta.baseDevices.includes('cds');
   const light = actuators.rgb_light;
 
   const [showActuatorControls, setShowActuatorControls] = useState(true);
@@ -210,7 +212,7 @@ export function InspectorPanel({
                     <span>실내 온도</span>
                   </div>
                   <span className="text-xs font-extrabold text-slate-800 mt-0.5">
-                    {sensors.dht11_temp.value.toFixed(1)}℃
+                    {useDht ? `${sensors.dht11_temp.value.toFixed(1)}℃` : '미사용'}
                   </span>
                 </div>
 
@@ -220,7 +222,7 @@ export function InspectorPanel({
                     <span>실내 습도</span>
                   </div>
                   <span className="text-xs font-extrabold text-slate-800 mt-0.5">
-                    {sensors.dht11_humi.value.toFixed(0)}%
+                    {useDht ? `${sensors.dht11_humi.value.toFixed(0)}%` : '미사용'}
                   </span>
                 </div>
 
@@ -230,9 +232,11 @@ export function InspectorPanel({
                     <span>센서 조도</span>
                   </div>
                   <span className="text-xs font-extrabold text-slate-800 mt-0.5">
-                    {sensors.cds_light.value > 1000
-                      ? `${(sensors.cds_light.value / 1000).toFixed(0)}k`
-                      : sensors.cds_light.value}
+                    {!useCds
+                      ? '미사용'
+                      : sensors.cds_light.value > 1000
+                        ? `${(sensors.cds_light.value / 1000).toFixed(0)}k`
+                        : sensors.cds_light.value}
                   </span>
                 </div>
               </div>

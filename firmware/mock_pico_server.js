@@ -5,14 +5,16 @@
  * 실제 Pico 2 W 하드웨어가 없거나 Wi-Fi 연결 환경이 제한된 교실/실습실 환경에서
  * 하드웨어 연동 모드를 100% 동일하게 모의 테스트하고 디버깅할 수 있는 에뮬레이터 서버입니다.
  * 
- * [실행 방법]
- * node firmware/mock_pico_server.js
- * (포트: 5050 -> 대시보드 IP 입력창에 127.0.0.1:5050 입력)
+ * [실행 방법]  (공간마다 Pico 1대 → 공간마다 mock 서버 1개를 다른 포트로)
+ *   npm run mock:pico -- --room <공간ID> --port 5051   → 그 공간의 Pico 1대를 흉내 (IP: 127.0.0.1:5051)
+ *   npm run mock:pico -- --room <다른공간ID> --port 5052
+ *   npm run mock:pico                                 → 포트 5050, 모든 공간을 한 번에 흉내 (간단 연습용)
  *
  * [팀 공간 mock.js]
- * rooms-data/<공간ID>/mock.js 를 자동으로 불러와 통합 펌웨어와 같은 형식으로 응답합니다.
+ * rooms-data/<공간ID>/mock.js 를 자동으로 불러와 Pico 펌웨어와 같은 형식으로 응답합니다.
  *   GET  /api/status  → { ..., rooms: { 공간ID: {...} }, custom: {...}, team_errors: {...} }
  *   POST /api/command → { room, action, value } → 해당 팀 mock.js onCommand()
+ * --room 을 주면 그 공간 room.json 의 baseDevices 에 있는 기본 장치 값만 응답합니다.
  * 파일이 바뀌면 다음 갱신 주기에 자동으로 다시 불러옵니다.
  */
 
@@ -21,9 +23,27 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const PORT = process.env.PORT || 5050;
+function argValue(name) {
+  const i = process.argv.indexOf(name);
+  return i >= 0 ? process.argv[i + 1] : undefined;
+}
+
+const PORT = Number(argValue('--port') || process.env.PORT || 5050);
+const ONLY_ROOM = argValue('--room') || process.env.ROOM || '';
 const ROOMS_DIR = process.env.ROOMS_DATA_DIR || path.join(__dirname, '..', 'rooms-data');
+const ALL_BASE_DEVICES = ['dht11', 'cds', 'sg90', 'rgb'];
 const startedAt = Date.now();
+
+// 이 mock Pico 에 연결된 기본 장치 (--room 이면 room.json baseDevices, 아니면 4종 전부)
+function baseDevices() {
+  if (!ONLY_ROOM) return ALL_BASE_DEVICES;
+  try {
+    const meta = JSON.parse(fs.readFileSync(path.join(ROOMS_DIR, ONLY_ROOM, 'room.json'), 'utf8'));
+    return Array.isArray(meta.baseDevices) ? meta.baseDevices : ALL_BASE_DEVICES;
+  } catch {
+    return ALL_BASE_DEVICES;
+  }
+}
 
 // 모의 하드웨어 상태
 let hardwareState = {
@@ -60,7 +80,7 @@ function loadMock(file) {
 function syncTeams() {
   let ids = [];
   try {
-    ids = fs.readdirSync(ROOMS_DIR).filter((id) => /^[a-z0-9_-]+$/.test(id));
+    ids = fs.readdirSync(ROOMS_DIR).filter((id) => /^[a-z0-9_-]+$/.test(id) && (!ONLY_ROOM || id === ONLY_ROOM));
   } catch {
     ids = [];
   }
@@ -170,14 +190,16 @@ const server = http.createServer((req, res) => {
       Object.assign(custom, team.values);
       if (team.error) teamErrors[id] = team.error;
     }
+    // 실제 펌웨어처럼 연결된 기본 장치 값만 응답
+    const devices = baseDevices();
     const responsePayload = {
-      temperature: hardwareState.temperature,
-      humidity: hardwareState.humidity,
-      light_adc: hardwareState.lightRaw,
-      light_raw: hardwareState.lightRaw,
-      servo_angle: hardwareState.servoAngle,
-      rgb_color: hardwareState.rgbColor,
-      rgb_state: hardwareState.rgbState,
+      status: 'online',
+      room: ONLY_ROOM,
+      base_devices: devices,
+      ...(devices.includes('dht11') ? { temperature: hardwareState.temperature, humidity: hardwareState.humidity } : {}),
+      ...(devices.includes('cds') ? { light_adc: hardwareState.lightRaw, light_raw: hardwareState.lightRaw } : {}),
+      ...(devices.includes('sg90') ? { servo_angle: hardwareState.servoAngle } : {}),
+      ...(devices.includes('rgb') ? { rgb_color: hardwareState.rgbColor, rgb_state: hardwareState.rgbState } : {}),
       uptime: process.uptime(),
       rooms,
       custom,
@@ -186,6 +208,16 @@ const server = http.createServer((req, res) => {
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(responsePayload));
+    return;
+  }
+
+  // 연결하지 않은 기본 장치 제어 요청은 실제 펌웨어처럼 거부
+  const unused =
+    req.method === 'POST' &&
+    ((url.startsWith('/api/servo') && !baseDevices().includes('sg90')) || (url.startsWith('/api/rgb') && !baseDevices().includes('rgb')));
+  if (unused) {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ success: false, error: '이 Pico 에는 해당 기본 장치가 연결되어 있지 않습니다 (baseDevices).' }));
     return;
   }
 
@@ -263,7 +295,9 @@ const server = http.createServer((req, res) => {
     const errors = {};
     Object.entries(teams).forEach(([id, t]) => t.error && (errors[id] = t.error));
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ loaded: Object.keys(teams).filter((id) => teams[id].mod), errors }));
+    res.end(
+      JSON.stringify({ room: ONLY_ROOM, base_devices: baseDevices(), loaded: Object.keys(teams).filter((id) => teams[id].mod), errors })
+    );
     return;
   }
 
@@ -275,6 +309,8 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, '127.0.0.1', () => {
   console.log('=======================================================');
   console.log(`[Mock Pico 2 W Server] Started on http://127.0.0.1:${PORT}`);
+  console.log(ONLY_ROOM ? `공간 "${ONLY_ROOM}" 전용 Pico (기본 장치: ${baseDevices().join(', ') || '없음'})` : '모든 공간 응답 모드');
+  console.log(`대시보드 '${ONLY_ROOM || '각'}' 공간의 Pico 연결 설정에 IP 127.0.0.1:${PORT} 입력`);
   console.log(`CircuitPython 9.x REST Server Emulation Ready`);
   console.log('=======================================================');
 });
