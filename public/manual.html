@@ -956,6 +956,13 @@ def handle(base, action, value):
         <h3>🔑 key 는 세 곳에서 똑같이</h3>
         <p>room.json <code>customSensors[].key</code> = mock.js · code.py 가 반환하는 key = Scene.tsx <code>useCustomValue('key')</code>. 다르면 게이지가 계속 '수신 대기'로 보입니다.</p>
       </div>
+      <div class="meta-box highlight" style="margin-top:16px;">
+        <h3>🎛️ code.py 가 서보 · LED 를 움직이면 mock.js 도 똑같이</h3>
+        <p>code.py 에서 <code>base.set_servo(90)</code> · <code>base.set_rgb("#EF4444", "ON")</code> 를 쓴다면, mock.js 의 <code>tick</code>/<code>onCommand</code> 도 <code>{ servo_angle: 90 }</code> · <code>{ rgb_color: '#EF4444', rgb_state: 'ON' }</code> 를 돌려주세요. 그래야 시뮬레이션에서도 3D 화면의 서보 · LED 가 실물과 똑같이 움직입니다.</p>
+        <pre class="code-block">onCommand(action, value, state) {
+  if (action === 'gate') return { servo_angle: value ? 90 : 0 };  // code.py: base.set_servo(90 if value else 0)
+}</pre>
+      </div>
     </article>
 
     <!-- =========================================================
@@ -1024,7 +1031,7 @@ def handle(base, action, value):
             <span>TOPIC EXAMPLES</span>
           </div>
           <h2>6. 주제별 아이디어 예시 6선 (복사해서 아이디어 칸에)</h2>
-          <p class="slide-desc">그대로 써도 되고, 우리 팀 상황에 맞게 고쳐 써도 됩니다. 스마트팜 완성본은 <code>context/examples/smart_farm/</code> 에 있습니다.</p>
+          <p class="slide-desc">그대로 써도 되고, 우리 팀 상황에 맞게 고쳐 써도 됩니다. 완성본 4종이 <code>context/examples/</code> 에 있습니다: 스마트 팜(1번) · 펫 급식기(<code>smart_pet_feeder</code>, 5번) · 주차장(<code>smart_parking</code>, 3번 변형: 적외선 센서) · 화재 방재(<code>fire_safety</code>, 4번).</p>
         </div>
       </div>
 
@@ -1139,6 +1146,8 @@ def handle(base, action, value):
           <tr><td><code>Pico IP … 를 다른 공간도 사용합니다</code></td><td>두 공간에 같은 Pico IP 저장</td><td>⋮ → Pico 연결 설정에서 공간마다 다른 IP 로 변경</td></tr>
           <tr><td>헤더에 <code>Pico 2 W … · 응답 없음</code></td><td>우리 Pico 가 꺼져 있음 / IP 가 다름 / 다른 Wi-Fi</td><td>Pico 시리얼 창의 IP 와 Pico 연결 설정 IP 비교, PC 와 같은 Wi-Fi 인지 확인</td></tr>
           <tr><td><code>이 Pico 에는 SG90 이(가) 연결되어 있지 않습니다</code></td><td>baseDevices 에 없는 장치를 제어함</td><td>Scene.tsx · code.py 에서 그 장치를 빼거나 baseDevices 에 추가 후 펌웨어 다시 설치</td></tr>
+          <tr><td>실물에서는 서보가 움직이는데 시뮬레이션에서는 안 움직임</td><td>mock.js 가 <code>servo_angle</code> / <code>rgb_color</code> 를 돌려주지 않음</td><td>STEP 04 의 'mock.js 도 똑같이' 참고</td></tr>
+          <tr><td><code>포트 … 는 브라우저가 보안상 막는 포트</code></td><td>5060 · 5061 등 막힌 포트</td><td>5051, 5052 처럼 다른 포트 사용</td></tr>
           <tr><td><code>업로드 비밀번호가 올바르지 않습니다</code></td><td>전시 PC 에 비밀번호 설정됨</td><td>선생님께 받은 비밀번호를 업로드 창에 입력</td></tr>
         </tbody>
       </table>
@@ -1248,6 +1257,7 @@ PICO_GATEWAY   = "192.168.0.1"     # 생략 시 x.x.x.1</pre>
           <pre class="code-block">npm run mock:pico -- --room 공간ID_A --port 5051
 npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           <p>공간 A 의 Pico 연결 설정에 <code>127.0.0.1:5051</code>, 공간 B 에 <code>127.0.0.1:5052</code> 를 저장하면 실제 Pico 처럼 그 공간의 기본 장치 · mock.js 로 응답합니다.</p>
+          <p>⚠ 5060 · 5061 · 6000 · 6665~6669 포트는 브라우저가 막아서 쓸 수 없습니다.</p>
           <p>확인: 브라우저에서 <code>http://Pico IP/api/teams</code> → 공간 · 기본 장치 · 팀 모듈 오류</p>
         </div>
       </div>

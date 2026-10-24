@@ -140,6 +140,7 @@ npm run dev          # http://localhost:3001
    ```
 2. 각 공간 메뉴(⋮) → **Pico 연결 설정** → IP `127.0.0.1:5051`(공간 A), `127.0.0.1:5052`(공간 B) → **[Pico 2 W 연결 저장]**
 3. 공간을 바꿀 때마다 그 공간의 mock Pico 로 자동 연결되고, 그 공간의 `baseDevices` · `mock.js` 대로 응답합니다.
+   - 포트 5060 · 5061 · 6000 · 6665~6669 등은 브라우저가 막는 포트라 쓸 수 없습니다. (저장 시 거부)
 
 ### 방법 B: 실제 Raspberry Pi Pico 2 W (공간마다 1대)
 1. Pico 2 W 에 CircuitPython 9.x 설치 → `CIRCUITPY` 드라이브 확인 (예: `E:`)
@@ -179,7 +180,7 @@ npm run dev          # http://localhost:3001
 | `context/CONTEXT_3D_SCENE_GUIDE.md` | Scene.tsx 3D 장면 만들기 요령 |
 | `context/CONTEXT_CIRCUITPYTHON_MAP.md` | 핀맵, 확장 핀, Pico IP 정하기, 펌웨어 REST API |
 | `context/CONTEXT_SYSTEM_SPEC.md` | 플랫폼 내부 구조 (교사 · 유지보수용) |
-| `context/examples/smart_farm/` | 실제 동작 검증된 공간 꾸러미 예제 |
+| `context/examples/` | 실제 동작 검증된 공간 꾸러미 예제 4종: 스마트 팜(`smart_farm`) · 펫 급식기(`smart_pet_feeder`) · 주차장(`smart_parking`) · 화재 방재(`fire_safety`) |
 
 > 규격이나 예제를 고친 뒤에는 `npm run context:build` 로 마스터 컨텍스트를 다시 생성하세요.
 

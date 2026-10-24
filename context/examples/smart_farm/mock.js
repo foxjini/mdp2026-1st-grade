@@ -19,7 +19,10 @@ module.exports = {
   onCommand(action, value) {
     if (action === 'water') {
       pump = !!value;
-      return { pump_on: pump ? 1 : 0, soil_moisture: round1(soil) };
+      const out = { pump_on: pump ? 1 : 0, soil_moisture: round1(soil) };
+      // code.py 와 같이 관수 중에는 생장등을 초록으로 (기본 장치 값)
+      if (pump) out.rgb_color = '#10B981';
+      return out;
     }
   },
 };

@@ -1,0 +1,15 @@
+{
+  "name": "스마트 주차장",
+  "team": "예제 3팀",
+  "iconType": "factory",
+  "sensorsDesc": "주차칸 3개 · 차단기 · 만차 표시등",
+  "baseDevices": ["sg90", "rgb"],
+  "picoIp": "",
+  "customSensors": [
+    { "key": "slot_1", "name": "1번 칸 주차", "unit": "", "min": 0, "max": 1 },
+    { "key": "slot_2", "name": "2번 칸 주차", "unit": "", "min": 0, "max": 1 },
+    { "key": "slot_3", "name": "3번 칸 주차", "unit": "", "min": 0, "max": 1 },
+    { "key": "free_count", "name": "빈자리", "unit": "칸", "min": 0, "max": 3, "minWarning": 1 }
+  ],
+  "pins": ["GP13", "GP14", "GP15"]
+}

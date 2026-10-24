@@ -1,0 +1,13 @@
+{
+  "name": "스마트 펫 급식기",
+  "team": "예제 2팀",
+  "iconType": "home",
+  "sensorsDesc": "사료 무게 · 급식기 뚜껑 · 상태등",
+  "baseDevices": ["cds", "sg90", "rgb"],
+  "picoIp": "",
+  "customSensors": [
+    { "key": "food_weight", "name": "사료 무게", "unit": "g", "min": 0, "max": 500, "minWarning": 50 },
+    { "key": "feed_count", "name": "오늘 급식 횟수", "unit": "회", "min": 0, "max": 10 }
+  ],
+  "pins": ["GP27"]
+}

@@ -90,3 +90,5 @@ npm run mock:pico -- --room room_aaaa --port 5051   # 공간 A 의 Pico → 플�
 npm run mock:pico -- --room room_bbbb --port 5052   # 공간 B 의 Pico → 플랫폼 IP 127.0.0.1:5052
 ```
 `--room` 을 주면 그 공간의 `baseDevices` 와 `mock.js` 로 실제 Pico 와 같은 형식으로 응답합니다.
+
+> ⚠ 포트 5060 · 5061 · 6000 · 6665~6669 · 10080 등은 브라우저가 보안상 막는 포트라 쓸 수 없습니다. (mock 서버와 Pico 연결 설정 모두 거부) 5051, 5052, 5053 … 을 쓰세요.

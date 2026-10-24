@@ -1,0 +1,13 @@
+{
+  "name": "화재 방재 안전실",
+  "team": "예제 4팀",
+  "iconType": "shield",
+  "sensorsDesc": "온도 · 불꽃 감지 · 경보 부저",
+  "baseDevices": ["dht11", "rgb"],
+  "picoIp": "",
+  "customSensors": [
+    { "key": "flame", "name": "불꽃 감지", "unit": "", "min": 0, "max": 1, "maxWarning": 0 },
+    { "key": "alarm_on", "name": "경보 작동", "unit": "", "min": 0, "max": 1, "maxWarning": 0 }
+  ],
+  "pins": ["GP17", "GP16"]
+}

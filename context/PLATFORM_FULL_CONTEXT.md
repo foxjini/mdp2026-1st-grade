@@ -154,7 +154,20 @@ module.exports = {
 - `state = { t, base: { temperature, humidity, light, servoAngle, rgbColor, rgbState }, custom: { 현재 확장 센서 값 } }`
 - 반환값: `{ 확장센서key: 숫자 }` (`true`/`false` 는 1/0 으로 변환). 반환하지 않아도 됩니다.
 - **순수 JavaScript** (TypeScript 문법, `import`, `require`, `fetch`, `setTimeout` 금지). 파일 맨 위의 `let` 변수로 상태를 유지합니다.
-- 기본 4종 장치 값은 플랫폼이 만듭니다. mock.js 는 **확장 센서만** 만듭니다.
+- 기본 센서(DHT11 · Cds) 값은 플랫폼이 만듭니다. mock.js 는 **확장 센서**를 만듭니다.
+- code.py 가 `base.set_servo()` / `base.set_rgb()` 로 기본 액추에이터를 움직인다면, mock.js 도 **같은 동작**을 아래 key 로 돌려주세요. 그래야 시뮬레이션에서도 서보 · LED 가 움직입니다.
+
+| 반환 key | 뜻 | code.py 에서 같은 동작 |
+| :--- | :--- | :--- |
+| `servo_angle` | SG90 각도 (0~180) | `base.set_servo(angle)` |
+| `rgb_color` | RGB LED 색 (`"#RRGGBB"`) | `base.set_rgb(color, ...)` |
+| `rgb_state` | `"ON"` / `"OFF"` | `base.set_rgb(..., state)` |
+
+```js
+onCommand(action, value, state) {
+  if (action === 'gate') return { servo_angle: value ? 90 : 0 };   // code.py: base.set_servo(90 if value else 0)
+}
+```
 
 ---
 
@@ -221,10 +234,21 @@ def handle(base, action, value):
 | `핀 충돌` (… 이(가) 사용하는 핀입니다) | `baseDevices` 장치의 핀과 겹침 → room.json `pins` 와 code.py 핀을 빈 핀으로 변경 (또는 그 기본 장치를 `baseDevices` 에서 빼기) |
 | `Pico IP … 를 다른 공간도 사용합니다` | 공간마다 다른 Pico IP 를 지정 (Pico 연결 설정) |
 | `이 Pico 에는 SG90 이(가) 연결되어 있지 않습니다` | `baseDevices` 에 없는 장치를 제어함 → Scene.tsx/code.py 에서 빼거나 baseDevices 에 추가 |
+| 실물 Pico 에서는 서보가 움직이는데 시뮬레이션에서는 안 움직임 | mock.js 가 `servo_angle` (LED 는 `rgb_color`/`rgb_state`) 을 돌려주지 않음 → 4장 표 참고 |
+| `포트 … 는 브라우저가 보안상 막는 포트` | 5060 · 5061 · 6000 · 6665~6669 등은 쓸 수 없음 → 5051, 5052 처럼 다른 포트 사용 |
+
+## 8. 더 많은 완성 예제 (`context/examples/`)
+
+| 폴더 | 주제 | baseDevices | 확장 장치 | 볼 점 |
+| :--- | :--- | :--- | :--- | :--- |
+| `smart_farm/` | 스마트 팜 온실 | dht11, cds, sg90, rgb | 토양 수분(GP27), 펌프 릴레이(GP21) | 아래 전체 수록 |
+| `smart_pet_feeder/` | 스마트 펫 급식기 | cds, sg90, rgb | 사료 무게(GP27) | time.sleep 없이 3초 뒤 뚜껑 닫기 (read 에서 처리) |
+| `smart_parking/` | 스마트 주차장 | sg90, rgb | 적외선 센서 3개(GP13 · GP14 · **GP15**) | DHT11 을 안 써서 GP15 재사용 |
+| `fire_safety/` | 화재 방재 안전실 | dht11, rgb | 불꽃(GP17), 부저 PWM(**GP16**) | SG90 을 안 써서 GP16 재사용 |
 
 ---
 
-## 8. 완성 예제: 스마트 팜 온실 (4개 파일 전체, 실제 동작 검증됨)
+## 9. 완성 예제: 스마트 팜 온실 (4개 파일 전체, 실제 동작 검증됨)
 
 ### 예제: `room.json`
 ```json
@@ -398,7 +422,10 @@ module.exports = {
   onCommand(action, value) {
     if (action === 'water') {
       pump = !!value;
-      return { pump_on: pump ? 1 : 0, soil_moisture: round1(soil) };
+      const out = { pump_on: pump ? 1 : 0, soil_moisture: round1(soil) };
+      // code.py 와 같이 관수 중에는 생장등을 초록으로 (기본 장치 값)
+      if (pump) out.rgb_color = '#10B981';
+      return out;
     }
   },
 };
