@@ -5,31 +5,34 @@
 ## 0. 가장 중요한 원칙
 
 1. **플랫폼 원본(`src/`, `firmware/`)은 수정하지 않습니다.** 팀이 만드는 것은 아래 4개 파일뿐입니다.
-2. 전시회에는 **윈도우 PC 1대 + 모니터 + Pico 2 W 1세트**만 있습니다. 모든 팀이 같은 하드웨어를 공유합니다.
-3. 기본 4종 장치(DHT11 · Cds · SG90 · RGB LED)는 **모든 팀 공용**입니다. 팀 주제에 맞게 의미를 바꿔 씁니다. (예: SG90 = 급식기 뚜껑, RGB LED = 경고등)
-4. 추가 센서/액추에이터가 필요하면 **확장 센서(customSensors)** 와 **확장 핀(pins)** 으로 선언합니다.
+2. 전시회에는 **윈도우 PC 1대 + 모니터**가 있고, **공간(팀 주제)마다 Pico 2 W 가 1대씩** 있습니다. 주제마다 센서와 액추에이터가 다르기 때문입니다.
+3. Pico 마다 **IP 주소가 다릅니다.** 플랫폼에서 공간을 선택하면 그 공간의 Pico 로 자동 연결됩니다. (Pico 가 아직 없으면 시뮬레이션)
+4. 기본 4종 장치(DHT11 · Cds · SG90 · RGB LED) 중 **우리 팀 Pico 에 실제로 연결하는 것만** `baseDevices` 로 고릅니다. 고른 장치는 팀 주제에 맞게 의미를 바꿔 씁니다. (예: SG90 = 급식기 뚜껑, RGB LED = 경고등)
+5. 추가 센서/액추에이터가 필요하면 **확장 센서(customSensors)** 와 **확장 핀(pins)** 으로 선언합니다.
 
 | 파일 | 역할 | 실행 위치 |
 | :--- | :--- | :--- |
-| `room.json` | 공간 이름, 팀, 아이콘, 확장 센서, 확장 핀 | 플랫폼 서버 |
+| `room.json` | 공간 이름, 팀, 아이콘, 사용 기본 장치, 확장 센서, 확장 핀, Pico IP | 플랫폼 서버 |
 | `Scene.tsx` | 3D 공간 화면 (React Three Fiber) | 브라우저 (업로드 즉시 적용) |
 | `mock.js` | 하드웨어 없이 확장 센서 가짜 값 생성 | 브라우저 시뮬레이션 + `mock_pico_server.js` |
-| `code.py` | Pico 2 W 팀 모듈 (CircuitPython) | 통합 펌웨어 `teams/<공간ID>.py` |
+| `code.py` | Pico 2 W 팀 모듈 (CircuitPython) | 우리 팀 Pico 의 `teams/<공간ID>.py` |
 
 ---
 
-## 1. 공용 하드웨어 (기본 4종, 핀 변경 금지)
+## 1. 기본 장치 4종 (공간마다 골라서 사용, 핀 변경 금지)
 
-| 장치 | 핀 | Scene.tsx (SDK) | code.py (base 객체) |
+| 장치 (`baseDevices` 값) | 핀 | Scene.tsx (SDK) | code.py (base 객체) |
 | :--- | :--- | :--- | :--- |
-| DHT11 온습도 | GP15 | `useSensor('dht11_temp')` ℃, `useSensor('dht11_humi')` % | `base.temperature()`, `base.humidity()` (읽기 실패 시 `None`) |
-| Cds 조도 | GP26 (ADC0) | `useSensor('cds_light')` 0~65535 | `base.light()` |
-| SG90 서보 | GP16 | `useServo()` → `{ angle, setAngle }` (0~180°) | `base.servo_angle()`, `base.set_servo(angle)` |
-| RGB LED | GP18 / GP19 / GP20 | `useRgb()` → `{ color, on, setColor, setOn }` | `base.rgb()`, `base.set_rgb("#RRGGBB", "ON")` |
+| DHT11 온습도 (`dht11`) | GP15 | `useSensor('dht11_temp')` ℃, `useSensor('dht11_humi')` % | `base.temperature()`, `base.humidity()` (읽기 실패 시 `None`) |
+| Cds 조도 (`cds`) | GP26 (ADC0) | `useSensor('cds_light')` 0~65535 | `base.light()` |
+| SG90 서보 (`sg90`) | GP16 | `useServo()` → `{ angle, setAngle }` (0~180°) | `base.servo_angle()`, `base.set_servo(angle)` |
+| RGB LED (`rgb`) | GP18 / GP19 / GP20 | `useRgb()` → `{ color, on, setColor, setOn }` | `base.rgb()`, `base.set_rgb("#RRGGBB", "ON")` |
 
-**사용 금지 핀:** GP15, GP16, GP18, GP19, GP20, GP26 (기본 장치), GP23, GP24, GP25, GP29 (Pico 2 W 무선 모듈)
-**확장에 쓸 수 있는 핀 예:** GP0~GP14, GP17, GP21, GP22, GP27 (ADC1), GP28 (ADC2)
-다른 팀과 같은 핀을 쓰면 업로드 화면과 `npm run firmware:bundle` 에서 경고합니다.
+- `baseDevices` 에 **없는** 장치는 우리 Pico 에 연결되지 않습니다. Scene.tsx 에서 그 장치의 SDK 를 쓰지 말고, code.py 의 base 함수는 `None` 을 돌려주거나 아무 동작도 하지 않습니다. 연결 여부는 `base.has("sg90")` 로 확인합니다.
+- **사용 금지 핀:** `baseDevices` 에 넣은 장치의 핀 + GP23, GP24, GP25, GP29 (Pico 2 W 무선 모듈)
+  - 예: `baseDevices: ["sg90"]` 이면 GP16 만 예약 → GP15 · GP18~20 · GP26(ADC0) 은 확장 부품에 사용 가능
+- **확장에 쓸 수 있는 핀 예:** GP0~GP14, GP17, GP21, GP22, GP27 (ADC1), GP28 (ADC2)
+- Pico 가 팀마다 따로 있으므로 **다른 팀과 같은 핀을 써도 됩니다.** 대신 **Pico IP 는 공간마다 달라야** 하며, 겹치면 경고합니다.
 
 ---
 
@@ -41,6 +44,8 @@
   "team": "1학년 3반 2팀",
   "iconType": "home",
   "sensorsDesc": "사료 무게 · 급식기 뚜껑",
+  "baseDevices": ["cds", "sg90", "rgb"],
+  "picoIp": "192.168.0.52",
   "customSensors": [
     { "key": "food_weight", "name": "사료 무게", "unit": "g", "min": 0, "max": 500, "minWarning": 50 }
   ],
@@ -49,6 +54,8 @@
 ```
 
 - `iconType`: `home` | `farm` | `factory` | `sparkles` | `shield`
+- `baseDevices`: 우리 팀 Pico 에 연결하는 기본 장치 (`dht11` · `cds` · `sg90` · `rgb` 중 선택, 생략하면 이전 값 유지 / 처음이면 4종 전부)
+- `picoIp`: 우리 팀 Pico 의 IP (선택, 예: `192.168.0.52`). 비워 두면 기존 값을 유지합니다. 시뮬레이션/하드웨어 모드는 room.json 이 아니라 화면의 **Pico 연결 설정**에서 바꿉니다.
 - `customSensors[].key`: 영문 소문자로 시작, 소문자/숫자/`_` 만 (최대 32자). 이 key가 Scene.tsx · mock.js · code.py 에서 **똑같이** 쓰입니다.
 - `min`/`max`: 게이지 범위 (기본 0~100). `minWarning`/`maxWarning`: 경고 표시 기준 (선택)
 - 켜짐/꺼짐 같은 상태는 `0`/`1` 숫자 센서로 표현합니다. (예: `pump_on`)
@@ -168,10 +175,11 @@ def handle(base, action, value):
 ```
 
 - **CircuitPython 9.x** 문법 (MicroPython 전용 `machine` 모듈 금지)
-- Wi-Fi, HTTP 서버, 기본 4종 장치 초기화는 통합 펌웨어가 합니다. 팀 모듈에서 **`wifi`, `socketpool`, `adafruit_httpserver` 사용과 기본 핀(GP15/16/18/19/20/26) 재초기화 금지**
-- `while True` 무한 루프, `time.sleep()` 긴 대기 금지 (전체 서버가 멈춤)
+- Wi-Fi, HTTP 서버, `baseDevices` 기본 장치 초기화는 플랫폼 펌웨어(`code.py` + `config.py`)가 합니다. 팀 모듈에서 **`wifi`, `socketpool`, `adafruit_httpserver` 사용과 `baseDevices` 장치 핀 재초기화 금지** (`baseDevices` 에 없는 기본 핀은 사용 가능)
+- 기본 장치를 쓸 때는 연결 여부를 확인합니다: `if base.has("sg90"): base.set_servo(90)`
+- `while True` 무한 루프, `time.sleep()` 긴 대기 금지 (웹 서버가 멈춤)
 - 사용 가능한 라이브러리: `board`, `analogio`, `digitalio`, `pwmio`, `time`, `math`, `adafruit_motor` (그 외 라이브러리는 선생님과 상의)
-- 오류가 나도 해당 팀 모듈만 꺼지고 다른 팀은 계속 동작합니다. 오류 내용은 `http://<Pico IP>/api/teams` 에서 확인합니다.
+- 팀 모듈에서 오류가 나도 기본 장치와 웹 서버는 계속 동작합니다. 오류 내용은 `http://<우리 Pico IP>/api/teams` 에서 확인합니다.
 
 ---
 
@@ -181,9 +189,10 @@ def handle(base, action, value):
 [시뮬레이션 모드]  mock.js tick()  ─────────────▶  확장 센서 값  ─▶  Scene.tsx useCustomValue()
                   Scene.tsx sendCommand() ──▶  mock.js onCommand()
 
-[하드웨어 모드]    Pico teams/<id>.py read()  ─▶ GET /api/status { rooms: { <id>: {...} } } ─▶ Scene.tsx
+[하드웨어 모드]    공간 선택 → 그 공간의 picoIp 로 자동 연결 (공간마다 Pico 1대)
+                  우리 Pico teams/<id>.py read() ─▶ GET /api/status { rooms: { <id>: {...} } } ─▶ Scene.tsx
                   Scene.tsx sendCommand() ──▶ POST /api/command { room, action, value } ─▶ handle()
-                  (Pico 없이 연습: node firmware/mock_pico_server.js → IP 127.0.0.1:5050)
+                  (Pico 없이 연습: npm run mock:pico -- --room <공간ID> --port 5051 → IP 127.0.0.1:5051)
 ```
 
 ## 7. 자주 나는 오류
@@ -195,4 +204,6 @@ def handle(base, action, value):
 | `문법 오류 (Scene.tsx)` | 괄호/태그 짝 확인. 오류 줄 번호를 AI에게 전달 |
 | 확장 센서가 `수신 대기` | room.json key 와 mock.js / code.py 반환 key 가 다름 |
 | `mock.js에 onCommand가 없어…` | mock.js 에 `onCommand` 추가 |
-| `핀 충돌` | room.json `pins` 를 다른 빈 핀으로 변경하고 code.py 도 같이 수정 |
+| `핀 충돌` (… 이(가) 사용하는 핀입니다) | `baseDevices` 장치의 핀과 겹침 → room.json `pins` 와 code.py 핀을 빈 핀으로 변경 (또는 그 기본 장치를 `baseDevices` 에서 빼기) |
+| `Pico IP … 를 다른 공간도 사용합니다` | 공간마다 다른 Pico IP 를 지정 (Pico 연결 설정) |
+| `이 Pico 에는 SG90 이(가) 연결되어 있지 않습니다` | `baseDevices` 에 없는 장치를 제어함 → Scene.tsx/code.py 에서 빼거나 baseDevices 에 추가 |

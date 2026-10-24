@@ -1,63 +1,92 @@
-# CONTEXT_CIRCUITPYTHON_MAP: Pico 2 W 핀맵 & 통합 펌웨어 규격
+# CONTEXT_CIRCUITPYTHON_MAP: Pico 2 W 핀맵 & 공간별 펌웨어 규격
 
-> 팀 code.py 작성 규칙은 `CONTEXT_ROOM_PACKAGE_SPEC.md` 5장입니다. 이 문서는 하드웨어 결선과 통합 펌웨어 구조입니다.
+> 팀 code.py 작성 규칙은 `CONTEXT_ROOM_PACKAGE_SPEC.md` 5장입니다. 이 문서는 하드웨어 결선, IP 설정, 펌웨어 구조입니다.
 
-## 1. 공용 기본 장치 결선 (전시용 1세트, 변경 금지)
+## 0. 공간마다 Pico 2 W 1대
+- 주제마다 센서와 액추에이터가 다르므로 **공간(팀)마다 Pico 2 W 를 따로** 씁니다.
+- 각 Pico 는 **서로 다른 IP** 를 가져야 합니다. 플랫폼에서 공간을 선택하면 그 공간에 저장된 IP 로 자동 연결됩니다.
+- 기본 예제 공간(스마트 거실 · 팜 · 팩토리)도 각각 Pico 를 연결할 수 있습니다. (공간 메뉴 ⋮ → Pico 연결 설정)
 
-| 장치 | 부품 | 핀 | 신호 | 비고 |
+## 1. 기본 장치 결선 (연결하는 장치만, 핀 변경 금지)
+
+| 장치 (`baseDevices`) | 부품 | 핀 | 신호 | 필요한 lib |
 | :--- | :--- | :--- | :--- | :--- |
-| 온습도 센서 | DHT11 | `board.GP15` | Digital | `adafruit_dht.DHT11` |
-| 조도 센서 | Cds + 10kΩ | `board.GP26` (ADC0) | Analog | 0 ~ 65535 |
-| 서보 모터 | SG90 | `board.GP16` | PWM 50Hz | `adafruit_motor.servo`, 0 ~ 180° |
-| RGB LED | 공통 캐소드 | `GP18`(R) `GP19`(G) `GP20`(B) | PWM 1kHz | Hex 색상 → 듀티 |
+| 온습도 센서 (`dht11`) | DHT11 | `board.GP15` | Digital | `adafruit_dht.mpy` |
+| 조도 센서 (`cds`) | Cds + 10kΩ | `board.GP26` (ADC0) | Analog | - |
+| 서보 모터 (`sg90`) | SG90 | `board.GP16` | PWM 50Hz | `adafruit_motor/` |
+| RGB LED (`rgb`) | 공통 캐소드 | `GP18`(R) `GP19`(G) `GP20`(B) | PWM 1kHz | - |
 
-**사용 불가:** 위 핀 + `GP23`, `GP24`, `GP25`, `GP29` (Pico 2 W 무선 모듈 내부 사용)
+- room.json `baseDevices` 에 넣은 장치만 펌웨어가 초기화합니다. 넣지 않은 장치의 핀은 팀 확장 부품에 써도 됩니다.
+- **항상 사용 불가:** `GP23`, `GP24`, `GP25`, `GP29` (Pico 2 W 무선 모듈 내부 사용)
 
-## 2. 팀 확장 핀 배정 가이드
+## 2. 팀 확장 핀 가이드
 | 부품 종류 | 추천 핀 | CircuitPython |
 | :--- | :--- | :--- |
-| 아날로그 센서 (토양 수분, 수위, 가변저항) | `GP27` (ADC1), `GP28` (ADC2) | `analogio.AnalogIn` |
+| 아날로그 센서 (토양 수분, 수위, 가변저항) | `GP27` (ADC1), `GP28` (ADC2), (Cds 미사용 시) `GP26` (ADC0) | `analogio.AnalogIn` |
 | 디지털 입력 (PIR, 불꽃, 버튼, 초음파 Echo) | `GP13`, `GP14`, `GP17`, `GP22` | `digitalio.DigitalInOut` |
 | 디지털 출력 (릴레이, 버저, LED) | `GP21`, `GP0` ~ `GP12` | `digitalio.DigitalInOut` / `pwmio.PWMOut` |
 
-- 여러 팀이 하나의 Pico 를 공유하므로 **팀별로 핀을 미리 나눠 주는 것**을 권장합니다. (예: 1팀 GP27·GP21, 2팀 GP28·GP22 …)
-- 각 팀은 사용하는 핀을 room.json `pins` 에 적습니다. 업로드 창과 `npm run firmware:bundle` 이 겹침을 검사합니다.
-- ADC 입력이 2개(GP27, GP28)뿐이므로 아날로그 센서가 필요한 팀이 많으면 선생님이 조정합니다.
+- 사용하는 핀은 room.json `pins` 에 적습니다. `baseDevices` 장치의 핀과 겹치면 업로드 창과 `firmware:bundle` 이 경고합니다.
+- Pico 가 팀마다 따로 있으므로 다른 팀과 같은 핀 번호를 써도 됩니다.
 
-## 3. CIRCUITPY 드라이브 구성
+## 3. Pico IP 정하기 (공간마다 다르게)
+**방법 ① 고정 IP (권장)** — `settings.toml` 에 적으면 펌웨어가 `wifi.radio.set_ipv4_address()` 로 설정합니다.
+```toml
+CIRCUITPY_WIFI_SSID = "전시장 Wi-Fi"
+CIRCUITPY_WIFI_PASSWORD = "비밀번호"
+PICO_STATIC_IP = "192.168.0.51"   # 공간마다 다른 값 (플랫폼의 Pico IP 와 같게)
+PICO_NETMASK   = "255.255.255.0"  # 생략 가능
+PICO_GATEWAY   = "192.168.0.1"    # 생략 시 x.x.x.1
+# PICO_DNS     = "8.8.8.8"        # 선택
+```
+- 플랫폼 공간에 Pico IP 를 먼저 입력해 두면 `npm run firmware:bundle -- <공간ID> E:\` 가 `PICO_STATIC_IP` 를 자동으로 써 줍니다.
+- 고정 IP 는 공유기의 DHCP 범위 밖이면서 같은 대역(예: 192.168.0.x)이어야 합니다. 공유기 정보는 선생님께 확인하세요.
+
+**방법 ② 공유기 DHCP 예약** — `PICO_STATIC_IP` 를 비우고, 공유기 관리 화면에서 Pico 의 MAC 주소에 IP 를 예약합니다. 부팅 시 시리얼 창의 `Pico 2 W IP: …` 를 플랫폼 Pico 연결 설정에 입력합니다.
+
+## 4. CIRCUITPY 드라이브 구성 (공간 1개)
 ```
 CIRCUITPY/
-├── code.py           ← firmware/circuitpython/code.py (통합 펌웨어, 학생 수정 금지)
-├── settings.toml     ← Wi-Fi 정보
+├── code.py           ← firmware/circuitpython/code.py (플랫폼 펌웨어, 학생 수정 금지)
+├── config.py         ← ROOM_ID, BASE_DEVICES (firmware:bundle 이 room.json 으로 생성)
+├── settings.toml     ← Wi-Fi + PICO_STATIC_IP
 ├── teams/
-│   ├── room_xxxx.py  ← 팀 A 의 code.py
-│   └── room_yyyy.py  ← 팀 B 의 code.py
-└── lib/              ← adafruit_httpserver/, adafruit_motor/, adafruit_dht.mpy (+ 팀이 요청한 라이브러리)
+│   └── room_xxxx.py  ← 우리 팀 code.py (이 Pico 에는 이 공간 하나만)
+└── lib/              ← adafruit_httpserver/ (+ dht11 쓰면 adafruit_dht.mpy, sg90 쓰면 adafruit_motor/)
 ```
-`npm run firmware:bundle -- E:\` (E: = CIRCUITPY) 한 번으로 code.py 와 teams/ 가 채워집니다.
+```bash
+npm run firmware:bundle                       # 공간 목록 (공간 ID · IP · 기본 장치)
+npm run firmware:bundle -- room_xxxx E:\      # E: = 이 공간 Pico 의 CIRCUITPY 드라이브
+```
 
-## 4. 통합 펌웨어 REST API
+## 5. 펌웨어 REST API (모든 Pico 공통)
 
 ### `GET /api/status`
 ```json
 {
-  "status": "online",
-  "temperature": 24.5, "humidity": 45.0, "light_adc": 48200,
+  "status": "online", "room": "room_xxxx", "base_devices": ["sg90", "rgb"], "ip": "192.168.0.51",
   "servo_angle": 90, "rgb_color": "#FF5500", "rgb_state": "ON",
   "rooms": { "room_xxxx": { "soil_moisture": 41.2, "pump_on": 0 } },
   "custom": { "soil_moisture": 41.2, "pump_on": 0 },
   "team_errors": {}
 }
 ```
-대시보드는 현재 공간의 `rooms[공간ID]` 값을 확장 센서로 사용합니다.
+연결한 기본 장치의 값만 포함합니다. (`temperature`/`humidity` ← dht11, `light_adc` ← cds, `servo_angle` ← sg90, `rgb_color`/`rgb_state` ← rgb)
 
 ### `POST /api/servo` `{ "angle": 90 }` · `POST /api/rgb` `{ "color": "#00FF88", "state": "ON" }`
-기본 장치 제어 (기존과 동일)
+기본 장치 제어. 연결하지 않은 장치면 `{ "success": false, "error": "이 Pico 에는 … 연결되어 있지 않습니다" }`
 
 ### `POST /api/command` `{ "room": "room_xxxx", "action": "water", "value": true }`
-해당 팀 모듈의 `handle(base, action, value)` 실행 → `{ "success": true, "result": {...} }`
+팀 모듈의 `handle(base, action, value)` 실행 → `{ "success": true, "result": {...} }`
 
 ### `GET /api/teams`
-로드된 팀 모듈과 오류 목록 `{ "loaded": [...], "errors": { "room_xxxx": "..." } }` (전시 전 점검용)
+`{ "room": "room_xxxx", "base_devices": [...], "loaded": [...], "errors": {...} }` (전시 전 점검용)
 
 모든 응답에는 CORS 헤더(`Access-Control-Allow-Origin: *`)가 포함됩니다.
+
+## 6. Pico 없이 연습 (mock 서버)
+```bash
+npm run mock:pico -- --room room_aaaa --port 5051   # 공간 A 의 Pico → 플랫폼 IP 127.0.0.1:5051
+npm run mock:pico -- --room room_bbbb --port 5052   # 공간 B 의 Pico → 플랫폼 IP 127.0.0.1:5052
+```
+`--room` 을 주면 그 공간의 `baseDevices` 와 `mock.js` 로 실제 Pico 와 같은 형식으로 응답합니다.

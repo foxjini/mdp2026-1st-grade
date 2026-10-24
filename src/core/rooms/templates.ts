@@ -1,11 +1,13 @@
 // 새 공간용 빈 템플릿 4종 + AI 바이브 코딩 프롬프트 생성
-import { RoomMeta } from '../types/iot';
+import { BASE_DEVICE_INFO, RoomMeta } from '../types/iot';
 
 export function roomJsonTemplate(meta: RoomMeta): string {
-  const { createdAt, updatedAt, hasNotification, ...rest } = meta;
+  // mode 는 화면의 'Pico 연결 설정'에서만 바꾸므로 템플릿에서 제외
+  const { createdAt, updatedAt, hasNotification, mode, ...rest } = meta;
   void createdAt;
   void updatedAt;
   void hasNotification;
+  void mode;
   return JSON.stringify(
     {
       ...rest,
@@ -105,12 +107,14 @@ module.exports = {
 export function codePyTemplate(meta: RoomMeta): string {
   const key = meta.customSensors[0]?.key || 'my_sensor';
   const pin = meta.pins[0] || 'GP27';
+  const reserved = meta.baseDevices.flatMap((d) => BASE_DEVICE_INFO[d].pins);
   return `# code.py (팀 모듈) — "${meta.name}" / 팀: ${meta.team || '미정'}
-# 전시용 통합 펌웨어가 이 파일을 teams/${meta.id}.py 로 불러옵니다.
-# 기본 4종(DHT11·Cds·SG90·RGB LED)은 통합 펌웨어가 관리하므로 base 객체로만 사용하세요.
-#   base.temperature(), base.humidity(), base.light()       # 센서 읽기
-#   base.set_servo(angle), base.set_rgb("#RRGGBB", "ON")    # 액추에이터 제어
-# 규칙: 확장 핀은 room.json "pins"에 선언한 핀만 사용 (GP15/16/18/19/20/26 사용 금지)
+# 우리 팀 전용 Pico 2 W 의 펌웨어가 이 파일을 teams/${meta.id}.py 로 불러옵니다.
+# 이 Pico 에 연결한 기본 장치: ${meta.baseDevices.join(', ') || '없음'} → 펌웨어가 관리하므로 base 객체로만 사용하세요.
+#   base.temperature(), base.humidity(), base.light()       # 센서 읽기 (연결 안 된 장치는 None)
+#   base.set_servo(angle), base.set_rgb("#RRGGBB", "ON")    # 액추에이터 제어 (연결 안 된 장치는 무시)
+#   base.has("sg90")                                        # 기본 장치 연결 여부
+# 규칙: 확장 핀은 room.json "pins"에 선언한 핀만 사용${reserved.length ? ` (${reserved.join('/')} 사용 금지)` : ''}
 import board
 import analogio
 
@@ -133,7 +137,8 @@ def read(base):
 def handle(base, action, value):
     """3D 화면의 sendCommand(action, value) → POST /api/command 처리"""
     if action == "toggle":
-        base.set_servo(90 if base.servo_angle() < 90 else 0)
+        if base.has("sg90"):
+            base.set_servo(90 if base.servo_angle() < 90 else 0)
         return {"ok": True}
     return {"ok": False, "error": "unknown action: " + str(action)}
 `;
@@ -151,6 +156,13 @@ export function buildVibePrompt(meta: RoomMeta, platformContext: string, idea: s
 - 공간 이름: ${meta.name}
 - 팀: ${meta.team || '미정'}
 - 설명: ${meta.sensorsDesc}
+- 우리 팀 Pico 2 W: ${meta.picoIp || 'IP 미지정'} (공간마다 Pico 1대)
+- 연결한 기본 장치(baseDevices): ${
+    meta.baseDevices.length
+      ? meta.baseDevices.map((d) => `${d}(${BASE_DEVICE_INFO[d].name} ${BASE_DEVICE_INFO[d].pins.join('/')})`).join(', ')
+      : '없음'
+  }
+  → 목록에 없는 기본 장치는 Scene.tsx / code.py 에서 사용하지 말고, 그 핀은 확장 부품에 써도 됩니다.
 - 확장 센서(customSensors):
 ${sensors}
 - 확장 핀(pins): ${meta.pins.length ? meta.pins.join(', ') : '없음'}
@@ -160,7 +172,7 @@ ${idea.trim() || '(여기에 프로젝트 주제와 3D 공간에서 보여주고
 
 [요청]
 위 [플랫폼 컨텍스트]의 "공간 꾸러미 규격"을 지켜서 아래 4개 파일을 각각 완성된 코드 블록으로 작성해 주세요.
-1. room.json  (id는 "${meta.id}" 그대로 유지)
+1. room.json  (id는 "${meta.id}" 그대로, baseDevices 는 실제로 연결할 기본 장치만)
 2. Scene.tsx  (허용 모듈만 import, export default 컴포넌트)
 3. mock.js    (module.exports = { tick, onCommand })
 4. code.py    (팀 모듈: setup(base) / read(base) / handle(base, action, value))

@@ -1,5 +1,5 @@
 # code.py (팀 모듈) — 스마트 팜 온실 (예제 꾸러미)
-# 통합 펌웨어가 teams/example_smart_farm.py 로 불러옵니다.
+# 이 팀 전용 Pico 2 W 의 펌웨어가 teams/<공간ID>.py 로 불러옵니다. (npm run firmware:bundle)
 # 확장 장치: 토양 수분 센서(GP27/ADC1), 관수 펌프 릴레이(GP21)
 # 기본 장치(SG90 환기 돔, RGB 생장등)는 base 객체로만 제어합니다.
 import board

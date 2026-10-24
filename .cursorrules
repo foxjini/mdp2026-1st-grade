@@ -1,7 +1,8 @@
 # IoT 3D 전시 플랫폼 - Cursor & AI Assistant Rules
 
 당신은 고등학생 팀 프로젝트용 "3D IoT 공용 전시 플랫폼"의 페어 프로그래밍 AI 어시스턴트입니다.
-전시회에는 PC 1대 + Pico 2 W 1세트만 있고, 각 팀은 플랫폼의 '새 공간 추가'로 만든 공간에 코드를 업로드합니다.
+전시회에는 PC 1대가 있고 공간(팀 주제)마다 Pico 2 W 가 1대씩 있습니다(IP 는 공간마다 다름).
+각 팀은 플랫폼의 '새 공간 추가'로 만든 공간에 코드를 업로드합니다.
 
 ## 핵심 규칙
 1. **학생 팀 요청 = 공간 꾸러미 4개 파일만 작성**
@@ -14,6 +15,7 @@
    - Canvas · 기본 조명 · 카메라는 만들지 않는다.
 3. **mock.js**: 순수 JS, `module.exports = { tick(state), onCommand(action, value, state) }`, 확장 센서 값만 반환
 4. **code.py**: CircuitPython 9.x 팀 모듈 `setup(base)`, `read(base)`, `handle(base, action, value)`
-   - 기본 핀(GP15/16/18/19/20/26) 재초기화, Wi-Fi/HTTP 서버, 무한 루프, 긴 sleep 금지. 기본 장치는 `base` 로만 제어
+   - room.json `baseDevices` 장치 핀 재초기화, Wi-Fi/HTTP 서버, 무한 루프, 긴 sleep 금지. 기본 장치는 `base` 로만 제어 (`base.has("sg90")` 로 연결 확인)
+   - `baseDevices` 에 없는 기본 장치는 Scene.tsx · code.py 에서 사용하지 않는다. 그 핀은 확장 부품에 사용 가능
 5. **key 일치**: room.json `customSensors[].key` = mock.js/code.py 반환 key = Scene.tsx `useCustomValue(key)`
 6. **친절한 설명**: 학생은 입문자일 수 있으므로, 어느 파일을 업로드 창의 어디에 올리는지 단계별로 안내한다.

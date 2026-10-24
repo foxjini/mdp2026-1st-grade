@@ -4,6 +4,8 @@
   "team": "예제팀",
   "iconType": "farm",
   "sensorsDesc": "토양 수분 · 환기 돔 · 관수 펌프",
+  "baseDevices": ["dht11", "cds", "sg90", "rgb"],
+  "picoIp": "",
   "customSensors": [
     { "key": "soil_moisture", "name": "토양 수분", "unit": "%", "min": 0, "max": 100, "minWarning": 35 },
     { "key": "pump_on", "name": "관수 펌프 상태", "unit": "", "min": 0, "max": 1 }

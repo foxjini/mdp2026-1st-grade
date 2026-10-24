@@ -98,7 +98,7 @@ export class CircuitPythonAdapter implements IIoTAdapter {
         store.confirmRgbAck(data.rgb_color, data.rgb_state);
       }
 
-      // 팀 확장 센서: 통합 펌웨어는 { rooms: { 공간ID: {...} }, custom: {...전체 병합} } 를 반환
+      // 팀 확장 센서: Pico 펌웨어는 { rooms: { 공간ID: {...} }, custom: {...전체 병합} } 를 반환
       const roomId = useIoTStore.getState().activeRoomPackage?.meta.id;
       const customValues =
         roomId && data.rooms && typeof data.rooms[roomId] === 'object' ? data.rooms[roomId] : data.custom;
