@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { NavRail } from '@/components/ui/NavRail';
 import { RoomsSidebar, RoomItem } from '@/components/ui/RoomsSidebar';
@@ -13,9 +13,12 @@ import { PicoIpModal } from '@/components/ui/PicoIpModal';
 import { DeviceManageModal } from '@/components/ui/DeviceManageModal';
 import { ScheduleModal } from '@/components/ui/ScheduleModal';
 import { AddRoomModal } from '@/components/ui/AddRoomModal';
+import { RoomCodeModal } from '@/components/ui/RoomCodeModal';
 import { ReviewModal } from '@/components/ui/ReviewModal';
 import { ExhibitionOverlay } from '@/components/ui/ExhibitionOverlay';
 import { useIoTStore } from '@/core/store/useIoTStore';
+import { RoomPackage } from '@/core/types/iot';
+import { BUILTIN_ROOMS, metaToRoomItem, roomsApi } from '@/core/rooms/roomsApi';
 import { Loader2, ArrowLeft, SlidersHorizontal, Calendar, Eye } from 'lucide-react';
 
 // R3F 3D Canvas는 브라우저 전용이므로 SSR 완전 해제
@@ -34,54 +37,10 @@ const SceneCanvas = dynamic(
   }
 );
 
-const INITIAL_ROOMS: RoomItem[] = [
-  {
-    id: 'marketing',
-    name: '스마트 거실 허브',
-    sensorsDesc: '센서 3종 · 액추에이터 2종',
-    iconType: 'home',
-    iconBg: 'bg-amber-100',
-    iconColor: 'text-amber-700',
-  },
-  {
-    id: 'new_project',
-    name: '스마트 팜 온실',
-    sensorsDesc: '온습도 & 토양 제어',
-    iconType: 'farm',
-    iconBg: 'bg-emerald-100',
-    iconColor: 'text-emerald-700',
-  },
-  {
-    id: 'dev_qa',
-    name: '스마트 팩토리 공정',
-    sensorsDesc: '모터 및 컨베이어 감지',
-    iconType: 'factory',
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-700',
-  },
-  {
-    id: 'product_design',
-    name: '조명 & 환경 허브',
-    sensorsDesc: 'RGB LED · 조도 연동',
-    iconType: 'sparkles',
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-700',
-    hasNotification: true,
-  },
-  {
-    id: 'ops_admin',
-    name: '출입 & 도어 보안',
-    sensorsDesc: 'SG90 서보 · 도어락',
-    iconType: 'shield',
-    iconBg: 'bg-rose-100',
-    iconColor: 'text-rose-700',
-    hasNotification: true,
-  },
-];
 
 export default function HomePage() {
-  const [activeRoomId, setActiveRoomId] = useState('marketing');
-  const [roomList, setRoomList] = useState<RoomItem[]>(INITIAL_ROOMS);
+  const [activeRoomId, setActiveRoomId] = useState('builtin_home');
+  const [roomList, setRoomList] = useState<RoomItem[]>(BUILTIN_ROOMS);
   const [activeNavTab, setActiveNavTab] = useState('space');
   const [activeCenterTab, setActiveCenterTab] = useState<'inspector' | 'output' | 'thread'>('inspector');
 
@@ -95,12 +54,15 @@ export default function HomePage() {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
 
   const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved'>('pending');
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
   const setServoAngle = useIoTStore((s) => s.setServoAngle);
   const addLog = useIoTStore((s) => s.addLog);
+  const activeRoomPackage = useIoTStore((s) => s.activeRoomPackage);
+  const setActiveRoomPackage = useIoTStore((s) => s.setActiveRoomPackage);
 
   const currentRoom = roomList.find((r) => r.id === activeRoomId) || roomList[0];
 
@@ -118,12 +80,59 @@ export default function HomePage() {
     }, 4000);
   };
 
-  const handleAddRoom = (newRoom: RoomItem) => {
-    setRoomList((prev) => [...prev, newRoom]);
-    setActiveRoomId(newRoom.id);
-    showToast(`새 공간 "${newRoom.name}"이(가) 등록되었습니다.`);
-    addLog('info', `새 모니터링 공간 등록: ${newRoom.name}`, 'USER');
+  // 전시 PC(rooms-data/)에 저장된 팀 공간 목록 불러오기
+  const refreshRooms = useCallback(async () => {
+    try {
+      const metas = await roomsApi.list();
+      setRoomList([...BUILTIN_ROOMS, ...metas.map(metaToRoomItem)]);
+    } catch (err) {
+      addLog('warn', `팀 공간 목록을 불러오지 못했습니다: ${err instanceof Error ? err.message : err}`, 'SYSTEM');
+    }
+  }, [addLog]);
+
+  useEffect(() => {
+    refreshRooms();
+  }, [refreshRooms]);
+
+  // 업로드 공간을 선택하면 꾸러미(Scene.tsx · mock.js 등)를 불러와 스토어에 적용
+  useEffect(() => {
+    if (activeRoomId.startsWith('builtin_')) {
+      setActiveRoomPackage(null);
+      return;
+    }
+    let cancelled = false;
+    roomsApi
+      .get(activeRoomId)
+      .then((pkg) => !cancelled && setActiveRoomPackage(pkg))
+      .catch((err) => {
+        if (cancelled) return;
+        setActiveRoomPackage(null);
+        addLog('error', `공간 코드를 불러오지 못했습니다: ${err instanceof Error ? err.message : err}`, 'SYSTEM');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRoomId, setActiveRoomPackage, addLog]);
+
+  const applyPackage = (pkg: RoomPackage) => {
+    setRoomList((prev) => {
+      const item = metaToRoomItem(pkg.meta);
+      return prev.some((r) => r.id === item.id) ? prev.map((r) => (r.id === item.id ? item : r)) : [...prev, item];
+    });
+    if (pkg.meta.id === activeRoomId) setActiveRoomPackage(pkg);
   };
+
+  const handleRoomCreated = (pkg: RoomPackage) => {
+    applyPackage(pkg);
+    setActiveRoomId(pkg.meta.id);
+    setActiveRoomPackage(pkg);
+    setShowAddRoomModal(false);
+    setShowCodeModal(true);
+    showToast(`새 공간 "${pkg.meta.name}"이(가) 만들어졌습니다. 이제 코드를 업로드하세요.`);
+    addLog('info', `새 팀 공간 등록: ${pkg.meta.name} (${pkg.meta.team || '팀 미정'})`, 'USER');
+  };
+
+  const findRoom = (roomId: string) => roomList.find((r) => r.id === roomId);
 
   // 좌측 NavRail 탭 전환 및 3D 가상 공간 뷰 포커스 핸들러
   const handleNavTabChange = (tab: string) => {
@@ -157,6 +166,10 @@ export default function HomePage() {
 
   // 공간 3-dot 더보기 메뉴 액션 핸들러들
   const handleToggleNotification = (roomId: string) => {
+    const target = findRoom(roomId);
+    if (target?.source === 'uploaded') {
+      roomsApi.patch(roomId, { hasNotification: !target.hasNotification }).then(applyPackage).catch(() => {});
+    }
     setRoomList((prev) =>
       prev.map((r) => {
         if (r.id === roomId) {
@@ -172,6 +185,12 @@ export default function HomePage() {
   const handleRenameRoom = (roomId: string, newName: string) => {
     const trimmed = newName.trim();
     if (!trimmed) return;
+    if (findRoom(roomId)?.source === 'uploaded') {
+      roomsApi
+        .patch(roomId, { name: trimmed })
+        .then(applyPackage)
+        .catch((err) => showToast(`이름 변경 실패: ${err.message}`));
+    }
     setRoomList((prev) =>
       prev.map((r) => (r.id === roomId ? { ...r, name: trimmed } : r))
     );
@@ -179,34 +198,39 @@ export default function HomePage() {
     addLog('info', `공간 이름 변경: ${trimmed}`, 'USER');
   };
 
-  const handleDuplicateRoom = (roomId: string) => {
-    const target = roomList.find((r) => r.id === roomId);
-    if (!target) return;
-    const newId = `${target.id}_copy_${Date.now()}`;
-    const newRoom: RoomItem = {
-      ...target,
-      id: newId,
-      name: `${target.name} (사본)`,
-    };
-    setRoomList((prev) => [...prev, newRoom]);
-    setActiveRoomId(newId);
-    showToast(`"${target.name}" 공간이 복제되었습니다.`);
-    addLog('info', `새 모니터링 공간 복제: ${newRoom.name}`, 'USER');
-  };
-
-  const handleDeleteRoom = (roomId: string) => {
-    if (roomList.length <= 1) {
-      showToast('최소 1개의 모니터링 공간이 유지되어야 합니다.');
+  const handleDuplicateRoom = async (roomId: string) => {
+    const target = findRoom(roomId);
+    if (!target || target.source !== 'uploaded') {
+      showToast('기본 예제 공간은 복제할 수 없습니다. "새 공간 추가"를 사용하세요.');
       return;
     }
-    const target = roomList.find((r) => r.id === roomId);
-    const remaining = roomList.filter((r) => r.id !== roomId);
-    setRoomList(remaining);
-    if (activeRoomId === roomId) {
-      setActiveRoomId(remaining[0].id);
+    try {
+      const pkg = await roomsApi.duplicate(roomId);
+      applyPackage(pkg);
+      setActiveRoomId(pkg.meta.id);
+      showToast(`"${target.name}" 공간이 복제되었습니다.`);
+      addLog('info', `팀 공간 복제: ${pkg.meta.name}`, 'USER');
+    } catch (err) {
+      showToast(`복제 실패: ${err instanceof Error ? err.message : err}`);
     }
-    showToast(`"${target?.name || '공간'}"이(가) 삭제되었습니다.`);
-    addLog('info', `공간 삭제: ${target?.name}`, 'USER');
+  };
+
+  const handleDeleteRoom = async (roomId: string) => {
+    const target = findRoom(roomId);
+    if (!target || target.source !== 'uploaded') {
+      showToast('기본 예제 공간은 삭제할 수 없습니다.');
+      return;
+    }
+    if (!window.confirm(`"${target.name}" 공간과 업로드된 코드를 모두 삭제할까요?`)) return;
+    try {
+      await roomsApi.remove(roomId);
+      setRoomList((prev) => prev.filter((r) => r.id !== roomId));
+      if (activeRoomId === roomId) setActiveRoomId(BUILTIN_ROOMS[0].id);
+      showToast(`"${target.name}"이(가) 삭제되었습니다.`);
+      addLog('info', `공간 삭제: ${target.name}`, 'USER');
+    } catch (err) {
+      showToast(`삭제 실패: ${err instanceof Error ? err.message : err}`);
+    }
   };
 
   return (
@@ -236,6 +260,7 @@ export default function HomePage() {
         onRenameRoom={handleRenameRoom}
         onDuplicateRoom={handleDuplicateRoom}
         onDeleteRoom={handleDeleteRoom}
+        onOpenCodeModal={() => setShowCodeModal(true)}
       />
 
       {/* 3. 중앙 3D 가상 공간 워크스페이스 */}
@@ -252,6 +277,7 @@ export default function HomePage() {
         <div className="flex-1 relative w-full h-full overflow-hidden">
           <SceneCanvas
             roomId={activeRoomId}
+            roomPackage={activeRoomPackage}
             approvalStatus={approvalStatus}
             onApprove={handleApproveProposal}
             onReview={() => setShowReviewModal(true)}
@@ -262,7 +288,8 @@ export default function HomePage() {
               showDeviceManageModal ||
               showScheduleModal ||
               showAddRoomModal ||
-              showReviewModal
+              showReviewModal ||
+              showCodeModal
             }
           />
 
@@ -337,6 +364,8 @@ export default function HomePage() {
         isOpen={showDeviceManageModal}
         onClose={() => setShowDeviceManageModal(false)}
         onFeedbackMessage={showToast}
+        onOpenCodeModal={() => setShowCodeModal(true)}
+        onOpenAddRoomModal={() => setShowAddRoomModal(true)}
       />
 
       <ScheduleModal
@@ -347,7 +376,15 @@ export default function HomePage() {
       <AddRoomModal
         isOpen={showAddRoomModal}
         onClose={() => setShowAddRoomModal(false)}
-        onAddRoom={handleAddRoom}
+        onCreated={handleRoomCreated}
+      />
+
+      <RoomCodeModal
+        isOpen={showCodeModal}
+        onClose={() => setShowCodeModal(false)}
+        pkg={activeRoomPackage}
+        onPackageChange={applyPackage}
+        onFeedbackMessage={showToast}
       />
 
       <ReviewModal

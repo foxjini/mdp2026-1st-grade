@@ -1,47 +1,49 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Home, Sprout, Factory, Sparkles, ShieldCheck } from 'lucide-react';
-import { RoomItem } from './RoomsSidebar';
+import { X, Plus, Home, Sprout, Factory, Sparkles, ShieldCheck, Loader2 } from 'lucide-react';
+import { RoomIconType, RoomPackage } from '@/core/types/iot';
+import { roomsApi } from '@/core/rooms/roomsApi';
 
 interface AddRoomModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddRoom: (room: RoomItem) => void;
+  // 1단계(공간 생성) 완료 → 부모가 2단계(코드 업로드 모달)를 엽니다.
+  onCreated: (pkg: RoomPackage) => void;
 }
 
-export function AddRoomModal({ isOpen, onClose, onAddRoom }: AddRoomModalProps) {
+export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) {
   const [name, setName] = useState('');
+  const [team, setTeam] = useState('');
   const [sensorsDesc, setSensorsDesc] = useState('');
-  const [iconType, setIconType] = useState<RoomItem['iconType']>('home');
+  const [iconType, setIconType] = useState<RoomIconType>('sparkles');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || submitting) return;
 
-    const colors: Record<RoomItem['iconType'], { bg: string; color: string }> = {
-      home: { bg: 'bg-amber-100', color: 'text-amber-700' },
-      farm: { bg: 'bg-emerald-100', color: 'text-emerald-700' },
-      factory: { bg: 'bg-blue-100', color: 'text-blue-700' },
-      sparkles: { bg: 'bg-purple-100', color: 'text-purple-700' },
-      shield: { bg: 'bg-rose-100', color: 'text-rose-700' },
-    };
-
-    const newRoom: RoomItem = {
-      id: `room_${Date.now()}`,
-      name: name.trim(),
-      sensorsDesc: sensorsDesc.trim() || '신규 모니터링 센서 노드',
-      iconType,
-      iconBg: colors[iconType].bg,
-      iconColor: colors[iconType].color,
-    };
-
-    onAddRoom(newRoom);
-    setName('');
-    setSensorsDesc('');
-    onClose();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const pkg = await roomsApi.create({
+        name: name.trim(),
+        team: team.trim(),
+        sensorsDesc: sensorsDesc.trim() || '팀 프로젝트 공간',
+        iconType,
+      });
+      setName('');
+      setTeam('');
+      setSensorsDesc('');
+      onCreated(pkg);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : '공간 생성 실패');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -55,10 +57,10 @@ export function AddRoomModal({ isOpen, onClose, onAddRoom }: AddRoomModalProps) 
             </div>
             <div>
               <h3 className="text-base font-extrabold text-slate-900">
-                새 모니터링 공간 추가
+                새 공간 추가 <span className="text-blue-600">(1/2 공간 정보)</span>
               </h3>
               <p className="text-xs text-slate-400 font-medium">
-                프로젝트 주제에 맞춘 커스텀 공간을 사이드바에 등록합니다.
+                팀 프로젝트 공간을 만든 뒤, 바이브 코딩으로 만든 코드를 업로드합니다.
               </p>
             </div>
           </div>
@@ -80,6 +82,19 @@ export function AddRoomModal({ isOpen, onClose, onAddRoom }: AddRoomModalProps) 
               onChange={(e) => setName(e.target.value)}
               placeholder="예: 스마트 펫룸, 베란다 수경재배 온실"
               required
+              maxLength={40}
+              className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-700">팀 이름</label>
+            <input
+              type="text"
+              value={team}
+              onChange={(e) => setTeam(e.target.value)}
+              placeholder="예: 1학년 3반 2팀"
+              maxLength={40}
               className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
@@ -91,6 +106,7 @@ export function AddRoomModal({ isOpen, onClose, onAddRoom }: AddRoomModalProps) 
               value={sensorsDesc}
               onChange={(e) => setSensorsDesc(e.target.value)}
               placeholder="예: 온습도 센서 · 급식기 서보모터"
+              maxLength={60}
               className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
             />
           </div>
@@ -122,6 +138,12 @@ export function AddRoomModal({ isOpen, onClose, onAddRoom }: AddRoomModalProps) 
             </div>
           </div>
 
+          {error && (
+            <p className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+              {error}
+            </p>
+          )}
+
           {/* 하단 버튼 */}
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
             <button
@@ -133,9 +155,11 @@ export function AddRoomModal({ isOpen, onClose, onAddRoom }: AddRoomModalProps) 
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
+              disabled={submitting}
+              className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20 flex items-center gap-1.5"
             >
-              공간 생성 및 추가
+              {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              공간 생성 후 코드 업로드 →
             </button>
           </div>
         </form>

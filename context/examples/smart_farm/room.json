@@ -1,0 +1,12 @@
+{
+  "id": "example_smart_farm",
+  "name": "스마트 팜 온실 (예제 꾸러미)",
+  "team": "예제팀",
+  "iconType": "farm",
+  "sensorsDesc": "토양 수분 · 환기 돔 · 관수 펌프",
+  "customSensors": [
+    { "key": "soil_moisture", "name": "토양 수분", "unit": "%", "min": 0, "max": 100, "minWarning": 35 },
+    { "key": "pump_on", "name": "관수 펌프 상태", "unit": "", "min": 0, "max": 1 }
+  ],
+  "pins": ["GP27", "GP21"]
+}

@@ -29,3 +29,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 전시 PC에 업로드된 팀 공간 꾸러미 (rooms-data/<roomId>/)
+/rooms-data/
+# firmware:bundle 출력
+/firmware/dist/
+__pycache__/

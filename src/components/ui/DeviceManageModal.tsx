@@ -24,6 +24,8 @@ interface DeviceManageModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFeedbackMessage?: (msg: string) => void;
+  onOpenCodeModal?: () => void;
+  onOpenAddRoomModal?: () => void;
 }
 
 interface PresetItem {
@@ -100,8 +102,16 @@ const PRESETS: PresetItem[] = [
   },
 ];
 
-export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: DeviceManageModalProps) {
+export function DeviceManageModal({
+  isOpen,
+  onClose,
+  onFeedbackMessage,
+  onOpenCodeModal = () => {},
+  onOpenAddRoomModal = () => {},
+}: DeviceManageModalProps) {
   const mode = useIoTStore((s) => s.mode);
+  const roomPackage = useIoTStore((s) => s.activeRoomPackage);
+  const customSensors = useIoTStore((s) => s.customSensors);
   const picoIp = useIoTStore((s) => s.picoIpAddress);
   const addLog = useIoTStore((s) => s.addLog);
 
@@ -117,7 +127,6 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
   const [actuatorRole, setActuatorRole] = useState('토양 수분 35% 미만 시 5초간 펌프 가동 (급수 시작)');
 
   const [isCopied, setIsCopied] = useState(false);
-  const [isSimulated, setIsSimulated] = useState(false);
 
   if (!isOpen) return null;
 
@@ -165,28 +174,27 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
     setActuatorName(p.actuatorName);
     setActuatorPin(p.actuatorPin);
     setActuatorRole(p.actuatorRole);
-    setIsSimulated(false);
   };
 
-  const generatedPrompt = `[스마트홈 3D IoT 대시보드 하드웨어 핀맵 & 대시보드 변경 요청]
-저희 팀의 프로젝트 과제 주제는 "${projectName}"입니다.
-기존 레퍼런스 하드웨어 구성을 아래의 신규 장치로 교체/추가해주세요:
+  const generatedPrompt = `[공간 꾸러미 바이브 코딩 요청]
+저희 팀의 프로젝트 주제는 "${projectName}"입니다.${roomPackage ? `\n공간 ID: ${roomPackage.meta.id} (공간 이름: ${roomPackage.meta.name})` : ''}
+전시용 공용 하드웨어(기본 4종: DHT11 GP15 · Cds GP26 · SG90 GP16 · RGB LED GP18/19/20)에 아래 장치를 확장합니다.
+(기본 4종 핀을 적으면 새 부품이 아니라 기본 장치를 우리 주제에 맞게 재해석해서 사용합니다.)
 
-1. 신규 센서: ${sensorName}
+1. 확장 센서: ${sensorName}
    - 연결 핀: ${sensorPin}
-   - 측정 단위 및 용도: ${sensorUnit} (실시간 텔레메트리 연동)
+   - 단위: ${sensorUnit} → room.json customSensors 에 key/name/unit 으로 등록
 
-2. 신규 액추에이터: ${actuatorName}
+2. 확장 액추에이터: ${actuatorName}
    - 연결 핀: ${actuatorPin}
-   - 동작 기능: ${actuatorRole}
+   - 동작: ${actuatorRole} → Scene.tsx 에서 sendCommand(action, value) 로 호출
 
 [AI 코딩 지침 (Context Engineering 규칙 준수)]
-다음 순서에 따라 코드를 수정하고 연동해주세요:
-1. \`context/CONTEXT_CIRCUITPYTHON_MAP.md\` 및 \`firmware/pico2w/code.py\`: 위 핀맵에 맞는 CircuitPython 핀 및 REST 핸들러 추가
-2. \`src/core/types/iot.ts\`: 센서/액추에이터 인터페이스에 신규 필드 정의
-3. \`src/core/adapter/MockIoTAdapter.ts\`: 시뮬레이션용 데이터 발생기 및 액추에이터 핸들러 추가
-4. \`src/components/3d/\`: 3D 가상 공간에 해당 장치 3D 오브젝트 배치
-5. \`src/components/ui/InspectorPanel.tsx\` 및 \`SensorOutputPanel.tsx\`: 센서 게이지와 제어 스위치 위젯 추가`;
+플랫폼 원본(src/, firmware/)은 절대 수정하지 말고, context/CONTEXT_ROOM_PACKAGE_SPEC.md 규격의 4개 파일만 작성해 주세요.
+1. room.json  : customSensors(확장 센서), pins(확장 핀: 기본 4종 핀 제외)
+2. Scene.tsx  : 허용 모듈만 import, '@/core/sdk' 의 useSensor/useCustomValue/useServo/useRgb/sendCommand 사용
+3. mock.js    : module.exports = { tick(state), onCommand(action, value, state) }
+4. code.py    : 팀 모듈 setup(base) / read(base) / handle(base, action, value)`;
 
   const handleCopyPrompt = async () => {
     try {
@@ -210,16 +218,11 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
     }
   };
 
-  const handleSimulateApply = () => {
-    setIsSimulated(true);
-    addLog(
-      'info',
-      `[바이브 코딩 시뮬레이션] "${projectName}" 장치 구성 반영: ${sensorName}(${sensorPin}), ${actuatorName}(${actuatorPin})`,
-      'USER'
-    );
-    if (onFeedbackMessage) {
-      onFeedbackMessage(`"${projectName}" 핀맵이 대시보드 시뮬레이션에 반영되었습니다!`);
-    }
+  const handleOpenUpload = () => {
+    addLog('info', `[바이브 코딩] "${projectName}" 장치 구성으로 코드 업로드 시작`, 'USER');
+    onClose();
+    if (roomPackage) onOpenCodeModal();
+    else onOpenAddRoomModal();
   };
 
   return (
@@ -284,6 +287,7 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
         {activeTab === 'current' && (
           <div className="flex flex-col gap-3.5 overflow-y-auto pr-1">
             <div className="flex flex-col gap-2">
+              <span className="text-[11px] font-bold text-slate-400 tracking-wider">공용 기본 장치 (모든 팀 공유)</span>
               {referenceDevices.map((dev) => (
                 <div
                   key={dev.id}
@@ -309,6 +313,46 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
               ))}
             </div>
 
+            {/* 현재 팀 공간의 확장 장치 (room.json) */}
+            {roomPackage && (
+              <div className="flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-slate-400 tracking-wider">
+                  "{roomPackage.meta.name}" 팀 확장 장치 (room.json)
+                </span>
+                {roomPackage.meta.customSensors.length === 0 && roomPackage.meta.pins.length === 0 && (
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-dashed border-slate-300 text-[11px] text-slate-500">
+                    확장 장치가 없습니다. 기본 4종만 사용합니다.
+                  </div>
+                )}
+                {roomPackage.meta.customSensors.map((def) => {
+                  const live = customSensors[def.key];
+                  return (
+                    <div key={def.key} className="p-3 rounded-2xl bg-blue-50/50 border border-blue-200/70 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-bold text-slate-900">
+                          {def.name} <code className="text-[10px] text-blue-700">custom.{def.key}</code>
+                        </span>
+                        <span className="text-[11px] text-slate-500">단위 {def.unit || '-'}</span>
+                      </div>
+                      <span className={`text-xs font-bold ${live && !live.isStale ? 'text-emerald-600' : 'text-slate-400'}`}>
+                        {live && !live.isStale ? `${live.value} ${def.unit}` : '수신 대기'}
+                      </span>
+                    </div>
+                  );
+                })}
+                {roomPackage.meta.pins.length > 0 && (
+                  <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600">
+                    확장 핀: <span className="font-mono font-bold text-blue-700">{roomPackage.meta.pins.join(', ')}</span>
+                  </div>
+                )}
+                {roomPackage.warnings.map((w, i) => (
+                  <div key={i} className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800">
+                    ⚠ {w}
+                  </div>
+                ))}
+              </div>
+            )}
+
             {/* AI 바이브 코딩 유도 배너 */}
             <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 border border-blue-200/80 flex items-center justify-between">
               <div className="flex flex-col">
@@ -317,7 +361,7 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
                   우리 팀의 프로젝트 주제(스마트팜, 스마트팩토리 등)로 바꾸고 싶나요?
                 </span>
                 <span className="text-[11px] text-slate-500 mt-0.5">
-                  코드를 직접 짤 필요 없이, AI에게 원하는 센서와 모터를 말해주면 100% 자동 수정됩니다!
+                  새 공간을 만든 뒤 AI로 4개 파일(room.json · Scene.tsx · mock.js · code.py)을 만들어 업로드하세요.
                 </span>
               </div>
               <button
@@ -469,7 +513,7 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
               <p className="text-[11px] text-amber-800 leading-normal">
                 1️⃣ 위의 <strong>[📋 AI 프롬프트 원클릭 복사]</strong> 버튼을 누릅니다.<br />
                 2️⃣ Antigravity (또는 ChatGPT/Claude) 대화창에 <code>Ctrl+V</code>(붙여넣기) 후 엔터를 칩니다.<br />
-                3️⃣ AI가 가이드된 5개 파일(타입, 시뮬레이터, 핀맵, 3D 씬, UI)을 자동 수정한 뒤 즉시 동작을 확인합니다!
+                3️⃣ AI가 만든 4개 파일을 <strong>공간 메뉴(⋮) → 코드 업로드</strong>에 올리면 즉시 3D 화면에 적용됩니다!
               </p>
             </div>
           </div>
@@ -479,15 +523,11 @@ export function DeviceManageModal({ isOpen, onClose, onFeedbackMessage }: Device
         <div className="flex items-center justify-between pt-2 border-t border-slate-100">
           {activeTab === 'vibe' ? (
             <button
-              onClick={handleSimulateApply}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
-                isSimulated
-                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
-              }`}
+              onClick={handleOpenUpload}
+              className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200"
             >
               <Play className="w-3.5 h-3.5 text-blue-600" />
-              <span>{isSimulated ? '✓ 시뮬레이션 반영됨' : '🚀 대시보드에 모의 등록해보기'}</span>
+              <span>{roomPackage ? '🚀 이 공간에 코드 업로드' : '🚀 새 공간 추가부터 하기'}</span>
             </button>
           ) : (
             <div />

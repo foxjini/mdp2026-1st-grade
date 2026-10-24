@@ -6,6 +6,8 @@ import { SmartHomeRoom } from './SmartHomeRoom';
 import { SmartFarmRoom } from './SmartFarmRoom';
 import { SmartFactoryRoom } from './SmartFactoryRoom';
 import { CameraRig } from './CameraRig';
+import { DynamicRoom } from './DynamicRoom';
+import { RoomPackage } from '@/core/types/iot';
 import { useIoTStore } from '@/core/store/useIoTStore';
 
 interface SceneCanvasProps {
@@ -14,6 +16,8 @@ interface SceneCanvasProps {
   onReview?: () => void;
   isModalOpen?: boolean;
   roomId?: string;
+  // 업로드 공간이면 해당 꾸러미 (Scene.tsx 런타임 적용), 기본 예제 공간이면 null
+  roomPackage?: RoomPackage | null;
   cameraPreset?: 'default' | 'overview';
   cameraTrigger?: number;
 }
@@ -23,7 +27,8 @@ export function SceneCanvas({
   onApprove = () => {},
   onReview = () => {},
   isModalOpen = false,
-  roomId = 'marketing',
+  roomId = 'builtin_home',
+  roomPackage = null,
   cameraPreset = 'default',
   cameraTrigger = 0,
 }: SceneCanvasProps) {
@@ -85,10 +90,12 @@ export function SceneCanvas({
           castShadow={false}
         />
 
-        {/* 3D 씬 컴포넌트: 스마트팜 온실 / 스마트 팩토리 공정 / 스마트 거실 허브 */}
-        {roomId === 'new_project' ? (
+        {/* 3D 씬 컴포넌트: 팀 업로드 공간 / 스마트팜 온실 / 스마트 팩토리 공정 / 스마트 거실 허브 */}
+        {roomPackage && roomPackage.meta.id === roomId ? (
+          <DynamicRoom pkg={roomPackage} isModalOpen={isModalOpen} />
+        ) : !roomId.startsWith('builtin_') ? null : roomId === 'builtin_farm' ? (
           <SmartFarmRoom isModalOpen={isModalOpen} />
-        ) : roomId === 'dev_qa' ? (
+        ) : roomId === 'builtin_factory' ? (
           <SmartFactoryRoom isModalOpen={isModalOpen} />
         ) : (
           <SmartHomeRoom

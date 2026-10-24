@@ -1,5 +1,6 @@
 import { IIoTAdapter } from './IIoTAdapter';
 import { useIoTStore } from '../store/useIoTStore';
+import { CustomCommand } from '../types/iot';
 
 export class CircuitPythonAdapter implements IIoTAdapter {
   private pollInterval: NodeJS.Timeout | null = null;
@@ -96,6 +97,17 @@ export class CircuitPythonAdapter implements IIoTAdapter {
       if (!store.actuators.rgb_light.pending && data.rgb_color && data.rgb_state) {
         store.confirmRgbAck(data.rgb_color, data.rgb_state);
       }
+
+      // 팀 확장 센서: 통합 펌웨어는 { rooms: { 공간ID: {...} }, custom: {...전체 병합} } 를 반환
+      const roomId = useIoTStore.getState().activeRoomPackage?.meta.id;
+      const customValues =
+        roomId && data.rooms && typeof data.rooms[roomId] === 'object' ? data.rooms[roomId] : data.custom;
+      if (customValues && typeof customValues === 'object') {
+        Object.entries(customValues as Record<string, unknown>).forEach(([key, value]) => {
+          if (typeof value === 'number' && Number.isFinite(value)) store.updateCustomSensor(key, value);
+          else if (typeof value === 'boolean') store.updateCustomSensor(key, value ? 1 : 0);
+        });
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '통신 오류';
       if (store.connectionState !== 'error') {
@@ -189,6 +201,52 @@ export class CircuitPythonAdapter implements IIoTAdapter {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '명령 전송 실패';
       store.failCommand('rgb_light', msg);
+      return false;
+    }
+  }
+
+  async sendCommand(command: CustomCommand): Promise<boolean> {
+    const store = useIoTStore.getState();
+    const rawIp = store.picoIpAddress;
+    if (!rawIp) {
+      store.addLog('error', 'Pico 2 W IP 주소가 지정되지 않았습니다.', 'PICO_2W');
+      return false;
+    }
+    const ip = rawIp.replace(/^https?:\/\//i, '').replace(/\/+$/, '').trim();
+    const body = JSON.stringify({ room: command.roomId, action: command.action, value: command.value });
+
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+
+      let res: Response;
+      try {
+        res = await fetch(`http://${ip}/api/command`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: controller.signal,
+          mode: 'cors',
+        });
+      } catch {
+        res = await fetch(`/api/pico/command?target=${encodeURIComponent(ip)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: controller.signal,
+        });
+      }
+
+      clearTimeout(timeout);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json().catch(() => ({}));
+      if (data && data.success === false) throw new Error(data.error || '팀 모듈 처리 실패');
+
+      store.addLog('success', `확장 명령 처리 완료: ${command.action}`, 'PICO_2W');
+      return true;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '명령 전송 실패';
+      store.addLog('error', `확장 명령 실패 (${command.action}): ${msg}`, 'PICO_2W');
       return false;
     }
   }

@@ -19,16 +19,21 @@ import {
   Copy,
   Trash2,
   X,
+  Upload,
 } from 'lucide-react';
+import { RoomIconType } from '@/core/types/iot';
 
 export interface RoomItem {
   id: string;
   name: string;
   sensorsDesc: string;
-  iconType: 'home' | 'farm' | 'factory' | 'sparkles' | 'shield';
+  iconType: RoomIconType;
   iconBg: string;
   iconColor: string;
   hasNotification?: boolean;
+  // builtin: 플랫폼 기본 예제 공간 / uploaded: 팀이 '새 공간 추가'로 만든 공간 (rooms-data/)
+  source: 'builtin' | 'uploaded';
+  team?: string;
 }
 
 interface RoomsSidebarProps {
@@ -41,6 +46,7 @@ interface RoomsSidebarProps {
   onRenameRoom?: (roomId: string, newName: string) => void;
   onDuplicateRoom?: (roomId: string) => void;
   onDeleteRoom?: (roomId: string) => void;
+  onOpenCodeModal?: (roomId: string) => void;
   roomList: RoomItem[];
 }
 
@@ -54,6 +60,7 @@ export function RoomsSidebar({
   onRenameRoom = () => {},
   onDuplicateRoom = () => {},
   onDeleteRoom = () => {},
+  onOpenCodeModal = () => {},
   roomList,
 }: RoomsSidebarProps) {
   // 열려있는 점 3개 메뉴의 공간 ID
@@ -110,7 +117,7 @@ export function RoomsSidebar({
         <div className="flex flex-col gap-2.5">
           {/* 거실 메인 라운지 카드 */}
           <div
-            onClick={() => onSelectRoom('marketing')}
+            onClick={() => onSelectRoom('builtin_home')}
             className="group p-3 rounded-2xl bg-white border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-slate-300 hover:shadow-sm cursor-pointer transition-all flex items-center gap-3"
           >
             <div className="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200/60 flex items-center justify-center text-amber-700 shrink-0">
@@ -202,8 +209,15 @@ export function RoomsSidebar({
                     >
                       {room.name}
                     </span>
-                    <span className="text-[11px] text-slate-400 font-medium truncate">
-                      {room.sensorsDesc}
+                    <span className="text-[11px] text-slate-400 font-medium truncate flex items-center gap-1">
+                      <span
+                        className={`shrink-0 px-1.5 rounded-md text-[9px] font-bold ${
+                          room.source === 'builtin' ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'
+                        }`}
+                      >
+                        {room.source === 'builtin' ? '예제' : room.team || '팀'}
+                      </span>
+                      <span className="truncate">{room.sensorsDesc}</span>
                     </span>
                   </div>
                 </div>
@@ -230,6 +244,21 @@ export function RoomsSidebar({
                     onClick={(e) => e.stopPropagation()}
                     className="room-dropdown-menu absolute right-2 top-11 z-50 w-44 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 py-1.5 px-1 flex flex-col gap-0.5 animate-in fade-in zoom-in-95 duration-150"
                   >
+                    {/* 0. 팀 코드 업로드 (업로드 공간 전용) */}
+                    {room.source === 'uploaded' && (
+                      <button
+                        onClick={() => {
+                          onSelectRoom(room.id);
+                          onOpenCodeModal(room.id);
+                          setOpenMenuRoomId(null);
+                        }}
+                        className="w-full px-2.5 py-1.5 text-left text-xs font-bold text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-2"
+                      >
+                        <Upload className="w-3.5 h-3.5 text-blue-600" />
+                        <span>코드 업로드 · 관리</span>
+                      </button>
+                    )}
+
                     {/* 1. 장치 구성 관리 */}
                     <button
                       onClick={() => {
@@ -279,7 +308,9 @@ export function RoomsSidebar({
                         onDuplicateRoom(room.id);
                         setOpenMenuRoomId(null);
                       }}
-                      className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-2"
+                      disabled={room.source === 'builtin'}
+                      title={room.source === 'builtin' ? '기본 예제 공간은 복제할 수 없습니다.' : undefined}
+                      className="disabled:opacity-40 disabled:hover:bg-transparent w-full px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-2"
                     >
                       <Copy className="w-3.5 h-3.5 text-emerald-500" />
                       <span>공간 복제하기</span>
@@ -293,7 +324,8 @@ export function RoomsSidebar({
                         onDeleteRoom(room.id);
                         setOpenMenuRoomId(null);
                       }}
-                      disabled={roomList.length <= 1}
+                      disabled={room.source === 'builtin'}
+                      title={room.source === 'builtin' ? '기본 예제 공간은 삭제할 수 없습니다.' : undefined}
                       className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:hover:bg-transparent rounded-xl transition-colors flex items-center gap-2"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

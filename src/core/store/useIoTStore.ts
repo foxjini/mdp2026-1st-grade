@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { IoTPlatformState, LogEntry } from '../types/iot';
+import { IoTPlatformState, LogEntry, SensorData } from '../types/iot';
 
 export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   mode: 'simulation',
@@ -58,6 +58,10 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
       pending: false,
     },
   },
+
+  customSensors: {},
+  activeRoomPackage: null,
+  lastCommand: null,
 
   logs: [
     {
@@ -238,6 +242,61 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
     get().addLog('error', `명령 실패 (${actuatorId}): ${errorMessage}`, 'SYSTEM');
   },
 
+  setActiveRoomPackage: (pkg) => {
+    // 공간이 바뀌면 확장 센서 목록을 room.json 정의대로 초기화 (이전 값은 같은 key면 유지)
+    set((state) => {
+      const next: Record<string, SensorData> = {};
+      (pkg?.meta.customSensors || []).forEach((def) => {
+        const prev = state.customSensors[def.key];
+        next[def.key] = {
+          deviceId: def.key,
+          name: def.name,
+          value: prev ? prev.value : def.min ?? 0,
+          unit: def.unit,
+          updatedAt: prev ? prev.updatedAt : 0,
+          isStale: prev ? prev.isStale : true,
+          minWarning: def.minWarning,
+          maxWarning: def.maxWarning,
+        };
+      });
+      return { activeRoomPackage: pkg, customSensors: next };
+    });
+  },
+
+  updateCustomSensor: (key, value) => {
+    set((state) => {
+      const prev = state.customSensors[key];
+      return {
+        customSensors: {
+          ...state.customSensors,
+          [key]: {
+            deviceId: key,
+            name: prev?.name || key,
+            unit: prev?.unit || '',
+            minWarning: prev?.minWarning,
+            maxWarning: prev?.maxWarning,
+            value,
+            updatedAt: Date.now(),
+            isStale: false,
+          },
+        },
+      };
+    });
+  },
+
+  sendCommand: (action, value) => {
+    const roomId = get().activeRoomPackage?.meta.id || 'builtin';
+    set({
+      lastCommand: {
+        id: `cmd-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        roomId,
+        action,
+        value,
+      },
+    });
+    get().addLog('info', `확장 명령 전송: ${action} = ${String(value)} (${roomId})`, 'USER');
+  },
+
   addLog: (type, message, source = 'SYSTEM') => {
     const newEntry: LogEntry = {
       id: `log-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
@@ -269,7 +328,17 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
         }
       });
 
-      return changed ? { sensors: updatedSensors } : state;
+      const updatedCustom = { ...state.customSensors };
+      Object.keys(updatedCustom).forEach((key) => {
+        const sensor = updatedCustom[key];
+        const isStale = now - sensor.updatedAt > staleThreshold;
+        if (sensor.isStale !== isStale) {
+          updatedCustom[key] = { ...sensor, isStale };
+          changed = true;
+        }
+      });
+
+      return changed ? { sensors: updatedSensors, customSensors: updatedCustom } : state;
     });
   },
 }));

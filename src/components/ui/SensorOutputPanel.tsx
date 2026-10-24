@@ -2,11 +2,14 @@
 
 import React from 'react';
 import { useIoTStore } from '@/core/store/useIoTStore';
-import { Thermometer, Droplets, Sun, Activity, Download, RefreshCw } from 'lucide-react';
+import { Thermometer, Droplets, Sun, Activity, Download, RefreshCw, Gauge } from 'lucide-react';
 
 export function SensorOutputPanel() {
   const sensors = useIoTStore((s) => s.sensors);
   const mode = useIoTStore((s) => s.mode);
+  const customSensors = useIoTStore((s) => s.customSensors);
+  const roomPackage = useIoTStore((s) => s.activeRoomPackage);
+  const customDefs = roomPackage?.meta.customSensors || [];
 
   const temp = sensors.dht11_temp;
   const humi = sensors.dht11_humi;
@@ -18,7 +21,10 @@ export function SensorOutputPanel() {
       '타임스탬프,센서명,측정값,단위\n' +
       `${new Date().toISOString()},온도(DHT11),${temp.value.toFixed(1)},℃\n` +
       `${new Date().toISOString()},습도(DHT11),${humi.value.toFixed(1)},%\n` +
-      `${new Date().toISOString()},조도(Cds),${light.value},ADC\n`;
+      `${new Date().toISOString()},조도(Cds),${light.value},ADC\n` +
+      customDefs
+        .map((d) => `${new Date().toISOString()},${d.name}(${d.key}),${customSensors[d.key]?.value ?? ''},${d.unit}\n`)
+        .join('');
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
@@ -148,6 +154,54 @@ export function SensorOutputPanel() {
         </span>
       </div>
 
+      {/* 4-1. 팀 확장 센서 (room.json customSensors) */}
+      {customDefs.map((def) => {
+        const sensor = customSensors[def.key];
+        const min = def.min ?? 0;
+        const max = def.max ?? 100;
+        const value = sensor?.value ?? min;
+        const ratio = max > min ? ((value - min) / (max - min)) * 100 : 0;
+        const warn =
+          sensor && !sensor.isStale &&
+          ((def.minWarning !== undefined && value < def.minWarning) || (def.maxWarning !== undefined && value > def.maxWarning));
+        return (
+          <div key={def.key} className="bg-white rounded-2xl p-4 border border-blue-200/80 shadow-2xs flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Gauge className="w-4 h-4 text-blue-500" />
+                {def.name} <code className="text-[10px] text-slate-400">{def.key}</code>
+              </span>
+              <span
+                className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                  !sensor || sensor.isStale
+                    ? 'bg-slate-50 text-slate-400 border-slate-200'
+                    : warn
+                      ? 'bg-rose-50 text-rose-600 border-rose-200'
+                      : 'bg-blue-50 text-blue-600 border-blue-200'
+                }`}
+              >
+                {!sensor || sensor.isStale ? '수신 대기' : warn ? '경고 범위' : '팀 확장 센서'}
+              </span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-black text-slate-900 font-mono">
+                {sensor && !sensor.isStale ? Number(value.toFixed(2)) : '--'}
+              </span>
+              <span className="text-xs font-bold text-slate-400">{def.unit}</span>
+              <span className="text-[11px] text-slate-400 ml-auto font-medium">
+                {min} ~ {max}
+              </span>
+            </div>
+            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, Math.max(0, ratio))}%` }}
+              />
+            </div>
+          </div>
+        );
+      })}
+
       {/* 5. 실시간 센서 패킷 피드 */}
       <div className="flex flex-col gap-2">
         <span className="text-[11px] font-bold text-slate-400 tracking-wider">
@@ -166,6 +220,14 @@ export function SensorOutputPanel() {
             <span>CDS_LIGHT</span>
             <span className="text-slate-800 font-bold">{light.value} ADC</span>
           </div>
+          {customDefs.map((def) => (
+            <div key={def.key} className="flex items-center justify-between text-slate-500 border-t border-slate-100 pt-1">
+              <span>CUSTOM.{def.key.toUpperCase()}</span>
+              <span className="text-slate-800 font-bold">
+                {customSensors[def.key] && !customSensors[def.key].isStale ? `${customSensors[def.key].value}${def.unit}` : '--'}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     </aside>
