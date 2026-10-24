@@ -2,7 +2,12 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import {
+  BaseDeviceId,
+  BASE_DEVICE_IDS,
+  BASE_DEVICE_INFO,
   CustomSensorDef,
+  PlatformMode,
+  RoomConnection,
   RoomFileName,
   RoomIconType,
   RoomMeta,
@@ -16,21 +21,22 @@ export const MAX_FILE_BYTES = 200 * 1024;
 const ROOM_ID_RE = /^[a-z0-9_-]{1,64}$/;
 const SENSOR_KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 const PIN_RE = /^GP([0-9]|1[0-9]|2[0-8])$/;
+// 예: 192.168.0.51, 192.168.0.51:80, 127.0.0.1:5051, localhost:5051
+const PICO_IP_RE = /^(((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)|localhost)(:\d{1,5})?$/;
 const ICONS: RoomIconType[] = ['home', 'farm', 'factory', 'sparkles', 'shield'];
+const BUILTIN_ROOM_IDS = ['builtin_home', 'builtin_farm', 'builtin_factory'];
 
-// 기본 4종 장치와 Pico 2 W 내부(무선 모듈 등)가 사용하는 핀: 팀 확장에 사용 불가
-export const RESERVED_PINS: Record<string, string> = {
-  GP15: 'DHT11',
-  GP16: 'SG90 서보',
-  GP18: 'RGB LED (R)',
-  GP19: 'RGB LED (G)',
-  GP20: 'RGB LED (B)',
-  GP26: 'Cds 조도 (ADC0)',
-  GP23: 'Pico 2 W 무선 모듈',
-  GP24: 'Pico 2 W 무선 모듈',
-  GP25: 'Pico 2 W 무선 모듈',
-  GP29: 'Pico 2 W 무선 모듈',
-};
+// Pico 2 W 내부(무선 모듈)가 사용하는 핀: 어떤 공간도 사용 불가
+const WIRELESS_PINS = ['GP23', 'GP24', 'GP25', 'GP29'];
+
+// 공간이 사용하는 기본 장치의 핀 + 무선 모듈 핀 = 팀 확장에 사용할 수 없는 핀
+// (scripts/bundle-firmware.mjs 의 reservedPins 와 동일하게 유지)
+export function reservedPins(baseDevices: BaseDeviceId[]): Record<string, string> {
+  const reserved: Record<string, string> = {};
+  WIRELESS_PINS.forEach((pin) => (reserved[pin] = 'Pico 2 W 무선 모듈'));
+  baseDevices.forEach((d) => BASE_DEVICE_INFO[d].pins.forEach((pin) => (reserved[pin] = BASE_DEVICE_INFO[d].name)));
+  return reserved;
+}
 
 export class RoomError extends Error {
   constructor(message: string, public status = 400) {
@@ -56,6 +62,21 @@ function str(v: unknown, fallback: string, max = 80): string {
 
 function num(v: unknown): number | undefined {
   return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+}
+
+// Pico IP / 모드 정규화 (빈 IP 허용, 하드웨어 모드인데 IP가 없으면 시뮬레이션)
+export function normalizeConnection(src: Record<string, unknown>, prev?: RoomConnection): RoomConnection {
+  let picoIp = prev?.picoIp || '';
+  if (typeof src.picoIp === 'string') {
+    const ip = src.picoIp.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+    if (ip && !PICO_IP_RE.test(ip)) {
+      throw new RoomError(`Pico IP "${src.picoIp}"가 올바르지 않습니다. 예: 192.168.0.51 또는 127.0.0.1:5051`);
+    }
+    picoIp = ip;
+  }
+  let mode: PlatformMode = src.mode === 'hardware' || src.mode === 'simulation' ? src.mode : prev?.mode || 'simulation';
+  if (mode === 'hardware' && !picoIp) mode = 'simulation';
+  return { picoIp, mode };
 }
 
 // room.json 입력을 안전한 RoomMeta로 정규화 (id/createdAt은 서버가 관리)
@@ -98,12 +119,23 @@ export function normalizeMeta(input: unknown, id: string, prev?: RoomMeta): Room
     ? (src.iconType as RoomIconType)
     : prev?.iconType || 'sparkles';
 
+  let baseDevices: BaseDeviceId[] = prev?.baseDevices || [...BASE_DEVICE_IDS];
+  if (Array.isArray(src.baseDevices)) {
+    const unknown = src.baseDevices.filter((d) => !(BASE_DEVICE_IDS as readonly unknown[]).includes(d));
+    if (unknown.length) {
+      throw new RoomError(`baseDevices에는 ${BASE_DEVICE_IDS.join(', ')} 만 쓸 수 있습니다. (받은 값: ${unknown.join(', ')})`);
+    }
+    baseDevices = BASE_DEVICE_IDS.filter((d) => (src.baseDevices as unknown[]).includes(d));
+  }
+
   return {
     id,
     name: str(src.name, prev?.name || '새 공간', 40),
     team: str(src.team, prev?.team || '', 40),
     iconType,
     sensorsDesc: str(src.sensorsDesc, prev?.sensorsDesc || '팀 프로젝트 공간', 60),
+    ...normalizeConnection(src, prev),
+    baseDevices,
     customSensors,
     pins,
     hasNotification: typeof src.hasNotification === 'boolean' ? src.hasNotification : prev?.hasNotification,
@@ -138,15 +170,53 @@ export async function listRooms(): Promise<RoomMeta[]> {
   return metas.filter((m): m is RoomMeta => !!m).sort((a, b) => a.createdAt - b.createdAt);
 }
 
-// 핀 충돌 검사: 기본 장치 핀 또는 다른 팀이 선언한 핀과 겹치면 경고
-export function computePinWarnings(meta: RoomMeta, all: RoomMeta[]): string[] {
+// 공간마다 Pico 가 따로 있으므로: 이 공간의 기본 장치 핀과 겹치는지, 다른 공간과 Pico IP 가 같은지 검사
+export function computeRoomWarnings(meta: RoomMeta, all: RoomMeta[], builtin: Record<string, RoomConnection> = {}): string[] {
   const warnings: string[] = [];
+  const reserved = reservedPins(meta.baseDevices);
   for (const pin of meta.pins) {
-    if (RESERVED_PINS[pin]) warnings.push(`${pin}은(는) ${RESERVED_PINS[pin]}이(가) 사용하는 핀입니다.`);
-    const other = all.find((m) => m.id !== meta.id && m.pins.includes(pin));
-    if (other) warnings.push(`${pin}은(는) "${other.name}"(${other.team || other.id}) 공간과 겹칩니다.`);
+    if (reserved[pin]) warnings.push(`${pin}은(는) ${reserved[pin]}이(가) 사용하는 핀입니다.`);
+  }
+  if (meta.picoIp) {
+    const other = all.find((m) => m.id !== meta.id && m.picoIp === meta.picoIp);
+    if (other) warnings.push(`Pico IP ${meta.picoIp}를 "${other.name}" 공간도 사용합니다. 공간마다 다른 Pico IP를 지정하세요.`);
+    const builtinId = Object.keys(builtin).find((id) => builtin[id].picoIp === meta.picoIp);
+    if (builtinId) warnings.push(`Pico IP ${meta.picoIp}를 기본 예제 공간(${builtinId})도 사용합니다.`);
   }
   return warnings;
+}
+
+// ------------------------------------------------------------------------------
+// 기본 예제 공간(builtin_*)의 Pico 연결 설정: rooms-data/_builtin.json
+// ------------------------------------------------------------------------------
+const BUILTIN_FILE = () => path.join(ROOMS_DIR, '_builtin.json');
+
+export async function readBuiltinConnections(): Promise<Record<string, RoomConnection>> {
+  try {
+    const raw = JSON.parse(await fs.readFile(BUILTIN_FILE(), 'utf8')) as Record<string, Record<string, unknown>>;
+    const out: Record<string, RoomConnection> = {};
+    for (const id of BUILTIN_ROOM_IDS) {
+      if (raw[id]) {
+        try {
+          out[id] = normalizeConnection(raw[id]);
+        } catch {
+          // 잘못 저장된 값은 무시
+        }
+      }
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export async function updateBuiltinConnection(id: string, patch: Record<string, unknown>): Promise<RoomConnection> {
+  if (!BUILTIN_ROOM_IDS.includes(id)) throw new RoomError('기본 예제 공간이 아닙니다.', 404);
+  const all = await readBuiltinConnections();
+  all[id] = normalizeConnection(patch, all[id]);
+  await fs.mkdir(ROOMS_DIR, { recursive: true });
+  await fs.writeFile(BUILTIN_FILE(), JSON.stringify(all, null, 2), 'utf8');
+  return all[id];
 }
 
 export async function getRoom(id: string): Promise<RoomPackage> {
@@ -161,7 +231,7 @@ export async function getRoom(id: string): Promise<RoomPackage> {
       // 아직 업로드되지 않은 파일
     }
   }
-  return { meta, files, warnings: computePinWarnings(meta, await listRooms()) };
+  return { meta, files, warnings: computeRoomWarnings(meta, await listRooms(), await readBuiltinConnections()) };
 }
 
 export async function createRoom(input: unknown): Promise<RoomPackage> {
@@ -195,7 +265,13 @@ export async function writeRoomFiles(id: string, files: Record<string, unknown>)
       } catch {
         throw new RoomError('room.json이 올바른 JSON 형식이 아닙니다.');
       }
-      await writeMeta(normalizeMeta(parsed, id, prev));
+      // 연결 모드는 화면의 'Pico 연결 설정'에서만 바꿉니다. (AI가 만든 room.json 이 연결을 끊지 않도록)
+      // picoIp 는 업로드 파일에 값이 있을 때만 반영합니다.
+      const src = (parsed && typeof parsed === 'object' ? parsed : {}) as Record<string, unknown>;
+      const { mode: _mode, ...rest } = src;
+      void _mode;
+      if (typeof rest.picoIp !== 'string' || !rest.picoIp.trim()) delete rest.picoIp;
+      await writeMeta(normalizeMeta(rest, id, prev));
     }
   }
   // room.json 검증이 끝난 뒤 나머지 파일 저장
@@ -216,7 +292,13 @@ export async function deleteRoomFile(id: string, name: string): Promise<RoomPack
 
 export async function duplicateRoom(id: string): Promise<RoomPackage> {
   const src = await getRoom(id);
-  const copy = await createRoom({ ...src.meta, name: `${src.meta.name} (사본)`.slice(0, 40), pins: [] });
+  // 사본은 별도 Pico 를 연결해야 하므로 IP 를 비우고 시뮬레이션으로 시작
+  const copy = await createRoom({
+    ...src.meta,
+    name: `${src.meta.name} (사본)`.slice(0, 40),
+    picoIp: '',
+    mode: 'simulation',
+  });
   const files: Record<string, string> = {};
   Object.entries(src.files).forEach(([k, v]) => v !== undefined && (files[k] = v));
   return Object.keys(files).length ? writeRoomFiles(copy.meta.id, files) : copy;

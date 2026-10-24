@@ -1,5 +1,5 @@
 // 브라우저 → /api/rooms 호출 헬퍼
-import { RoomIconType, RoomMeta, RoomPackage } from '../types/iot';
+import { RoomConnection, RoomIconType, RoomMeta, RoomPackage } from '../types/iot';
 import type { RoomItem } from '@/components/ui/RoomsSidebar';
 
 const KEY_STORAGE = 'mdp.roomUploadKey';
@@ -44,6 +44,12 @@ export const roomsApi = {
   removeFile: (id: string, name: string) =>
     call<RoomPackage>(`/api/rooms/${id}`, { method: 'PATCH', body: JSON.stringify({ removeFile: name }) }),
   remove: (id: string) => call<{ ok: true }>(`/api/rooms/${id}`, { method: 'DELETE' }),
+  builtinConnections: () =>
+    call<{ connections: Record<string, RoomConnection> }>('/api/rooms/builtin').then((d) => d.connections),
+  patchBuiltin: (id: string, conn: Partial<RoomConnection>) =>
+    call<{ connection: RoomConnection }>(`/api/rooms/builtin/${id}`, { method: 'PATCH', body: JSON.stringify(conn) }).then(
+      (d) => d.connection
+    ),
 };
 
 export const ICON_COLORS: Record<RoomIconType, { bg: string; color: string }> = {
@@ -65,6 +71,8 @@ export function metaToRoomItem(meta: RoomMeta): RoomItem {
     hasNotification: meta.hasNotification,
     source: 'uploaded',
     team: meta.team,
+    picoIp: meta.picoIp,
+    mode: meta.mode,
   };
 }
 
@@ -78,6 +86,8 @@ export const BUILTIN_ROOMS: RoomItem[] = [
     iconBg: ICON_COLORS.home.bg,
     iconColor: ICON_COLORS.home.color,
     source: 'builtin',
+    picoIp: '',
+    mode: 'simulation',
   },
   {
     id: 'builtin_farm',
@@ -87,6 +97,8 @@ export const BUILTIN_ROOMS: RoomItem[] = [
     iconBg: ICON_COLORS.farm.bg,
     iconColor: ICON_COLORS.farm.color,
     source: 'builtin',
+    picoIp: '',
+    mode: 'simulation',
   },
   {
     id: 'builtin_factory',
@@ -96,5 +108,7 @@ export const BUILTIN_ROOMS: RoomItem[] = [
     iconBg: ICON_COLORS.factory.bg,
     iconColor: ICON_COLORS.factory.color,
     source: 'builtin',
+    picoIp: '',
+    mode: 'simulation',
   },
 ];

@@ -10,18 +10,21 @@ export function SensorOutputPanel() {
   const customSensors = useIoTStore((s) => s.customSensors);
   const roomPackage = useIoTStore((s) => s.activeRoomPackage);
   const customDefs = roomPackage?.meta.customSensors || [];
+  // 업로드 공간은 이 공간의 Pico 에 연결한 기본 장치(baseDevices)만 표시
+  const useDht = !roomPackage || roomPackage.meta.baseDevices.includes('dht11');
+  const useCds = !roomPackage || roomPackage.meta.baseDevices.includes('cds');
 
   const temp = sensors.dht11_temp;
   const humi = sensors.dht11_humi;
   const light = sensors.cds_light;
 
   const exportCsv = () => {
+    const now = new Date().toISOString();
     const csvContent =
       'data:text/csv;charset=utf-8,' +
       '타임스탬프,센서명,측정값,단위\n' +
-      `${new Date().toISOString()},온도(DHT11),${temp.value.toFixed(1)},℃\n` +
-      `${new Date().toISOString()},습도(DHT11),${humi.value.toFixed(1)},%\n` +
-      `${new Date().toISOString()},조도(Cds),${light.value},ADC\n` +
+      (useDht ? `${now},온도(DHT11),${temp.value.toFixed(1)},℃\n${now},습도(DHT11),${humi.value.toFixed(1)},%\n` : '') +
+      (useCds ? `${now},조도(Cds),${light.value},ADC\n` : '') +
       customDefs
         .map((d) => `${new Date().toISOString()},${d.name}(${d.key}),${customSensors[d.key]?.value ?? ''},${d.unit}\n`)
         .join('');
@@ -61,6 +64,8 @@ export function SensorOutputPanel() {
         </button>
       </div>
 
+      {useDht && (
+      <>
       {/* 2. DHT11 온도 상세 카드 */}
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
@@ -123,7 +128,11 @@ export function SensorOutputPanel() {
         </div>
       </div>
 
-      {/* 4. Cds 조도 센서 상세 카드 */}
+      </>
+      )}
+
+      {useCds && (
+      // 4. Cds 조도 센서 상세 카드
       <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-2xs flex flex-col gap-2.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -153,6 +162,8 @@ export function SensorOutputPanel() {
           * 3D 방의 Ambient Light 밝기가 이 조도 값에 따라 자동 연동됩니다.
         </span>
       </div>
+
+      )}
 
       {/* 4-1. 팀 확장 센서 (room.json customSensors) */}
       {customDefs.map((def) => {

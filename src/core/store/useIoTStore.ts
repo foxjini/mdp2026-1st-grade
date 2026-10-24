@@ -4,7 +4,7 @@ import { IoTPlatformState, LogEntry, SensorData } from '../types/iot';
 export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   mode: 'simulation',
   connectionState: 'connected',
-  picoIpAddress: '192.168.1.100',
+  picoIpAddress: '',
   selectedDeviceId: null,
   isExhibitionMode: false,
   isAutoRotate: false,
@@ -92,6 +92,37 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   },
 
   setPicoIpAddress: (ip) => set({ picoIpAddress: ip }),
+
+  applyRoomConnection: (roomName, conn) => {
+    const ip = conn.picoIp.trim();
+    const mode = conn.mode === 'hardware' && ip ? 'hardware' : 'simulation';
+    const { mode: prevMode, picoIpAddress: prevIp } = get();
+    if (prevMode === mode && (mode === 'simulation' || prevIp === ip)) {
+      if (prevIp !== ip) set({ picoIpAddress: ip });
+      return;
+    }
+    // 다른 Pico 로 바뀌면 이전 Pico 의 값이 남아 보이지 않도록 센서를 수신 대기로, 명령 대기를 해제
+    set((state) => {
+      const sensors = { ...state.sensors };
+      (Object.keys(sensors) as Array<keyof typeof sensors>).forEach((k) => {
+        sensors[k] = { ...sensors[k], updatedAt: 0, isStale: true };
+      });
+      return {
+        mode,
+        picoIpAddress: ip,
+        sensors,
+        actuators: {
+          sg90_door: { ...state.actuators.sg90_door, pending: false, errorMessage: undefined },
+          rgb_light: { ...state.actuators.rgb_light, pending: false, errorMessage: undefined },
+        },
+      };
+    });
+    get().addLog(
+      'info',
+      mode === 'hardware' ? `"${roomName}" 공간 → Pico 2 W (${ip}) 연결` : `"${roomName}" 공간 → 시뮬레이션 모드`,
+      'SYSTEM'
+    );
+  },
   setConnectionState: (state) => set({ connectionState: state }),
   setSelectedDevice: (deviceId) => set({ selectedDeviceId: deviceId }),
   setExhibitionMode: (enabled) => set({ isExhibitionMode: enabled }),

@@ -16,8 +16,9 @@ import {
   Loader2,
   ClipboardPaste,
   KeyRound,
+  Wifi,
 } from 'lucide-react';
-import { RoomFileName, RoomMeta, RoomPackage, ROOM_FILE_NAMES } from '@/core/types/iot';
+import { BASE_DEVICE_INFO, RoomFileName, RoomMeta, RoomPackage, ROOM_FILE_NAMES } from '@/core/types/iot';
 import { roomsApi, getUploadKey, setUploadKey } from '@/core/rooms/roomsApi';
 import {
   buildVibePrompt,
@@ -35,13 +36,14 @@ interface RoomCodeModalProps {
   pkg: RoomPackage | null;
   onPackageChange: (pkg: RoomPackage) => void;
   onFeedbackMessage?: (msg: string) => void;
+  onOpenConnection?: () => void;
 }
 
 const FILE_INFO: Record<RoomFileName, { label: string; desc: string; icon: React.ElementType; template: (m: RoomMeta) => string }> = {
   'room.json': { label: '공간 정보', desc: '이름 · 확장 센서 · 확장 핀', icon: FileJson, template: roomJsonTemplate },
   'Scene.tsx': { label: '3D 화면', desc: 'React Three Fiber 3D 공간', icon: FileCode2, template: sceneTemplate },
   'mock.js': { label: '시뮬레이션', desc: '하드웨어 없이 가짜 센서 값', icon: FlaskConical, template: mockTemplate },
-  'code.py': { label: 'Pico 2 W 팀 모듈', desc: 'CircuitPython (통합 펌웨어에 포함)', icon: Cpu, template: codePyTemplate },
+  'code.py': { label: 'Pico 2 W 팀 모듈', desc: 'CircuitPython (우리 팀 Pico 펌웨어에 포함)', icon: Cpu, template: codePyTemplate },
 };
 
 function currentContent(pkg: RoomPackage, name: RoomFileName): string | undefined {
@@ -92,7 +94,14 @@ function matchFileName(raw: string): RoomFileName | null {
   return ROOM_FILE_NAMES.find((n) => n.toLowerCase() === lower) || null;
 }
 
-export function RoomCodeModal({ isOpen, onClose, pkg, onPackageChange, onFeedbackMessage = () => {} }: RoomCodeModalProps) {
+export function RoomCodeModal({
+  isOpen,
+  onClose,
+  pkg,
+  onPackageChange,
+  onFeedbackMessage = () => {},
+  onOpenConnection = () => {},
+}: RoomCodeModalProps) {
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [idea, setIdea] = useState('');
@@ -106,6 +115,7 @@ export function RoomCodeModal({ isOpen, onClose, pkg, onPackageChange, onFeedbac
 
   if (!isOpen || !pkg) return null;
   const meta = pkg.meta;
+  const bundleCommand = `npm run firmware:bundle -- ${meta.id} E:\\`;
 
   const upload = async (files: Record<string, string>) => {
     const problems: string[] = [];
@@ -236,6 +246,47 @@ export function RoomCodeModal({ isOpen, onClose, pkg, onPackageChange, onFeedbac
               매뉴얼 열기
             </a>
           </div>
+        </section>
+
+        {/* 우리 팀 Pico 2 W (공간마다 1대) */}
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-xs font-extrabold text-emerald-900">
+            <Wifi className="w-4 h-4" /> 우리 팀 Pico 2 W
+            <span className="ml-auto font-mono text-[11px] text-emerald-700">
+              {meta.mode === 'hardware' ? `하드웨어 · ${meta.picoIp}` : `시뮬레이션${meta.picoIp ? ` · ${meta.picoIp}` : ' · IP 미지정'}`}
+            </span>
+            <button
+              onClick={onOpenConnection}
+              className="px-2.5 py-1 rounded-lg bg-white border border-emerald-300 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100"
+            >
+              연결 설정
+            </button>
+          </div>
+          <p className="text-[11px] text-emerald-900">
+            연결하는 기본 장치:{' '}
+            <b>{meta.baseDevices.length ? meta.baseDevices.map((d) => BASE_DEVICE_INFO[d].name).join(' · ') : '없음 (확장 부품만 사용)'}</b>
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-900 text-slate-100 text-[11px] font-mono truncate select-text">
+              {bundleCommand}
+            </code>
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(bundleCommand);
+                  onFeedbackMessage('펌웨어 묶기 명령이 복사되었습니다. E: 를 우리 팀 CIRCUITPY 드라이브 문자로 바꿔 실행하세요.');
+                } catch {
+                  onFeedbackMessage(bundleCommand);
+                }
+              }}
+              className="px-2.5 py-1.5 rounded-lg bg-white border border-emerald-300 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 flex items-center gap-1"
+            >
+              <Copy className="w-3 h-3" /> 복사
+            </button>
+          </div>
+          <p className="text-[10px] text-emerald-800">
+            위 명령은 이 공간의 code.py 만 담은 펌웨어를 우리 팀 Pico(CIRCUITPY 드라이브)에 복사합니다. (선생님과 함께 실행)
+          </p>
         </section>
 
         {/* ② 파일 4종 상태 */}
@@ -392,7 +443,7 @@ export function RoomCodeModal({ isOpen, onClose, pkg, onPackageChange, onFeedbac
 
         {pkg.warnings.length > 0 && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3 flex flex-col gap-1">
-            <div className="text-xs font-extrabold text-amber-800">핀 충돌 경고 (room.json pins 를 수정하세요)</div>
+            <div className="text-xs font-extrabold text-amber-800">경고 (room.json pins · Pico IP 를 확인하세요)</div>
             {pkg.warnings.map((w, i) => (
               <p key={i} className="text-[11px] text-amber-800">
                 · {w}

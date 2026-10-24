@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Plus, Home, Sprout, Factory, Sparkles, ShieldCheck, Loader2 } from 'lucide-react';
-import { RoomIconType, RoomPackage } from '@/core/types/iot';
+import { BaseDeviceId, BASE_DEVICE_IDS, BASE_DEVICE_INFO, RoomIconType, RoomPackage } from '@/core/types/iot';
 import { roomsApi } from '@/core/rooms/roomsApi';
 
 interface AddRoomModalProps {
@@ -17,6 +17,9 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
   const [team, setTeam] = useState('');
   const [sensorsDesc, setSensorsDesc] = useState('');
   const [iconType, setIconType] = useState<RoomIconType>('sparkles');
+  // 이 공간 전용 Pico 2 W 에 실제로 연결하는 기본 장치 / Pico IP (비우면 시뮬레이션)
+  const [baseDevices, setBaseDevices] = useState<BaseDeviceId[]>([...BASE_DEVICE_IDS]);
+  const [picoIp, setPicoIp] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,10 +37,15 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
         team: team.trim(),
         sensorsDesc: sensorsDesc.trim() || '팀 프로젝트 공간',
         iconType,
+        baseDevices,
+        picoIp: picoIp.trim(),
+        mode: picoIp.trim() ? 'hardware' : 'simulation',
       });
       setName('');
       setTeam('');
       setSensorsDesc('');
+      setPicoIp('');
+      setBaseDevices([...BASE_DEVICE_IDS]);
       onCreated(pkg);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : '공간 생성 실패');
@@ -48,7 +56,7 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-xs select-none p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
+      <div className="w-full max-w-md max-h-[92vh] overflow-y-auto bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl flex flex-col gap-5 animate-in fade-in zoom-in-95 duration-200">
         {/* 헤더 */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -136,6 +144,51 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-700">
+              우리 팀 Pico 2 W 에 연결할 기본 장치
+              <span className="ml-1 font-medium text-slate-400">(연결하지 않는 장치의 핀은 확장 부품에 사용 가능)</span>
+            </label>
+            <div className="grid grid-cols-2 gap-1.5">
+              {BASE_DEVICE_IDS.map((id) => {
+                const checked = baseDevices.includes(id);
+                return (
+                  <label
+                    key={id}
+                    className={`px-2.5 py-2 rounded-xl border text-[11px] flex items-center gap-2 cursor-pointer ${
+                      checked ? 'bg-blue-50 border-blue-300 text-blue-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-500'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setBaseDevices((prev) =>
+                          checked ? prev.filter((d) => d !== id) : BASE_DEVICE_IDS.filter((d) => d === id || prev.includes(d))
+                        )
+                      }
+                    />
+                    <span>{BASE_DEVICE_INFO[id].name}</span>
+                    <code className="ml-auto text-[10px] text-slate-400">{BASE_DEVICE_INFO[id].pins.join('/')}</code>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-bold text-slate-700">
+              우리 팀 Pico 2 W IP <span className="font-medium text-slate-400">(선택 · 비우면 시뮬레이션으로 시작)</span>
+            </label>
+            <input
+              type="text"
+              value={picoIp}
+              onChange={(e) => setPicoIp(e.target.value)}
+              placeholder="예: 192.168.0.51"
+              className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+            />
           </div>
 
           {error && (

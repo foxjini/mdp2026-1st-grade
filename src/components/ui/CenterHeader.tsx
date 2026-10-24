@@ -9,6 +9,8 @@ interface CenterHeaderProps {
   activeTab: 'inspector' | 'output' | 'thread';
   onTabChange: (tab: 'inspector' | 'output' | 'thread') => void;
   onOpenIpModal: () => void;
+  // 모드 전환은 현재 공간의 연결 설정으로 저장됩니다 (공간마다 Pico 2 W 1대)
+  onChangeMode: (mode: 'simulation' | 'hardware') => void;
 }
 
 export function CenterHeader({
@@ -16,9 +18,9 @@ export function CenterHeader({
   activeTab,
   onTabChange,
   onOpenIpModal,
+  onChangeMode,
 }: CenterHeaderProps) {
   const mode = useIoTStore((s) => s.mode);
-  const setMode = useIoTStore((s) => s.setMode);
   const connectionState = useIoTStore((s) => s.connectionState);
   const picoIpAddress = useIoTStore((s) => s.picoIpAddress);
 
@@ -45,7 +47,11 @@ export function CenterHeader({
             {roomName}
           </h1>
           <p className="text-xs text-slate-400 font-medium mt-1">
-            연결 장치 4개 · 텔레메트리 6개 실시간 수집 중
+            {mode === 'simulation'
+              ? '시뮬레이션 모드 · 가상 센서 데이터'
+              : `Pico 2 W ${picoIpAddress} · ${
+                  connectionState === 'connected' ? '연결됨' : connectionState === 'connecting' ? '연결 중…' : '응답 없음'
+                }`}
           </p>
         </div>
 
@@ -66,7 +72,7 @@ export function CenterHeader({
         {/* 하드웨어 / 시뮬레이션 모드 전환 알약 스위치 */}
         <div className="flex items-center bg-white/90 p-1 rounded-full border border-slate-200/80 shadow-2xs">
           <button
-            onClick={() => setMode('simulation')}
+            onClick={() => onChangeMode('simulation')}
             className={`px-3 py-1 rounded-full text-xs font-semibold transition-all ${
               mode === 'simulation'
                 ? 'bg-blue-600 text-white shadow-2xs'
@@ -76,7 +82,7 @@ export function CenterHeader({
             시뮬레이션
           </button>
           <button
-            onClick={() => setMode('hardware')}
+            onClick={() => onChangeMode('hardware')}
             className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all ${
               mode === 'hardware'
                 ? 'bg-emerald-600 text-white shadow-2xs'
@@ -89,7 +95,7 @@ export function CenterHeader({
           <button
             onClick={onOpenIpModal}
             className="p-1 text-slate-400 hover:text-slate-700 ml-0.5 rounded-full hover:bg-slate-100 transition-colors"
-            title="IP 설정"
+            title={`${roomName} 공간의 Pico 2 W IP 설정`}
           >
             <Settings className="w-3.5 h-3.5" />
           </button>

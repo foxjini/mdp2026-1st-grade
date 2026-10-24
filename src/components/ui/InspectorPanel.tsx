@@ -42,6 +42,10 @@ export function InspectorPanel({
   const setRgbState = useIoTStore((s) => s.setRgbState);
 
   const door = actuators.sg90_door;
+  // 업로드 공간은 이 공간의 Pico 에 연결한 기본 장치(baseDevices)만 제어 위젯 표시
+  const roomPackage = useIoTStore((s) => s.activeRoomPackage);
+  const useSg90 = !roomPackage || roomPackage.meta.baseDevices.includes('sg90');
+  const useRgbLed = !roomPackage || roomPackage.meta.baseDevices.includes('rgb');
   const light = actuators.rgb_light;
 
   const [showActuatorControls, setShowActuatorControls] = useState(true);
@@ -100,7 +104,14 @@ export function InspectorPanel({
 
           {showActuatorControls && (
             <div className="flex flex-col gap-3.5 pt-1">
+              {!useSg90 && !useRgbLed && (
+                <div className="p-2.5 rounded-xl border border-dashed border-slate-300 text-[11px] text-slate-500">
+                  이 공간의 Pico 에는 SG90 · RGB LED 가 연결되어 있지 않습니다. 확장 장치는 3D 화면에서 조작하세요.
+                </div>
+              )}
+
               {/* SG90 도어 서보모터 */}
+              {useSg90 && (
               <div className="bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/60 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
@@ -146,8 +157,10 @@ export function InspectorPanel({
                   ))}
                 </div>
               </div>
+              )}
 
               {/* RGB LED 조명 */}
+              {useRgbLed && (
               <div className="bg-slate-50/70 p-2.5 rounded-xl border border-slate-200/60 flex flex-col gap-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-700 flex items-center gap-1.5">
@@ -187,6 +200,7 @@ export function InspectorPanel({
                   ))}
                 </div>
               </div>
+              )}
 
               {/* 센서 텔레메트리 칩 (DHT11 & Cds) */}
               <div className="grid grid-cols-3 gap-1.5">

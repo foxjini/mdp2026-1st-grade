@@ -20,10 +20,12 @@ import {
   Trash2,
   X,
   Upload,
+  Wifi,
 } from 'lucide-react';
-import { RoomIconType } from '@/core/types/iot';
+import { RoomConnection, RoomIconType } from '@/core/types/iot';
 
-export interface RoomItem {
+// 공간마다 Pico 2 W 1대: picoIp / mode 는 공간별로 저장되어 공간 선택 시 자동 연결
+export interface RoomItem extends RoomConnection {
   id: string;
   name: string;
   sensorsDesc: string;
@@ -47,6 +49,7 @@ interface RoomsSidebarProps {
   onDuplicateRoom?: (roomId: string) => void;
   onDeleteRoom?: (roomId: string) => void;
   onOpenCodeModal?: (roomId: string) => void;
+  onOpenConnectionModal?: (roomId: string) => void;
   roomList: RoomItem[];
 }
 
@@ -61,6 +64,7 @@ export function RoomsSidebar({
   onDuplicateRoom = () => {},
   onDeleteRoom = () => {},
   onOpenCodeModal = () => {},
+  onOpenConnectionModal = () => {},
   roomList,
 }: RoomsSidebarProps) {
   // 열려있는 점 3개 메뉴의 공간 ID
@@ -219,6 +223,15 @@ export function RoomsSidebar({
                       </span>
                       <span className="truncate">{room.sensorsDesc}</span>
                     </span>
+                    {/* 이 공간의 Pico 2 W 연결 (공간 선택 시 자동 연결) */}
+                    <span
+                      className={`mt-0.5 text-[10px] font-mono font-bold truncate flex items-center gap-1 ${
+                        room.mode === 'hardware' ? 'text-emerald-600' : 'text-slate-400'
+                      }`}
+                    >
+                      <Wifi className="w-3 h-3 shrink-0" />
+                      {room.mode === 'hardware' ? `Pico ${room.picoIp}` : `시뮬레이션${room.picoIp ? ` · ${room.picoIp}` : ''}`}
+                    </span>
                   </div>
                 </div>
 
@@ -258,6 +271,19 @@ export function RoomsSidebar({
                         <span>코드 업로드 · 관리</span>
                       </button>
                     )}
+
+                    {/* 0-1. 이 공간의 Pico 2 W 연결 설정 */}
+                    <button
+                      onClick={() => {
+                        onSelectRoom(room.id);
+                        onOpenConnectionModal(room.id);
+                        setOpenMenuRoomId(null);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl transition-colors flex items-center gap-2"
+                    >
+                      <Wifi className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Pico 연결 설정</span>
+                    </button>
 
                     {/* 1. 장치 구성 관리 */}
                     <button

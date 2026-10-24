@@ -17,7 +17,7 @@ import { RoomCodeModal } from '@/components/ui/RoomCodeModal';
 import { ReviewModal } from '@/components/ui/ReviewModal';
 import { ExhibitionOverlay } from '@/components/ui/ExhibitionOverlay';
 import { useIoTStore } from '@/core/store/useIoTStore';
-import { RoomPackage } from '@/core/types/iot';
+import { RoomConnection, RoomPackage } from '@/core/types/iot';
 import { BUILTIN_ROOMS, metaToRoomItem, roomsApi } from '@/core/rooms/roomsApi';
 import { Loader2, ArrowLeft, SlidersHorizontal, Calendar, Eye } from 'lucide-react';
 
@@ -63,8 +63,16 @@ export default function HomePage() {
   const addLog = useIoTStore((s) => s.addLog);
   const activeRoomPackage = useIoTStore((s) => s.activeRoomPackage);
   const setActiveRoomPackage = useIoTStore((s) => s.setActiveRoomPackage);
+  const applyRoomConnection = useIoTStore((s) => s.applyRoomConnection);
 
   const currentRoom = roomList.find((r) => r.id === activeRoomId) || roomList[0];
+
+  // 공간마다 Pico 2 W 1대: 공간을 선택하거나 연결 설정이 바뀌면 그 공간의 Pico(또는 시뮬레이션)로 전환
+  useEffect(() => {
+    applyRoomConnection(currentRoom.name, { picoIp: currentRoom.picoIp, mode: currentRoom.mode });
+    // 이름 변경만으로는 다시 연결하지 않음
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRoom.id, currentRoom.picoIp, currentRoom.mode, applyRoomConnection]);
 
   const handleApproveProposal = () => {
     setApprovalStatus('approved');
@@ -83,8 +91,9 @@ export default function HomePage() {
   // 전시 PC(rooms-data/)에 저장된 팀 공간 목록 불러오기
   const refreshRooms = useCallback(async () => {
     try {
-      const metas = await roomsApi.list();
-      setRoomList([...BUILTIN_ROOMS, ...metas.map(metaToRoomItem)]);
+      const [metas, builtin] = await Promise.all([roomsApi.list(), roomsApi.builtinConnections()]);
+      const builtinRooms = BUILTIN_ROOMS.map((r) => ({ ...r, ...(builtin[r.id] || {}) }));
+      setRoomList([...builtinRooms, ...metas.map(metaToRoomItem)]);
     } catch (err) {
       addLog('warn', `팀 공간 목록을 불러오지 못했습니다: ${err instanceof Error ? err.message : err}`, 'SYSTEM');
     }
@@ -133,6 +142,28 @@ export default function HomePage() {
   };
 
   const findRoom = (roomId: string) => roomList.find((r) => r.id === roomId);
+
+  // 현재 공간의 Pico 연결 설정 저장 (업로드 공간: room.json / 기본 예제 공간: _builtin.json)
+  const handleSaveConnection = async (conn: RoomConnection) => {
+    const room = currentRoom;
+    try {
+      if (room.source === 'uploaded') {
+        applyPackage(await roomsApi.patch(room.id, { picoIp: conn.picoIp, mode: conn.mode }));
+      } else {
+        const saved = await roomsApi.patchBuiltin(room.id, conn);
+        setRoomList((prev) => prev.map((r) => (r.id === room.id ? { ...r, ...saved } : r)));
+      }
+      showToast(
+        conn.mode === 'hardware'
+          ? `"${room.name}" 공간을 Pico 2 W (${conn.picoIp})에 연결합니다.`
+          : `"${room.name}" 공간을 시뮬레이션 모드로 설정했습니다.`
+      );
+      return true;
+    } catch (err) {
+      showToast(`연결 설정 저장 실패: ${err instanceof Error ? err.message : err}`);
+      return false;
+    }
+  };
 
   // 좌측 NavRail 탭 전환 및 3D 가상 공간 뷰 포커스 핸들러
   const handleNavTabChange = (tab: string) => {
@@ -261,6 +292,7 @@ export default function HomePage() {
         onDuplicateRoom={handleDuplicateRoom}
         onDeleteRoom={handleDeleteRoom}
         onOpenCodeModal={() => setShowCodeModal(true)}
+        onOpenConnectionModal={() => setShowIpModal(true)}
       />
 
       {/* 3. 중앙 3D 가상 공간 워크스페이스 */}
@@ -271,6 +303,11 @@ export default function HomePage() {
           activeTab={activeCenterTab}
           onTabChange={setActiveCenterTab}
           onOpenIpModal={() => setShowIpModal(true)}
+          onChangeMode={(mode) => {
+            // 하드웨어로 바꾸려는데 이 공간의 Pico IP 가 없으면 연결 설정부터
+            if (mode === 'hardware' && !currentRoom.picoIp) setShowIpModal(true);
+            else handleSaveConnection({ picoIp: currentRoom.picoIp, mode });
+          }}
         />
 
         {/* 메인 3D 가상 공간 캔버스 */}
@@ -358,6 +395,9 @@ export default function HomePage() {
       <PicoIpModal
         isOpen={showIpModal}
         onClose={() => setShowIpModal(false)}
+        roomName={currentRoom.name}
+        connection={{ picoIp: currentRoom.picoIp, mode: currentRoom.mode }}
+        onSave={handleSaveConnection}
       />
 
       <DeviceManageModal
@@ -385,6 +425,10 @@ export default function HomePage() {
         pkg={activeRoomPackage}
         onPackageChange={applyPackage}
         onFeedbackMessage={showToast}
+        onOpenConnection={() => {
+          setShowCodeModal(false);
+          setShowIpModal(true);
+        }}
       />
 
       <ReviewModal

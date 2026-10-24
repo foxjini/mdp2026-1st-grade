@@ -19,6 +19,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
+import { BaseDeviceId } from '@/core/types/iot';
 
 interface DeviceManageModalProps {
   isOpen: boolean;
@@ -156,14 +157,18 @@ export function DeviceManageModal({
       status: '정상 가동',
     },
     {
-      id: 'rgb_led',
+      id: 'rgb',
       name: '실내 무드등 (RGB LED)',
       pin: 'GP18, GP19, GP20',
       type: '3채널 PWM 출력',
       role: '실내 조명 색상 및 밝기 물리적 발광',
       status: '정상 가동',
     },
-  ];
+  ].map((dev) => {
+    // 업로드 공간은 room.json baseDevices 에 있는 장치만 이 공간의 Pico 에 연결됨
+    const used = !roomPackage || roomPackage.meta.baseDevices.includes(dev.id as BaseDeviceId);
+    return { ...dev, used, status: used ? dev.status : '미사용 (핀 확장 가능)' };
+  });
 
   const handleSelectPreset = (p: PresetItem) => {
     setSelectedPresetId(p.id);
@@ -178,8 +183,10 @@ export function DeviceManageModal({
 
   const generatedPrompt = `[공간 꾸러미 바이브 코딩 요청]
 저희 팀의 프로젝트 주제는 "${projectName}"입니다.${roomPackage ? `\n공간 ID: ${roomPackage.meta.id} (공간 이름: ${roomPackage.meta.name})` : ''}
-전시용 공용 하드웨어(기본 4종: DHT11 GP15 · Cds GP26 · SG90 GP16 · RGB LED GP18/19/20)에 아래 장치를 확장합니다.
-(기본 4종 핀을 적으면 새 부품이 아니라 기본 장치를 우리 주제에 맞게 재해석해서 사용합니다.)
+우리 팀 전용 Pico 2 W 에 연결하는 기본 장치: ${
+    roomPackage ? roomPackage.meta.baseDevices.join(', ') || '없음' : 'dht11, cds, sg90, rgb'
+  } (DHT11 GP15 · Cds GP26 · SG90 GP16 · RGB LED GP18/19/20)
+여기에 아래 장치를 확장합니다. (기본 장치 핀을 적으면 새 부품이 아니라 기본 장치를 우리 주제에 맞게 재해석해서 사용합니다.)
 
 1. 확장 센서: ${sensorName}
    - 연결 핀: ${sensorPin}
@@ -191,7 +198,7 @@ export function DeviceManageModal({
 
 [AI 코딩 지침 (Context Engineering 규칙 준수)]
 플랫폼 원본(src/, firmware/)은 절대 수정하지 말고, context/CONTEXT_ROOM_PACKAGE_SPEC.md 규격의 4개 파일만 작성해 주세요.
-1. room.json  : customSensors(확장 센서), pins(확장 핀: 기본 4종 핀 제외)
+1. room.json  : baseDevices(사용 기본 장치), customSensors(확장 센서), pins(확장 핀: 사용하는 기본 장치 핀 제외)
 2. Scene.tsx  : 허용 모듈만 import, '@/core/sdk' 의 useSensor/useCustomValue/useServo/useRgb/sendCommand 사용
 3. mock.js    : module.exports = { tick(state), onCommand(action, value, state) }
 4. code.py    : 팀 모듈 setup(base) / read(base) / handle(base, action, value)`;
@@ -287,11 +294,15 @@ export function DeviceManageModal({
         {activeTab === 'current' && (
           <div className="flex flex-col gap-3.5 overflow-y-auto pr-1">
             <div className="flex flex-col gap-2">
-              <span className="text-[11px] font-bold text-slate-400 tracking-wider">공용 기본 장치 (모든 팀 공유)</span>
+              <span className="text-[11px] font-bold text-slate-400 tracking-wider">
+                기본 장치 (이 공간의 Pico 2 W{picoIp ? ` · ${picoIp}` : ''})
+              </span>
               {referenceDevices.map((dev) => (
                 <div
                   key={dev.id}
-                  className="p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 flex items-center justify-between transition-colors"
+                  className={`p-3 rounded-2xl bg-slate-50 hover:bg-slate-100/70 border border-slate-200/80 flex items-center justify-between transition-colors ${
+                    dev.used ? '' : 'opacity-50'
+                  }`}
                 >
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
@@ -306,8 +317,8 @@ export function DeviceManageModal({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                    <span className="text-xs font-bold text-emerald-600">{dev.status}</span>
+                    {dev.used && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    <span className={`text-xs font-bold ${dev.used ? 'text-emerald-600' : 'text-slate-400'}`}>{dev.status}</span>
                   </div>
                 </div>
               ))}

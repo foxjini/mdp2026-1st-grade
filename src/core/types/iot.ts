@@ -61,13 +61,31 @@ export interface CustomSensorDef {
   maxWarning?: number;
 }
 
+// 기본 장치 4종 중 공간(팀 Pico)이 실제로 연결해 사용하는 장치
+export const BASE_DEVICE_IDS = ['dht11', 'cds', 'sg90', 'rgb'] as const;
+export type BaseDeviceId = (typeof BASE_DEVICE_IDS)[number];
+
+export const BASE_DEVICE_INFO: Record<BaseDeviceId, { name: string; pins: string[] }> = {
+  dht11: { name: 'DHT11 온습도', pins: ['GP15'] },
+  cds: { name: 'Cds 조도', pins: ['GP26'] },
+  sg90: { name: 'SG90 서보', pins: ['GP16'] },
+  rgb: { name: 'RGB LED', pins: ['GP18', 'GP19', 'GP20'] },
+};
+
+// 공간별 Pico 2 W 연결 설정 (공간을 선택하면 이 설정으로 자동 연결)
+export interface RoomConnection {
+  picoIp: string;         // 예: "192.168.0.51" (빈 값 = 미지정)
+  mode: PlatformMode;     // 'simulation' | 'hardware'
+}
+
 // room.json 내용
-export interface RoomMeta {
+export interface RoomMeta extends RoomConnection {
   id: string;
   name: string;
   team: string;
   iconType: RoomIconType;
   sensorsDesc: string;
+  baseDevices: BaseDeviceId[];
   customSensors: CustomSensorDef[];
   pins: string[];         // 팀이 추가로 사용하는 Pico 핀 (예: ["GP27"])
   hasNotification?: boolean;
@@ -78,7 +96,7 @@ export interface RoomMeta {
 export interface RoomPackage {
   meta: RoomMeta;
   files: Partial<Record<Exclude<RoomFileName, 'room.json'>, string>>;
-  warnings: string[];     // 핀 충돌 등 서버 검사 경고
+  warnings: string[];     // 핀 충돌 · IP 중복 등 서버 검사 경고
 }
 
 // 팀 확장 액추에이터 명령 (POST /api/command)
@@ -123,6 +141,8 @@ export interface IoTPlatformState {
   // Actions
   setMode: (mode: PlatformMode) => void;
   setPicoIpAddress: (ip: string) => void;
+  // 공간 선택 시 그 공간의 Pico 2 W 로 연결 전환 (모드 + IP 동시 변경)
+  applyRoomConnection: (roomName: string, conn: RoomConnection) => void;
   setConnectionState: (state: ConnectionState) => void;
   setSelectedDevice: (deviceId: string | null) => void;
   setExhibitionMode: (enabled: boolean) => void;
