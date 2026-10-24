@@ -152,6 +152,8 @@ export function normalizeMeta(input: unknown, id: string, prev?: RoomMeta): Room
     customSensors,
     pins,
     hasNotification: typeof src.hasNotification === 'boolean' ? src.hasNotification : prev?.hasNotification,
+    // 업로드 여부는 서버만 기록 (업로드 파일 안의 같은 이름 값은 무시)
+    roomJsonUploadedAt: prev?.roomJsonUploadedAt,
     createdAt: prev?.createdAt || now,
     updatedAt: now,
   };
@@ -291,7 +293,7 @@ export async function writeRoomFiles(id: string, files: Record<string, unknown>)
       const { mode: _mode, ...rest } = src;
       void _mode;
       if (typeof rest.picoIp !== 'string' || !rest.picoIp.trim()) delete rest.picoIp;
-      await writeMeta(normalizeMeta(rest, id, prev));
+      await writeMeta({ ...normalizeMeta(rest, id, prev), roomJsonUploadedAt: Date.now() });
     }
   }
   // room.json 검증이 끝난 뒤 나머지 파일 저장
@@ -321,7 +323,11 @@ export async function duplicateRoom(id: string): Promise<RoomPackage> {
   });
   const files: Record<string, string> = {};
   Object.entries(src.files).forEach(([k, v]) => v !== undefined && (files[k] = v));
-  return Object.keys(files).length ? writeRoomFiles(copy.meta.id, files) : copy;
+  const result = Object.keys(files).length ? await writeRoomFiles(copy.meta.id, files) : copy;
+  if (!src.meta.roomJsonUploadedAt) return result;
+  // 원본의 room.json 업로드 여부를 사본에도 유지
+  await writeMeta({ ...result.meta, roomJsonUploadedAt: src.meta.roomJsonUploadedAt });
+  return getRoom(copy.meta.id);
 }
 
 export async function deleteRoom(id: string): Promise<void> {

@@ -801,6 +801,7 @@
             <li><strong>[공간 생성 후 코드 업로드 →]</strong> 클릭 → 공간 ID (예: <code>room_mx1abc</code>) 발급</li>
           </ol>
           <p>나중에 다시 열 때: 공간 오른쪽 <strong>⋮ → 코드 업로드 · 관리</strong> / <strong>⋮ → Pico 연결 설정</strong></p>
+          <p>공간 ID 는 <strong>⋮ → 공간 ID 복사</strong> 또는 업로드 창 상단 ID 옆 📋 아이콘으로 복사합니다. room.json 은 직접 올리기 전까지 '미업로드'로 보이며, 그동안은 새 공간 추가에서 입력한 기본값을 씁니다.</p>
         </div>
         <div class="meta-box">
           <h3>2️⃣ 코드 업로드 창 (2/2)</h3>
@@ -1217,7 +1218,7 @@ def handle(base, action, value):
         <tbody>
           <tr><td><strong>1</strong></td><td>선생님께 우리 팀 Pico IP 받기 (예: 팜 <code>192.168.0.51</code>, 펫룸 <code>192.168.0.52</code> …)</td><td>팀마다 다른 IP</td></tr>
           <tr><td><strong>2</strong></td><td>우리 공간 <strong>⋮ → Pico 연결 설정</strong> 에 IP 입력 → <strong>[Pico 2 W 연결 저장]</strong> (Pico 준비 전이면 <strong>[이 공간은 시뮬레이션으로]</strong>)</td><td>대시보드 사이드바</td></tr>
-          <tr><td><strong>3</strong></td><td>우리 공간 ID 확인 (코드 업로드 창 상단 또는 목록 명령)</td><td><code>npm run firmware:bundle</code></td></tr>
+          <tr><td><strong>3</strong></td><td>우리 공간 ID 복사: 공간 <strong>⋮ → 공간 ID 복사</strong> 또는 코드 업로드 창 상단 ID 옆 <strong>📋 아이콘</strong></td><td><code>npm run firmware:bundle</code></td></tr>
           <tr><td><strong>4</strong></td><td>우리 Pico 를 USB 로 연결 → CIRCUITPY 드라이브 문자 확인 (예: <code>E:</code>) → 펌웨어 설치</td><td><code>npm run firmware:bundle -- 공간ID E:\</code><br>(코드 업로드 창의 <strong>[복사]</strong> 버튼)</td></tr>
           <tr><td><strong>5</strong></td><td><code>settings.toml</code> 에 Wi-Fi 이름 · 암호 입력, <code>lib/</code> 에 스크립트가 알려 준 라이브러리 복사</td><td>CIRCUITPY 드라이브</td></tr>
           <tr><td><strong>6</strong></td><td>Pico 재부팅 → 시리얼 창에 <code>Pico 2 W IP: 192.168.0.51</code> 확인 → 대시보드에서 우리 공간 선택</td><td>헤더 <code>Pico 2 W 192.168.0.51 · 연결됨</code></td></tr>

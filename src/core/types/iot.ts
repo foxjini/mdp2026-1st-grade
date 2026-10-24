@@ -89,6 +89,7 @@ export interface RoomMeta extends RoomConnection {
   customSensors: CustomSensorDef[];
   pins: string[];         // 팀이 추가로 사용하는 Pico 핀 (예: ["GP27"])
   hasNotification?: boolean;
+  roomJsonUploadedAt?: number; // 팀이 room.json 파일을 직접 업로드한 시각 (없으면 '새 공간 추가' 기본값)
   createdAt: number;
   updatedAt: number;
 }

@@ -50,6 +50,7 @@ interface RoomsSidebarProps {
   onDeleteRoom?: (roomId: string) => void;
   onOpenCodeModal?: (roomId: string) => void;
   onOpenConnectionModal?: (roomId: string) => void;
+  onCopyRoomId?: (roomId: string) => void;
   roomList: RoomItem[];
 }
 
@@ -65,6 +66,7 @@ export function RoomsSidebar({
   onDeleteRoom = () => {},
   onOpenCodeModal = () => {},
   onOpenConnectionModal = () => {},
+  onCopyRoomId = () => {},
   roomList,
 }: RoomsSidebarProps) {
   // 열려있는 점 3개 메뉴의 공간 ID
@@ -283,6 +285,18 @@ export function RoomsSidebar({
                     >
                       <Wifi className="w-3.5 h-3.5 text-emerald-500" />
                       <span>Pico 연결 설정</span>
+                    </button>
+
+                    {/* 0-2. 공간 ID 복사 (펌웨어 묶기 · mock 서버 --room 에 사용) */}
+                    <button
+                      onClick={() => {
+                        onCopyRoomId(room.id);
+                        setOpenMenuRoomId(null);
+                      }}
+                      className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-2"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-slate-500" />
+                      <span>공간 ID 복사</span>
                     </button>
 
                     {/* 1. 장치 구성 관리 */}

@@ -299,6 +299,14 @@ export default function HomePage() {
         onDeleteRoom={handleDeleteRoom}
         onOpenCodeModal={() => setShowCodeModal(true)}
         onOpenConnectionModal={() => setShowIpModal(true)}
+        onCopyRoomId={async (roomId) => {
+          try {
+            await navigator.clipboard.writeText(roomId);
+            showToast(`공간 ID "${roomId}" 가 복사되었습니다.`);
+          } catch {
+            showToast(`공간 ID: ${roomId} (클립보드를 쓸 수 없어 직접 복사하세요)`);
+          }
+        }}
       />
 
       {/* 3. 중앙 3D 가상 공간 워크스페이스 */}

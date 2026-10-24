@@ -17,6 +17,7 @@ import {
   ClipboardPaste,
   KeyRound,
   Wifi,
+  Check,
 } from 'lucide-react';
 import { BASE_DEVICE_INFO, RoomFileName, RoomMeta, RoomPackage, ROOM_FILE_NAMES } from '@/core/types/iot';
 import { roomsApi, getUploadKey, setUploadKey } from '@/core/rooms/roomsApi';
@@ -103,6 +104,7 @@ export function RoomCodeModal({
   onOpenConnection = () => {},
 }: RoomCodeModalProps) {
   const [busy, setBusy] = useState(false);
+  const [idCopied, setIdCopied] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [idea, setIdea] = useState('');
   const [pasteTarget, setPasteTarget] = useState<RoomFileName>('Scene.tsx');
@@ -116,6 +118,18 @@ export function RoomCodeModal({
   if (!isOpen || !pkg) return null;
   const meta = pkg.meta;
   const bundleCommand = `npm run firmware:bundle -- ${meta.id} E:\\`;
+
+  // 펌웨어 묶기 · mock 서버 --room · AI 대화에 쓰는 공간 ID 복사
+  const copyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(meta.id);
+      setIdCopied(true);
+      setTimeout(() => setIdCopied(false), 2000);
+      onFeedbackMessage(`공간 ID "${meta.id}" 가 복사되었습니다.`);
+    } catch {
+      onFeedbackMessage(`공간 ID: ${meta.id} (클립보드를 쓸 수 없어 직접 복사하세요)`);
+    }
+  };
 
   const upload = async (files: Record<string, string>) => {
     const problems: string[] = [];
@@ -208,7 +222,17 @@ export function RoomCodeModal({
                 코드 업로드 <span className="text-blue-600">(2/2)</span> · {meta.name}
               </h3>
               <p className="text-xs text-slate-400 font-medium truncate">
-                팀: {meta.team || '미정'} · 공간 ID <code className="font-mono text-slate-500">{meta.id}</code>
+                팀: {meta.team || '미정'} · 공간 ID <code className="font-mono text-slate-500 select-text">{meta.id}</code>
+                <button
+                  onClick={copyRoomId}
+                  title="공간 ID 복사"
+                  aria-label="공간 ID 복사"
+                  className={`ml-1 inline-flex align-middle p-1 rounded-md border transition-colors ${
+                    idCopied ? 'border-emerald-300 bg-emerald-50 text-emerald-600' : 'border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-300'
+                  }`}
+                >
+                  {idCopied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                </button>
               </p>
             </div>
           </div>
@@ -297,7 +321,8 @@ export function RoomCodeModal({
               const info = FILE_INFO[name];
               const Icon = info.icon;
               const content = currentContent(pkg, name);
-              const uploaded = name === 'room.json' ? true : !!content;
+              // room.json 은 '새 공간 추가' 때 기본값으로 만들어지므로, 팀이 직접 올렸을 때만 업로드됨으로 표시
+              const uploaded = name === 'room.json' ? !!meta.roomJsonUploadedAt : !!content;
               const sceneError = name === 'Scene.tsx' && statusForRoom?.state === 'error';
               return (
                 <div
@@ -321,6 +346,9 @@ export function RoomCodeModal({
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500">{info.desc}</p>
+                  {name === 'room.json' && !uploaded && (
+                    <p className="text-[10px] text-amber-700">새 공간 추가에서 입력한 기본값 사용 중 (확장 센서 · 핀 정보는 room.json 을 올려야 반영)</p>
+                  )}
                   {sceneError && (
                     <p className="text-[10px] font-mono text-rose-700 whitespace-pre-wrap break-words select-text">{statusForRoom?.message}</p>
                   )}
@@ -331,7 +359,7 @@ export function RoomCodeModal({
                     >
                       빈 템플릿
                     </button>
-                    {uploaded && (
+                    {(uploaded || name === 'room.json') && (
                       <a
                         href={name === 'room.json' ? undefined : `/api/rooms/${meta.id}/files/${name}`}
                         onClick={name === 'room.json' ? () => downloadText('room.json', roomJsonTemplate(meta)) : undefined}
