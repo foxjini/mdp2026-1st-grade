@@ -8,7 +8,8 @@ import { IIoTAdapter } from '@/core/adapter/IIoTAdapter';
 
 export function IoTProvider({ children }: { children: React.ReactNode }) {
   const mode = useIoTStore((s) => s.mode);
-  const picoIpAddress = useIoTStore((s) => s.picoIpAddress);
+  // 시뮬레이션에서는 IP 가 바뀌어도 어댑터를 다시 만들지 않음 (mock.js 상태가 초기화되지 않도록)
+  const picoIpAddress = useIoTStore((s) => (s.mode === 'hardware' ? s.picoIpAddress : ''));
   const currentAdapterRef = useRef<IIoTAdapter | null>(null);
 
   useEffect(() => {

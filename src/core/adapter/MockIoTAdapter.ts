@@ -1,7 +1,7 @@
 import { IIoTAdapter } from './IIoTAdapter';
 import { useIoTStore } from '../store/useIoTStore';
 import { CustomCommand, RoomPackage } from '../types/iot';
-import { compileMock, sanitizeMockValues, MockState, TeamMock } from '../runtime/mockRuntime';
+import { compileMock, splitMockValues, MockState, TeamMock } from '../runtime/mockRuntime';
 
 export class MockIoTAdapter implements IIoTAdapter {
   private sensorInterval: NodeJS.Timeout | null = null;
@@ -97,9 +97,17 @@ export class MockIoTAdapter implements IIoTAdapter {
 
   private applyValues(values: unknown): void {
     const store = useIoTStore.getState();
-    Object.entries(sanitizeMockValues(values)).forEach(([key, value]) => {
+    const { custom, base } = splitMockValues(values);
+    Object.entries(custom).forEach(([key, value]) => {
       store.updateCustomSensor(key, value);
     });
+    // mock.js 가 servo_angle / rgb_color / rgb_state 를 돌려주면 code.py 처럼 기본 장치도 움직임
+    if (base.servo_angle !== undefined || base.rgb_color !== undefined || base.rgb_state !== undefined) {
+      store.syncReportedActuators(
+        { servoAngle: base.servo_angle, rgbColor: base.rgb_color, rgbState: base.rgb_state },
+        'MOCK'
+      );
+    }
   }
 
   private runTeamTick(): void {

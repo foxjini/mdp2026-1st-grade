@@ -23,7 +23,9 @@ export async function GET(
     const data = await res.json();
     return NextResponse.json(data);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Fetch failed';
+    // Node fetch 는 "fetch failed" 만 주고 실제 원인(연결 거부, 막힌 포트 등)은 cause 에 담김
+    const cause = err instanceof Error && err.cause instanceof Error ? err.cause.message : '';
+    const message = err instanceof Error ? `Pico 연결 실패: ${cause || err.message}` : 'Fetch failed';
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }
@@ -54,7 +56,9 @@ export async function POST(
     const data = await res.json();
     return NextResponse.json(data);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Fetch failed';
+    // Node fetch 는 "fetch failed" 만 주고 실제 원인(연결 거부, 막힌 포트 등)은 cause 에 담김
+    const cause = err instanceof Error && err.cause instanceof Error ? err.cause.message : '';
+    const message = err instanceof Error ? `Pico 연결 실패: ${cause || err.message}` : 'Fetch failed';
     return NextResponse.json({ error: message }, { status: 502 });
   }
 }

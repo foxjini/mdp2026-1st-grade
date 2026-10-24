@@ -64,8 +64,14 @@ export default function HomePage() {
   const activeRoomPackage = useIoTStore((s) => s.activeRoomPackage);
   const setActiveRoomPackage = useIoTStore((s) => s.setActiveRoomPackage);
   const applyRoomConnection = useIoTStore((s) => s.applyRoomConnection);
+  const resetActuators = useIoTStore((s) => s.resetActuators);
 
   const currentRoom = roomList.find((r) => r.id === activeRoomId) || roomList[0];
+
+  // 공간을 바꾸면 시뮬레이션 서보/LED 를 새로 시작 (하드웨어 공간은 곧 그 Pico 의 실제 값으로 갱신됨)
+  useEffect(() => {
+    resetActuators();
+  }, [currentRoom.id, resetActuators]);
 
   // 공간마다 Pico 2 W 1대: 공간을 선택하거나 연결 설정이 바뀌면 그 공간의 Pico(또는 시뮬레이션)로 전환
   useEffect(() => {

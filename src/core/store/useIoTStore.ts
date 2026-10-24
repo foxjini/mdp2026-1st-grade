@@ -167,6 +167,48 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
     return true;
   },
 
+  // 시뮬레이션 공간으로 바꿀 때 이전 공간의 서보 각도 · LED 색이 남지 않도록 기본값으로
+  resetActuators: () =>
+    set((s) => ({
+      actuators: {
+        sg90_door: { ...s.actuators.sg90_door, targetAngle: 0, reportedAngle: 0, pending: false, errorMessage: undefined },
+        rgb_light: {
+          ...s.actuators.rgb_light,
+          targetColor: '#3B82F6',
+          reportedColor: '#3B82F6',
+          targetState: 'ON',
+          reportedState: 'ON',
+          pending: false,
+          errorMessage: undefined,
+        },
+      },
+    })),
+
+  // 장치가 스스로 바뀐 상태를 반영 (Pico 폴링 · mock.js). 명령 대기 중이거나 값이 같으면 무시 → 로그 반복 방지
+  syncReportedActuators: (next, source) => {
+    const { sg90_door: door, rgb_light: rgb } = get().actuators;
+    const servoChanged = next.servoAngle !== undefined && !door.pending && door.reportedAngle !== next.servoAngle;
+    const color = next.rgbColor ?? rgb.reportedColor;
+    const state = next.rgbState ?? rgb.reportedState;
+    const rgbChanged =
+      (next.rgbColor !== undefined || next.rgbState !== undefined) &&
+      !rgb.pending &&
+      (rgb.reportedColor !== color || rgb.reportedState !== state);
+    if (!servoChanged && !rgbChanged) return;
+    set((s) => ({
+      actuators: {
+        sg90_door: servoChanged
+          ? { ...s.actuators.sg90_door, reportedAngle: next.servoAngle as number, targetAngle: next.servoAngle as number }
+          : s.actuators.sg90_door,
+        rgb_light: rgbChanged
+          ? { ...s.actuators.rgb_light, reportedColor: color, targetColor: color, reportedState: state, targetState: state }
+          : s.actuators.rgb_light,
+      },
+    }));
+    if (servoChanged) get().addLog('info', `SG90 각도 변경 감지: ${next.servoAngle}°`, source);
+    if (rgbChanged) get().addLog('info', `RGB LED 변경 감지: ${color} [${state}]`, source);
+  },
+
   confirmServoAck: (angle) => {
     set((state) => ({
       actuators: {

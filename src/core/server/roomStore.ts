@@ -64,6 +64,15 @@ function num(v: unknown): number | undefined {
   return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
 }
 
+// 브라우저 · Node fetch 가 보안상 막는 포트 (WHATWG Fetch "bad port" 목록) — 이 포트의 Pico/mock 에는 연결할 수 없음
+// (firmware/mock_pico_server.js 의 BLOCKED_PORTS 와 동일하게 유지)
+export const BLOCKED_PORTS = new Set([
+  1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79, 87, 95, 101, 102, 103, 104, 109, 110, 111,
+  113, 115, 117, 119, 123, 135, 137, 139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526, 530, 531, 532, 540, 548,
+  554, 556, 563, 587, 601, 636, 989, 990, 993, 995, 1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566,
+  6665, 6666, 6667, 6668, 6669, 6679, 6697, 10080,
+]);
+
 // Pico IP / 모드 정규화 (빈 IP 허용, 하드웨어 모드인데 IP가 없으면 시뮬레이션)
 export function normalizeConnection(src: Record<string, unknown>, prev?: RoomConnection): RoomConnection {
   let picoIp = prev?.picoIp || '';
@@ -71,6 +80,10 @@ export function normalizeConnection(src: Record<string, unknown>, prev?: RoomCon
     const ip = src.picoIp.trim().replace(/^https?:\/\//i, '').replace(/\/+$/, '');
     if (ip && !PICO_IP_RE.test(ip)) {
       throw new RoomError(`Pico IP "${src.picoIp}"가 올바르지 않습니다. 예: 192.168.0.51 또는 127.0.0.1:5051`);
+    }
+    const port = Number(ip.split(':')[1] || 80);
+    if (port < 1 || port > 65535 || BLOCKED_PORTS.has(port)) {
+      throw new RoomError(`포트 ${port} 는 브라우저가 보안상 막는 포트라 연결할 수 없습니다. 다른 포트를 쓰세요. (예: 5051, 5052)`);
     }
     picoIp = ip;
   }
@@ -147,7 +160,14 @@ export function normalizeMeta(input: unknown, id: string, prev?: RoomMeta): Room
 async function readMeta(id: string): Promise<RoomMeta | null> {
   try {
     const raw = JSON.parse(await fs.readFile(path.join(roomDir(id), 'room.json'), 'utf8'));
-    const meta = normalizeMeta(raw, id, raw);
+    let meta: RoomMeta;
+    try {
+      meta = normalizeMeta(raw, id, raw);
+    } catch {
+      // 저장된 연결 설정이 (규칙 변경 등으로) 더 이상 유효하지 않아도 공간이 사라지지 않도록
+      // Pico IP 를 비우고 시뮬레이션으로 되돌려 다시 읽음
+      meta = normalizeMeta({ ...raw, picoIp: '', mode: 'simulation' }, id, { ...raw, picoIp: '', mode: 'simulation' });
+    }
     return { ...meta, updatedAt: num(raw.updatedAt) ?? meta.updatedAt };
   } catch {
     return null;

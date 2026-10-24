@@ -37,13 +37,35 @@ export function compileMock(source: string): TeamMock {
   return mod;
 }
 
-// tick/onCommand 반환값 중 유한한 숫자만 남김
-export function sanitizeMockValues(values: unknown): MockValues {
-  const out: MockValues = {};
-  if (!values || typeof values !== 'object') return out;
+// mock.js 가 기본 장치를 흉내 낼 때 쓰는 key (Pico /api/status 와 같은 이름)
+// → code.py 의 base.set_servo() / base.set_rgb() 와 같은 동작을 시뮬레이션에서도 재현
+export interface MockBaseValues {
+  servo_angle?: number;
+  rgb_color?: string;
+  rgb_state?: 'ON' | 'OFF';
+}
+
+export const MOCK_BASE_KEYS = ['servo_angle', 'rgb_color', 'rgb_state'] as const;
+
+// tick/onCommand 반환값 → 확장 센서 값(유한한 숫자) + 기본 장치 값
+export function splitMockValues(values: unknown): { custom: MockValues; base: MockBaseValues } {
+  const custom: MockValues = {};
+  const base: MockBaseValues = {};
+  if (!values || typeof values !== 'object') return { custom, base };
   Object.entries(values as Record<string, unknown>).forEach(([key, v]) => {
-    if (typeof v === 'number' && Number.isFinite(v)) out[key] = v;
-    else if (typeof v === 'boolean') out[key] = v ? 1 : 0;
+    if (key === 'servo_angle') {
+      if (typeof v === 'number' && Number.isFinite(v)) base.servo_angle = Math.max(0, Math.min(180, Math.round(v)));
+    } else if (key === 'rgb_color') {
+      if (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) base.rgb_color = v.toUpperCase();
+    } else if (key === 'rgb_state') {
+      if (v === 'ON' || v === 'OFF') base.rgb_state = v;
+    } else if (typeof v === 'number' && Number.isFinite(v)) custom[key] = v;
+    else if (typeof v === 'boolean') custom[key] = v ? 1 : 0;
   });
-  return out;
+  return { custom, base };
+}
+
+// 확장 센서 값만 필요할 때
+export function sanitizeMockValues(values: unknown): MockValues {
+  return splitMockValues(values).custom;
 }

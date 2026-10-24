@@ -75,8 +75,14 @@ export class CircuitPythonAdapter implements IIoTAdapter {
 
       clearTimeout(timeoutId);
 
-      if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+      if (!res.ok) {
+        // 프록시(/api/pico)는 실패 원인을 { error } 로 알려 줌 (예: fetch failed, 시간 초과)
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body && body.error ? `${body.error} (HTTP ${res.status})` : `HTTP Error: ${res.status}`);
+      }
       const data = await res.json();
+      // 응답이 오는 사이 공간(=Pico)이 바뀌어 이 어댑터가 정리되었다면 이전 Pico 값은 버림
+      if (this.isDestroyed) return;
 
       if (store.connectionState !== 'connected') {
         store.setConnectionState('connected');
@@ -90,13 +96,16 @@ export class CircuitPythonAdapter implements IIoTAdapter {
       const lightVal = typeof data.light_adc === 'number' ? data.light_adc : (typeof data.light_raw === 'number' ? data.light_raw : null);
       if (lightVal !== null) store.updateSensor('cds_light', lightVal);
 
-      // 액추에이터 reported 상태 갱신 (pending이 아닐 때만)
-      if (!store.actuators.sg90_door.pending && typeof data.servo_angle === 'number') {
-        store.confirmServoAck(data.servo_angle);
-      }
-      if (!store.actuators.rgb_light.pending && data.rgb_color && data.rgb_state) {
-        store.confirmRgbAck(data.rgb_color, data.rgb_state);
-      }
+      // 액추에이터 reported 상태 갱신 (명령 대기 중이 아니고 값이 바뀐 경우만 → 폴링마다 로그가 쌓이지 않음)
+      // 팀 모듈이 base.set_servo() / set_rgb() 로 바꾼 상태도 여기서 화면에 반영됨
+      store.syncReportedActuators(
+        {
+          servoAngle: typeof data.servo_angle === 'number' ? data.servo_angle : undefined,
+          rgbColor: typeof data.rgb_color === 'string' ? data.rgb_color : undefined,
+          rgbState: data.rgb_state === 'ON' || data.rgb_state === 'OFF' ? data.rgb_state : undefined,
+        },
+        'PICO_2W'
+      );
 
       // 팀 확장 센서: Pico 펌웨어는 { rooms: { 공간ID: {...} }, custom: {...전체 병합} } 를 반환
       const roomId = useIoTStore.getState().activeRoomPackage?.meta.id;
@@ -109,6 +118,8 @@ export class CircuitPythonAdapter implements IIoTAdapter {
         });
       }
     } catch (err: unknown) {
+      // 공간 전환으로 정리된 어댑터의 요청이 중단된 것은 오류가 아님 (새 어댑터의 연결 상태를 덮어쓰지 않음)
+      if (this.isDestroyed) return;
       const message = err instanceof Error ? err.message : '통신 오류';
       if (store.connectionState !== 'error') {
         store.setConnectionState('error');

@@ -153,6 +153,11 @@ export interface IoTPlatformState {
   setRgbColor: (color: string) => Promise<boolean>;
   setRgbState: (state: 'ON' | 'OFF') => Promise<boolean>;
 
+  resetActuators: () => void;
+  syncReportedActuators: (
+    next: { servoAngle?: number; rgbColor?: string; rgbState?: 'ON' | 'OFF' },
+    source: LogEntry['source']
+  ) => void;
   confirmServoAck: (angle: number) => void;
   confirmRgbAck: (color: string, state: 'ON' | 'OFF') => void;
   failCommand: (actuatorId: 'sg90_door' | 'rgb_light', errorMessage: string) => void;

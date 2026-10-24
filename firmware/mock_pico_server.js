@@ -29,6 +29,17 @@ function argValue(name) {
 }
 
 const PORT = Number(argValue('--port') || process.env.PORT || 5050);
+// 브라우저가 막는 포트 (src/core/server/roomStore.ts 의 BLOCKED_PORTS 와 동일)
+const BLOCKED_PORTS = [
+  1, 7, 9, 11, 13, 15, 17, 19, 20, 21, 22, 23, 25, 37, 42, 43, 53, 69, 77, 79, 87, 95, 101, 102, 103, 104, 109, 110, 111,
+  113, 115, 117, 119, 123, 135, 137, 139, 143, 161, 179, 389, 427, 465, 512, 513, 514, 515, 526, 530, 531, 532, 540, 548,
+  554, 556, 563, 587, 601, 636, 989, 990, 993, 995, 1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566,
+  6665, 6666, 6667, 6668, 6669, 6679, 6697, 10080,
+];
+if (BLOCKED_PORTS.includes(PORT)) {
+  console.error(`✖ 포트 ${PORT} 는 브라우저가 보안상 막는 포트입니다. 다른 포트를 쓰세요. (예: --port 5051)`);
+  process.exit(1);
+}
 const ONLY_ROOM = argValue('--room') || process.env.ROOM || '';
 const ROOMS_DIR = process.env.ROOMS_DATA_DIR || path.join(__dirname, '..', 'rooms-data');
 const ALL_BASE_DEVICES = ['dht11', 'cds', 'sg90', 'rgb'];
@@ -105,11 +116,19 @@ function syncTeams() {
   }
 }
 
+// 팀 mock.js 반환값 → 확장 센서 값. servo_angle / rgb_color / rgb_state 는 code.py 의
+// base.set_servo() / set_rgb() 처럼 이 mock Pico 의 기본 장치 상태로 반영 (src/core/runtime/mockRuntime.ts 와 동일 규칙)
 function sanitize(values) {
   const out = {};
   if (!values || typeof values !== 'object') return out;
   for (const [k, v] of Object.entries(values)) {
-    if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+    if (k === 'servo_angle') {
+      if (typeof v === 'number' && Number.isFinite(v)) hardwareState.servoAngle = Math.max(0, Math.min(180, Math.round(v)));
+    } else if (k === 'rgb_color') {
+      if (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) hardwareState.rgbColor = v.toUpperCase();
+    } else if (k === 'rgb_state') {
+      if (v === 'ON' || v === 'OFF') hardwareState.rgbState = v;
+    } else if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
     else if (typeof v === 'boolean') out[k] = v ? 1 : 0;
   }
   return out;

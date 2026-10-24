@@ -240,6 +240,21 @@ def handle_status(request: Request):
         "ip": ip_addr,
     }
 
+    # 팀 확장 센서 값을 먼저 읽음 (팀 모듈이 read() 에서 바꾼 서보/LED 상태가 같은 응답에 반영되도록)
+    # rooms = {공간ID: {...}}, custom = 전체 병합
+    rooms = {}
+    custom = {}
+    for room_id, mod in teams.items():
+        if not hasattr(mod, "read"):
+            continue
+        try:
+            values = mod.read(base)
+            if isinstance(values, dict):
+                rooms[room_id] = values
+                custom.update(values)
+        except Exception as err:
+            team_errors[room_id] = str(err)
+
     # 연결된 기본 장치 값만 보냄 (없는 장치는 대시보드에서 '수신 대기')
     if dht:
         try:
@@ -255,19 +270,6 @@ def handle_status(request: Request):
         data["rgb_color"] = current_rgb_color
         data["rgb_state"] = current_rgb_state
 
-    # 팀 확장 센서 값: rooms = {공간ID: {...}}, custom = 전체 병합
-    rooms = {}
-    custom = {}
-    for room_id, mod in teams.items():
-        if not hasattr(mod, "read"):
-            continue
-        try:
-            values = mod.read(base)
-            if isinstance(values, dict):
-                rooms[room_id] = values
-                custom.update(values)
-        except Exception as err:
-            team_errors[room_id] = str(err)
     data["rooms"] = rooms
     data["custom"] = custom
     data["team_errors"] = team_errors
