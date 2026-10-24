@@ -169,7 +169,7 @@ npm run dev          # http://localhost:3001
 
 ## 📚 매뉴얼 · AI 컨텍스트 파일
 
-- **인터랙티브 매뉴얼**: [http://localhost:3001/manual.html](http://localhost:3001/manual.html) (학생 · 교사용 8장 슬라이드)
+- **인터랙티브 매뉴얼**: [http://localhost:3001/manual.html](http://localhost:3001/manual.html) (학생 · 교사용 9장 슬라이드: 전시 구조 → 기본 장치 · 핀 → 공간 추가 · 업로드 → 규격 → 아이디어 공식 → 예시 → 오류 해결 → 우리 팀 Pico 연결 → 전시 당일)
 - **AI 마스터 컨텍스트**: [`context/PLATFORM_FULL_CONTEXT.md`](context/PLATFORM_FULL_CONTEXT.md) — 코드 업로드 창의 [AI 프롬프트 복사] 가 자동으로 포함합니다.
 
 | 파일 | 내용 |

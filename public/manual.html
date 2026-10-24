@@ -645,7 +645,7 @@
       <div class="slide-step-badge" id="header-step-indicator">
         <span>STEP 01</span>
         <span style="color:var(--meta-slate);">/</span>
-        <span>08</span>
+        <span>09</span>
       </div>
 
       <button class="mode-toggle-btn" onclick="toggleScrollMode()" id="scroll-toggle-btn" title="슬라이드 발표 ↔ 전체 문서 연속 스크롤 전환">
@@ -722,7 +722,7 @@
           <tr><td><strong>③ AI 프롬프트 복사</strong></td><td>아이디어 작성 → <strong>[AI 프롬프트 복사]</strong> (플랫폼 컨텍스트 + 공간 ID 자동 포함)</td><td>코드 업로드 창 ①</td></tr>
           <tr><td><strong>④ 바이브 코딩</strong></td><td>ChatGPT · Claude · Gemini 에 붙여넣기 → 4개 파일 받기</td><td>생성형 AI</td></tr>
           <tr><td><strong>⑤ 업로드 · 확인</strong></td><td>파일 끌어다 놓기 또는 코드 붙여넣기 → 3D 화면 확인 → 오류는 AI 에게 다시 질문</td><td>코드 업로드 창 ③</td></tr>
-          <tr><td><strong>⑥ 우리 팀 Pico 연결</strong></td><td>우리 공간 펌웨어를 우리 Pico 에 설치하고, 그 IP 를 <strong>Pico 연결 설정</strong>에 저장</td><td>STEP 03 · STEP 08</td></tr>
+          <tr><td><strong>⑥ 우리 팀 Pico 연결</strong></td><td>우리 공간 펌웨어를 우리 Pico 에 설치하고, 그 IP 를 <strong>Pico 연결 설정</strong>에 저장</td><td>STEP 08</td></tr>
         </tbody>
       </table>
     </article>
@@ -860,12 +860,15 @@
   "team": "1학년 3반 2팀",
   "iconType": "home",
   "sensorsDesc": "사료 무게 · 급식기 뚜껑",
+  "baseDevices": ["cds", "sg90", "rgb"],
+  "picoIp": "192.168.0.52",
   "customSensors": [
     { "key": "food_weight", "name": "사료 무게",
       "unit": "g", "min": 0, "max": 500, "minWarning": 50 }
   ],
   "pins": ["GP27"]
 }</pre>
+          <p style="font-size:12px; color:var(--meta-slate); margin-top:6px;"><code>baseDevices</code> = 우리 Pico 에 연결하는 기본 장치 · <code>picoIp</code> = 우리 Pico IP (비우면 기존 값 유지). 시뮬레이션/하드웨어 모드는 화면의 <strong>Pico 연결 설정</strong>에서만 바꿉니다.</p>
         </div>
         <div class="prompt-box">
           <div class="prompt-header">
@@ -927,9 +930,11 @@ def read(base):
 
 def handle(base, action, value):
     if action == "feed":
-        base.set_servo(90)
+        if base.has("sg90"):     # 기본 장치 연결 확인
+            base.set_servo(90)
         return {"ok": True}
     return {"ok": False}</pre>
+          <p style="font-size:12px; color:var(--meta-slate); margin-top:6px;">우리 Pico 펌웨어가 <code>teams/공간ID.py</code> 로 불러옵니다. <code>baseDevices</code> 장치의 핀은 다시 초기화하지 말고 <code>base</code> 로만 제어합니다.</p>
         </div>
       </div>
 
@@ -939,9 +944,14 @@ def handle(base, action, value):
           <tr><td><code>useSensor('dht11_temp' | 'dht11_humi' | 'cds_light')</code></td><td>기본 센서 <code>{ value, unit, isStale }</code></td></tr>
           <tr><td><code>useCustomValue(key, 기본값)</code> / <code>useCustomSensor(key)</code></td><td>room.json 확장 센서 값</td></tr>
           <tr><td><code>useServo()</code> / <code>useRgb()</code></td><td>SG90 <code>{ angle, setAngle }</code> · RGB <code>{ color, on, setColor, setOn }</code></td></tr>
-          <tr><td><code>sendCommand(action, value)</code></td><td>시뮬레이션 → mock.js <code>onCommand</code> / 하드웨어 → code.py <code>handle</code></td></tr>
+          <tr><td><code>sendCommand(action, value)</code></td><td>시뮬레이션 → mock.js <code>onCommand</code> / 하드웨어 → 우리 Pico 의 code.py <code>handle</code></td></tr>
+          <tr><td><code>base.has('sg90')</code> (code.py)</td><td>이 Pico 에 그 기본 장치가 연결되어 있는지. 연결 안 된 장치의 <code>base</code> 함수는 <code>None</code> 반환 · 동작 안 함</td></tr>
         </tbody>
       </table>
+      <div class="meta-box" style="margin-top:16px;">
+        <h3>🧩 baseDevices 에 없는 기본 장치는?</h3>
+        <p>Scene.tsx 에서 그 장치의 SDK(<code>useServo</code>, <code>useRgb</code>, <code>useSensor</code>)를 쓰지 마세요. 대시보드도 그 장치의 게이지 · 제어 버튼을 숨기거나 '미사용'으로 표시합니다.</p>
+      </div>
       <div class="meta-box warning" style="margin-top:16px;">
         <h3>🔑 key 는 세 곳에서 똑같이</h3>
         <p>room.json <code>customSensors[].key</code> = mock.js · code.py 가 반환하는 key = Scene.tsx <code>useCustomValue('key')</code>. 다르면 게이지가 계속 '수신 대기'로 보입니다.</p>
@@ -1025,6 +1035,7 @@ def handle(base, action, value):
             <button class="copy-btn" onclick="copyFullPrompt('p-1', this)">📋 복사</button>
           </div>
           <pre class="code-block" id="p-1">[주제] 토양이 마르면 자동으로 물을 주는 스마트 팜 온실
+[사용 기본 장치] dht11, cds, sg90, rgb (4종 모두)
 [기본 장치 역할] SG90 = 온실 환기 돔(0° 닫힘 ~ 180° 최대 개방), RGB LED = 식물 생장등, DHT11 = 온실 온습도
 [확장 센서] key: soil_moisture / 토양 수분 / % / 0~100 / 핀 GP27 (ADC1), 35% 미만이면 경고
 [확장 센서] key: pump_on / 관수 펌프 상태 / 0·1 / 핀 GP21 (릴레이)
@@ -1038,6 +1049,7 @@ def handle(base, action, value):
             <button class="copy-btn" onclick="copyFullPrompt('p-2', this)">📋 복사</button>
           </div>
           <pre class="code-block" id="p-2">[주제] 컨베이어 위 불량품을 밀어내는 스마트 팩토리
+[사용 기본 장치] cds, sg90, rgb (DHT11 연결 안 함 → GP15 는 확장에 사용 가능)
 [기본 장치 역할] SG90 = 불량품 푸셔 암(0° 대기 / 60° 밀어내기), RGB LED = 타워 램프(초록 가동 / 노랑 대기 / 빨강 정지), Cds = 물품 통과 감지
 [확장 센서] key: product_count / 생산 수량 / 개 / 0~999 (센서 없음: code.py 에서 Cds 값이 갑자기 낮아질 때 1 증가)
 [확장 동작] 비상정지 버튼을 클릭하면 sendCommand('estop', true) → RGB 빨강, 컨베이어 정지
@@ -1050,6 +1062,7 @@ def handle(base, action, value):
             <button class="copy-btn" onclick="copyFullPrompt('p-3', this)">📋 복사</button>
           </div>
           <pre class="code-block" id="p-3">[주제] 빈자리를 알려 주는 스마트 주차장
+[사용 기본 장치] sg90, rgb (DHT11 · Cds 연결 안 함 → GP15 · GP26 은 확장에 사용 가능)
 [기본 장치 역할] SG90 = 차단기(0° 닫힘 / 90° 열림), RGB LED = 만차 표시(초록 빈자리 / 빨강 만차)
 [확장 센서] key: distance_cm / 차량 거리 / cm / 0~200 / 핀 GP13(Echo), GP14(Trig)  ※ adafruit_hcsr04 라이브러리 필요 → 선생님께 확인
 [확장 센서] key: occupied / 주차 여부 / 0·1 (distance_cm 30 미만이면 1)
@@ -1063,6 +1076,7 @@ def handle(base, action, value):
             <button class="copy-btn" onclick="copyFullPrompt('p-4', this)">📋 복사</button>
           </div>
           <pre class="code-block" id="p-4">[주제] 온도가 오르면 경보를 울리고 비상문을 여는 방재 안전실
+[사용 기본 장치] dht11, sg90, rgb (Cds 연결 안 함)
 [기본 장치 역할] DHT11 = 실내 온도, SG90 = 비상 탈출문, RGB LED = 경보등(평상시 흰색, 35℃ 이상 빨강)
 [확장 센서] key: flame / 불꽃 감지 / 0·1 / 핀 GP17 (디지털 입력)
 [확장 동작] 경보 해제 버튼 클릭 → sendCommand('reset', true)
@@ -1075,6 +1089,7 @@ def handle(base, action, value):
             <button class="copy-btn" onclick="copyFullPrompt('p-5', this)">📋 복사</button>
           </div>
           <pre class="code-block" id="p-5">[주제] 반려동물 자동 급식 펫룸
+[사용 기본 장치] cds, sg90, rgb (DHT11 연결 안 함)
 [기본 장치 역할] SG90 = 사료통 뚜껑, RGB LED = 사료 상태등, Cds = 밤/낮 판단(밤이면 무드등)
 [확장 센서] key: food_weight / 사료 무게 / g / 0~500 / 핀 GP27, 50g 미만 경고
 [확장 동작] 사료통 클릭 → sendCommand('feed', true) → 뚜껑 90° 열기 (다음 read 에서 닫기, time.sleep 금지)
@@ -1087,6 +1102,7 @@ def handle(base, action, value):
             <button class="copy-btn" onclick="copyFullPrompt('p-6', this)">📋 복사</button>
           </div>
           <pre class="code-block" id="p-6">[주제] 쾌적도를 알려 주는 학교 휴게실
+[사용 기본 장치] dht11, cds, sg90, rgb (4종 모두)
 [기본 장치 역할] DHT11 = 온습도, Cds = 조도, RGB LED = 쾌적도 표시(초록 쾌적 / 주황 보통 / 빨강 불쾌), SG90 = 환기창
 [확장 센서] key: comfort / 불쾌지수 / 점 / 50~90 (센서 없음: 온도·습도로 계산 → mock.js 와 code.py 모두 같은 공식)
 [3D 장면] 소파, 테이블, 화분, 창문이 서보 각도에 맞춰 열림
@@ -1119,7 +1135,10 @@ def handle(base, action, value):
           <tr><td><code>Scene.tsx에 화면 컴포넌트가 없습니다</code></td><td>export default 없음</td><td><code>export default function Scene() {...}</code></td></tr>
           <tr><td>3D 화면 빨간 배지 <code>Scene.tsx 실행 오류</code></td><td>값이 없는 변수 사용 등</td><td>배지 메시지 전달. 다른 공간은 영향 없음</td></tr>
           <tr><td>게이지가 계속 <code>수신 대기</code></td><td>key 불일치 / mock.js tick 반환 없음</td><td>room.json · mock.js · code.py 의 key 통일</td></tr>
-          <tr><td><code>핀 충돌</code> 경고</td><td>기본 핀 또는 다른 팀 핀과 겹침</td><td>room.json pins 와 code.py 핀을 빈 핀으로 변경</td></tr>
+          <tr><td><code>핀 충돌</code> 경고</td><td>우리가 고른 기본 장치(baseDevices)의 핀과 겹침</td><td>room.json pins 와 code.py 핀을 빈 핀으로 변경 (또는 그 기본 장치를 baseDevices 에서 빼기)</td></tr>
+          <tr><td><code>Pico IP … 를 다른 공간도 사용합니다</code></td><td>두 공간에 같은 Pico IP 저장</td><td>⋮ → Pico 연결 설정에서 공간마다 다른 IP 로 변경</td></tr>
+          <tr><td>헤더에 <code>Pico 2 W … · 응답 없음</code></td><td>우리 Pico 가 꺼져 있음 / IP 가 다름 / 다른 Wi-Fi</td><td>Pico 시리얼 창의 IP 와 Pico 연결 설정 IP 비교, PC 와 같은 Wi-Fi 인지 확인</td></tr>
+          <tr><td><code>이 Pico 에는 SG90 이(가) 연결되어 있지 않습니다</code></td><td>baseDevices 에 없는 장치를 제어함</td><td>Scene.tsx · code.py 에서 그 장치를 빼거나 baseDevices 에 추가 후 펌웨어 다시 설치</td></tr>
           <tr><td><code>업로드 비밀번호가 올바르지 않습니다</code></td><td>전시 PC 에 비밀번호 설정됨</td><td>선생님께 받은 비밀번호를 업로드 창에 입력</td></tr>
         </tbody>
       </table>
@@ -1169,7 +1188,7 @@ def handle(base, action, value):
     </article>
 
     <!-- =========================================================
-         SLIDE 8: 전시 당일 체크리스트 & FAQ
+         SLIDE 8: 우리 팀 Pico 2 W 연결하기 (공간마다 1대)
          ========================================================= -->
     <article class="slide-card" id="slide-8">
       <div class="slide-header">
@@ -1177,9 +1196,75 @@ def handle(base, action, value):
           <div class="slide-num-pill">
             <span>STEP 08</span>
             <span>·</span>
+            <span>CONNECT OUR PICO</span>
+          </div>
+          <h2>8. 우리 팀 Pico 2 W 연결하기 (공간마다 1대)</h2>
+          <p class="slide-desc">주제마다 센서가 다르므로 팀마다 Pico 를 따로 씁니다. Pico 마다 IP 를 다르게 정하고, 플랫폼의 우리 공간에 그 IP 를 저장하면 공간을 고를 때 자동으로 연결됩니다.</p>
+        </div>
+      </div>
+
+      <table class="meta-table">
+        <thead><tr><th>순서</th><th>할 일</th><th>어디서 / 명령</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td>선생님께 우리 팀 Pico IP 받기 (예: 팜 <code>192.168.0.51</code>, 펫룸 <code>192.168.0.52</code> …)</td><td>팀마다 다른 IP</td></tr>
+          <tr><td><strong>2</strong></td><td>우리 공간 <strong>⋮ → Pico 연결 설정</strong> 에 IP 입력 → <strong>[Pico 2 W 연결 저장]</strong> (Pico 준비 전이면 <strong>[이 공간은 시뮬레이션으로]</strong>)</td><td>대시보드 사이드바</td></tr>
+          <tr><td><strong>3</strong></td><td>우리 공간 ID 확인 (코드 업로드 창 상단 또는 목록 명령)</td><td><code>npm run firmware:bundle</code></td></tr>
+          <tr><td><strong>4</strong></td><td>우리 Pico 를 USB 로 연결 → CIRCUITPY 드라이브 문자 확인 (예: <code>E:</code>) → 펌웨어 설치</td><td><code>npm run firmware:bundle -- 공간ID E:\</code><br>(코드 업로드 창의 <strong>[복사]</strong> 버튼)</td></tr>
+          <tr><td><strong>5</strong></td><td><code>settings.toml</code> 에 Wi-Fi 이름 · 암호 입력, <code>lib/</code> 에 스크립트가 알려 준 라이브러리 복사</td><td>CIRCUITPY 드라이브</td></tr>
+          <tr><td><strong>6</strong></td><td>Pico 재부팅 → 시리얼 창에 <code>Pico 2 W IP: 192.168.0.51</code> 확인 → 대시보드에서 우리 공간 선택</td><td>헤더 <code>Pico 2 W 192.168.0.51 · 연결됨</code></td></tr>
+        </tbody>
+      </table>
+
+      <div class="grid-2">
+        <div class="meta-box highlight">
+          <h3>📦 펌웨어 설치 명령이 해 주는 일</h3>
+          <ul>
+            <li><code>code.py</code> (플랫폼 펌웨어, 수정 금지) 복사</li>
+            <li><code>config.py</code> 생성: 공간 ID + <strong>우리가 고른 기본 장치</strong>만 켜기</li>
+            <li><code>teams/공간ID.py</code> ← 우리가 업로드한 code.py (다른 팀 파일은 지움)</li>
+            <li><code>settings.toml</code> 에 <code>PICO_STATIC_IP</code> (저장한 Pico IP) 자동 기록 · Wi-Fi 정보는 그대로</li>
+            <li>핀 충돌 · Python 문법 · Pico IP 중복 검사, 필요한 라이브러리 안내</li>
+          </ul>
+        </div>
+        <div class="meta-box">
+          <h3>🌐 IP 정하는 2가지 방법</h3>
+          <p><strong>① 고정 IP (권장):</strong> 2번에서 저장한 IP 가 <code>settings.toml</code> 의 <code>PICO_STATIC_IP</code> 로 들어갑니다. 공유기와 같은 대역(예: 192.168.0.x) · DHCP 범위 밖 주소를 쓰세요.</p>
+          <pre class="code-block">PICO_STATIC_IP = "192.168.0.51"
+PICO_NETMASK   = "255.255.255.0"   # 생략 가능
+PICO_GATEWAY   = "192.168.0.1"     # 생략 시 x.x.x.1</pre>
+          <p><strong>② 공유기 DHCP 예약:</strong> <code>PICO_STATIC_IP</code> 줄을 지우고 공유기에서 Pico 에 IP 를 예약 → 시리얼 창의 IP 를 Pico 연결 설정에 입력.</p>
+        </div>
+        <div class="meta-box success">
+          <h3>🔁 공간을 바꾸면 자동 전환</h3>
+          <ul>
+            <li>공간마다 <strong>Pico IP 와 모드(시뮬레이션/하드웨어)</strong>가 저장됩니다.</li>
+            <li>사이드바 공간 아래에 <code>Pico 192.168.0.51</code> 또는 <code>시뮬레이션</code> 표시</li>
+            <li>상단 <strong>시뮬레이션 / Pico 2 W</strong> 토글도 지금 공간에만 저장됩니다.</li>
+            <li>전환 직후 센서는 새 Pico 값이 올 때까지 '수신 대기' 로 보입니다.</li>
+          </ul>
+        </div>
+        <div class="meta-box">
+          <h3>🧪 Pico 없이 연습 (공간마다 mock Pico)</h3>
+          <pre class="code-block">npm run mock:pico -- --room 공간ID_A --port 5051
+npm run mock:pico -- --room 공간ID_B --port 5052</pre>
+          <p>공간 A 의 Pico 연결 설정에 <code>127.0.0.1:5051</code>, 공간 B 에 <code>127.0.0.1:5052</code> 를 저장하면 실제 Pico 처럼 그 공간의 기본 장치 · mock.js 로 응답합니다.</p>
+          <p>확인: 브라우저에서 <code>http://Pico IP/api/teams</code> → 공간 · 기본 장치 · 팀 모듈 오류</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         SLIDE 9: 전시 당일 체크리스트 & FAQ
+         ========================================================= -->
+    <article class="slide-card" id="slide-9">
+      <div class="slide-header">
+        <div class="slide-header-left">
+          <div class="slide-num-pill">
+            <span>STEP 09</span>
+            <span>·</span>
             <span>EXHIBITION DAY</span>
           </div>
-          <h2>8. 전시 당일 체크리스트 (교사용) & FAQ</h2>
+          <h2>9. 전시 당일 체크리스트 (교사용) & FAQ</h2>
           <p class="slide-desc">PC 1대에 모든 팀 공간을 모으고, 공간마다 Pico 2 W 1대를 연결합니다. Pico 마다 IP 가 달라야 합니다.</p>
         </div>
       </div>
@@ -1242,10 +1327,11 @@ def handle(base, action, value):
       <div class="dock-dot" onclick="goToSlide(6)">6</div>
       <div class="dock-dot" onclick="goToSlide(7)">7</div>
       <div class="dock-dot" onclick="goToSlide(8)">8</div>
+      <div class="dock-dot" onclick="goToSlide(9)">9</div>
     </div>
 
     <div class="dock-info" id="dock-page-counter">
-      1 / 8
+      1 / 9
     </div>
 
     <button class="dock-btn" id="next-btn" onclick="changeSlide(1)">
@@ -1262,7 +1348,7 @@ def handle(base, action, value):
   <!-- 4. Client Presentation Controller Script -->
   <script>
     let currentSlide = 1;
-    const totalSlides = 8;
+    const totalSlides = 9;
     let isScrollMode = false;
 
     function updateSlideView() {
