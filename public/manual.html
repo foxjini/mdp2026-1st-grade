@@ -528,6 +528,7 @@
       padding: 8px 16px;
       border-radius: 12px;
       font-size: 12.5px;
+      white-space: nowrap;
       font-weight: 700;
       cursor: pointer;
       display: inline-flex;
@@ -586,6 +587,7 @@
       font-weight: 700;
       color: var(--meta-slate);
       padding: 0 4px;
+      white-space: nowrap;
     }
 
     .fullscreen-btn {
@@ -606,12 +608,66 @@
       color: var(--meta-navy);
     }
 
+    /* 부록 A: 흐름 단계 · 도우미 폼 */
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .flow-step {
+      background: var(--meta-gray-subtle);
+      border: 1px solid var(--meta-border);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--meta-dark);
+    }
+    .flow-step b { color: var(--meta-blue); font-size: 16px; }
+    .flow-step span { font-weight: 700; line-height: 1.4; }
+    .flow-step small { color: var(--meta-slate); font-size: 11.5px; }
+    .flow-step.accent { background: var(--meta-green-light); border-color: rgba(0, 163, 108, 0.3); }
+    .helper-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      margin-top: 12px;
+    }
+    .helper-form label, .helper-form .hf-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--meta-navy);
+    }
+    .helper-form .hf-wide { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+    .helper-form input[type="text"], .helper-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border: 1px solid var(--meta-border);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 400;
+      background: #FFFFFF;
+      color: var(--meta-dark);
+    }
+    .helper-form .hf-checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .helper-form .hf-checks label { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; color: var(--meta-dark); }
+    .helper-build-btn { margin-top: 14px; }
+    .check-list { list-style: none; padding-left: 0 !important; }
+    .appendix-link { color: var(--meta-blue); font-weight: 700; cursor: pointer; text-decoration: underline; }
+
     /* Responsive Adjustments */
     @media (max-width: 900px) {
       .slide-card {
         padding: 24px 20px;
       }
-      .grid-2, .grid-3 {
+      .grid-2, .grid-3, .helper-form, .flow-steps {
         grid-template-columns: 1fr;
       }
       .slide-dock {
@@ -645,7 +701,7 @@
       <div class="slide-step-badge" id="header-step-indicator">
         <span>STEP 01</span>
         <span style="color:var(--meta-slate);">/</span>
-        <span>11</span>
+        <span>12</span>
       </div>
 
       <button class="mode-toggle-btn" onclick="toggleScrollMode()" id="scroll-toggle-btn" title="슬라이드 발표 ↔ 전체 문서 연속 스크롤 전환">
@@ -663,7 +719,7 @@
     <div class="progress-bar-fill" id="progress-fill"></div>
   </div>
 
-  <!-- 2. Main Presentation Stage (8 Slides) -->
+  <!-- 2. Main Presentation Stage (STEP 01~11 + 부록 A) -->
   <main class="presentation-stage">
 
     <!-- =========================================================
@@ -717,7 +773,7 @@
           <tr><th>단계</th><th>할 일</th><th>어디서</th></tr>
         </thead>
         <tbody>
-          <tr><td><strong>① 주제 정하기</strong></td><td>해결할 문제, 어떤 기본 장치를 쓸지, 필요한 확장 부품 정리</td><td>팀 회의 (STEP 05~07 작성법 · STEP 08 예시 참고)</td></tr>
+          <tr><td><strong>① 주제 정하기</strong></td><td>해결할 문제, 어떤 기본 장치를 쓸지, 필요한 확장 부품 정리</td><td>팀 회의 (STEP 05~07 작성법 · STEP 08 예시 참고 · 빈칸 채우기가 어렵다면 <a class="appendix-link" onclick="goToSlide(12)">부록 A: AI 로 아이디어 완성하기</a>)</td></tr>
           <tr><td><strong>② 새 공간 추가</strong></td><td>공간 이름 · 팀 이름 · 아이콘 · 사용할 기본 장치 · (선택) Pico IP → 공간 ID 발급</td><td>대시보드 왼쪽 <strong>+ 새 공간 추가</strong></td></tr>
           <tr><td><strong>③ AI 프롬프트 복사</strong></td><td>아이디어 작성 → <strong>[AI 프롬프트 복사]</strong> (플랫폼 컨텍스트 + 공간 ID 자동 포함)</td><td>코드 업로드 창 ①</td></tr>
           <tr><td><strong>④ 바이브 코딩</strong></td><td>ChatGPT · Claude · Gemini 에 붙여넣기 → 4개 파일 받기</td><td>생성형 AI</td></tr>
@@ -806,7 +862,7 @@
         <div class="meta-box">
           <h3>2️⃣ 코드 업로드 창 (2/2)</h3>
           <ol>
-            <li><strong>① 아이디어 작성</strong> 칸에 STEP 05~07 작성법대로 우리 팀 아이디어 입력</li>
+            <li><strong>① 아이디어 작성</strong> 칸에 STEP 05~07 작성법대로 우리 팀 아이디어 입력 · 빈칸 채우기가 어렵다면 <a class="appendix-link" onclick="goToSlide(12)">부록 A: AI 로 아이디어 완성하기</a></li>
             <li><strong>[AI 프롬프트 복사]</strong> → AI 채팅창에 붙여넣기 (마스터 컨텍스트 + 공간 ID 자동 포함)</li>
             <li>AI 답변의 코드 블록 4개를 파일로 저장 (<code>room.json · Scene.tsx · mock.js · code.py</code>)</li>
             <li><strong>③ 업로드</strong>에 파일을 끌어다 놓기 · 또는 <strong>직접 붙여넣기</strong>에서 파일 종류 선택 후 붙여넣기</li>
@@ -1021,6 +1077,10 @@ def handle(base, action, value):
 [확장 동작] 3D 화면에서 ________ 를 클릭하면 sendCommand('______', ____) 로 ________ 한다.
 [3D 장면] 바닥: ________ / 주요 오브젝트: ________ / 움직임: ________
 [mock 규칙] 하드웨어가 없을 때 확장 센서 값은 ________ 처럼 변한다.</pre>
+      </div>
+      <div class="meta-box highlight" style="margin-top:12px;">
+        <h3>🤖 빈칸 채우기가 어렵다면 → <a class="appendix-link" onclick="goToSlide(12)">부록 A</a></h3>
+        <p>우리 팀 주제와 하드웨어 구성을 생성형 AI 에게 주고, 이 빈칸 템플릿을 함께 완성하는 방법(도우미 프롬프트 · 자동 조립 폼 · 처음부터 끝까지 예시)을 정리했습니다.</p>
       </div>
     </article>
 
@@ -1639,6 +1699,384 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
       </div>
     </article>
 
+    <!-- =========================================================
+         SLIDE 12: 부록 A — 생성형 AI 로 아이디어 프롬프트 완성하기
+         ========================================================= -->
+    <article class="slide-card" id="slide-12">
+      <div class="slide-header">
+        <div class="slide-header-left">
+          <div class="slide-num-pill">
+            <span>부록 A</span>
+            <span>·</span>
+            <span>APPENDIX · AI IDEA HELPER</span>
+          </div>
+          <h2>부록 A. 생성형 AI 로 아이디어 프롬프트 완성하기 → 바이브 코딩으로 이어가기</h2>
+          <p class="slide-desc">STEP 05 빈칸 템플릿을 혼자 채우기 어렵다면, 우리 팀 정보를 AI 에게 주고 <strong>빈칸을 함께 채워 달라고</strong> 하세요. AI 가 필요한 것을 먼저 물어보고, 완성된 아이디어 프롬프트를 돌려줍니다. 그 결과로 본격적인 바이브 코딩을 시작합니다.</p>
+        </div>
+      </div>
+
+      <h3 style="margin:4px 0 10px; font-size:16px;">🗺️ 전체 흐름 — AI 대화창을 2개로 나눠 씁니다</h3>
+      <div class="flow-steps">
+        <div class="flow-step"><b>①</b><span>팀 정보 카드 채우기</span><small>STEP A · 쉬운 말로</small></div>
+        <div class="flow-step"><b>②</b><span>도우미 프롬프트 보내기</span><small>STEP B · <em>대화창 ①</em></small></div>
+        <div class="flow-step"><b>③</b><span>AI 질문에 답하고 완성본 받기</span><small>STEP C</small></div>
+        <div class="flow-step"><b>④</b><span>점검 후 아이디어 칸에 붙여넣기</span><small>STEP D</small></div>
+        <div class="flow-step accent"><b>⑤</b><span>[AI 프롬프트 복사] → 4개 파일</span><small>STEP E · <em>새 대화창 ②</em></small></div>
+      </div>
+      <div class="grid-2" style="margin-top:12px;">
+        <div class="meta-box highlight">
+          <h3>💬 대화창 ① 아이디어 도우미</h3>
+          <p>목표: <strong>설계도(아이디어 프롬프트)</strong> 만들기. 코드는 쓰지 않습니다. AI 는 기획 코치 역할을 합니다. 질문하고, 규칙에 맞는지 확인하고, 빈칸을 숫자까지 채웁니다.</p>
+        </div>
+        <div class="meta-box success">
+          <h3>🛠️ 대화창 ② 바이브 코딩</h3>
+          <p>목표: <strong>4개 파일</strong>(room.json · Scene.tsx · mock.js · code.py) 만들기. 플랫폼의 [AI 프롬프트 복사] 가 규격 + 우리 공간 정보 + 아이디어를 한 번에 담아 줍니다. <strong>새 대화창</strong>에서 시작해야 대화 ① 의 내용과 섞이지 않습니다.</p>
+        </div>
+      </div>
+
+      <!-- STEP A -->
+      <h3 style="margin:24px 0 10px; font-size:16px;">STEP A · 우리 팀 정보 카드 (회의하면서 채우기)</h3>
+      <div class="grid-2">
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>팀 정보 카드 (빈칸)</span><span class="prompt-badge">짧게 · 쉬운 말로</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-teamcard', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-teamcard">[우리 팀 정보 카드]
+1. 주제(한 줄):
+2. 해결하고 싶은 문제:
+3. 누가 쓰나요:
+4. 어떤 장소인가요:
+5. 사용할 기본 장치 ('새 공간 추가'에서 고른 것, dht11 / cds / sg90 / rgb):
+   그 장치로 하고 싶은 일:
+6. 추가 부품과 핀 (없으면 '없음', 모르면 '추천해 주세요'):
+7. 3D 화면에서 꼭 보여주고 싶은 장면 · 감탄 포인트:
+8. 관람객이 클릭하면 일어날 일:
+9. 하지 말 것 · 걱정되는 점:</pre>
+        </div>
+        <div class="meta-box">
+          <h3>✏️ 이렇게 쓰면 충분해요</h3>
+          <ul>
+            <li><strong>완벽하지 않아도 됩니다.</strong> 모르는 칸은 "모르겠음", "추천해 주세요" 라고 쓰면 AI 가 질문합니다.</li>
+            <li><strong>5번은 반드시 정확히</strong> 씁니다. 업로드 창 위쪽의 '연결하는 기본 장치' 와 같아야 합니다.</li>
+            <li>7번에는 장면을 <strong>그림 그리듯</strong> 적습니다. 예) "버스가 멀리서 다가오는 모습", "추우면 벤치가 빨갛게"</li>
+            <li>숫자를 알면 같이 씁니다. 예) "10℃ 아래면", "30초마다"</li>
+            <li>이름 · 학번 · 연락처 같은 <strong>개인정보는 쓰지 않습니다.</strong></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- STEP B -->
+      <h3 style="margin:24px 0 10px; font-size:16px;">STEP B · 아이디어 도우미 프롬프트 만들기 → 대화창 ① 에 붙여넣기</h3>
+      <div class="meta-box highlight">
+        <h3>(가) 자동 조립 (권장) — 칸을 채우고 버튼 한 번</h3>
+        <p>아래 칸에 팀 정보 카드 내용을 적으면, 도우미 프롬프트 전체(역할 · 플랫폼 규칙 · 빈칸 템플릿 · 우리 팀 정보)를 한 번에 복사합니다. 비워 둔 칸은 "(모름 — AI 가 질문해 주세요)" 로 들어갑니다.</p>
+        <div class="helper-form">
+          <label>1. 주제(한 줄)<input id="hf-topic" type="text" placeholder="예: 겨울에 버스 기다리는 사람을 위한 따뜻한 버스정류장"></label>
+          <label>2. 해결하고 싶은 문제<input id="hf-problem" type="text" placeholder="예: 추운 날 오래 기다리면 춥고, 밤에는 어둡다"></label>
+          <label>3. 누가 쓰나요<input id="hf-user" type="text" placeholder="예: 등하교 학생, 어르신"></label>
+          <label>4. 어떤 장소인가요<input id="hf-place" type="text" placeholder="예: 학교 앞 버스정류장"></label>
+          <div class="hf-wide">
+            <span class="hf-label">5. 사용할 기본 장치 ('새 공간 추가'에서 고른 것)</span>
+            <div class="hf-checks">
+              <label><input type="checkbox" value="dht11"> dht11 온습도 (GP15)</label>
+              <label><input type="checkbox" value="cds"> cds 조도 (GP26)</label>
+              <label><input type="checkbox" value="sg90"> sg90 서보 (GP16)</label>
+              <label><input type="checkbox" value="rgb"> rgb LED (GP18~20)</label>
+            </div>
+            <input id="hf-roles" type="text" placeholder="그 장치로 하고 싶은 일 — 예: 온도 재기, 밤이면 불 켜기">
+          </div>
+          <label class="hf-wide">6. 추가 부품과 핀<input id="hf-extra" type="text" placeholder="예: 사람 감지 센서? 모르겠음 추천해 주세요"></label>
+          <label class="hf-wide">7. 3D 화면에서 꼭 보여주고 싶은 장면 · 감탄 포인트<textarea id="hf-scene" rows="2" placeholder="예: 정류장 지붕과 벤치, 버스가 들어오는 모습. 추우면 벤치가 빨갛게 따뜻해지는 것"></textarea></label>
+          <label>8. 관람객이 클릭하면 일어날 일<input id="hf-click" type="text" placeholder="예: 벤치를 누르면 히터 켜기"></label>
+          <label>9. 하지 말 것 · 걱정되는 점<input id="hf-avoid" type="text" placeholder="예: 너무 복잡하지 않게"></label>
+        </div>
+        <button class="master-copy-btn helper-build-btn" onclick="buildHelperPrompt(this)">🧩 도우미 프롬프트 만들기 · 복사</button>
+      </div>
+
+      <div class="prompt-box" style="margin-top:16px;">
+        <div class="prompt-header">
+          <div class="prompt-title-text"><span>(나) 아이디어 도우미 프롬프트 전체</span><span class="prompt-badge">직접 복사 → 맨 아래 카드만 채우기</span></div>
+          <button class="copy-btn" onclick="copyFullPrompt('p-helper', this)">📋 복사</button>
+        </div>
+        <pre class="code-block" id="p-helper" style="max-height:420px;">[역할]
+너는 고등학생 팀의 'IoT 3D 전시 작품' 기획 코치야. 우리 팀이 플랫폼에 넣을 "아이디어 프롬프트"를 완성하도록 도와줘.
+이 아이디어 프롬프트는 나중에 다른 AI 가 4개 파일(room.json · Scene.tsx · mock.js · code.py)을 만드는 설계도로 쓰여.
+지금은 코드를 쓰지 말고, 아래 [채울 템플릿]만 완성해 줘.
+
+[플랫폼 사실 요약 — 이 범위 안에서만 기획할 것]
+- 공간(팀)마다 Raspberry Pi Pico 2 W 1대 (CircuitPython 10.x). 3D 화면은 PC 웹 브라우저에 나온다.
+- 기본 장치 4종 (핀 변경 불가). 팀이 고른 것만 연결한다.
+  · dht11 온습도 센서 GP15 → 온도(℃) · 습도(%)
+  · cds 조도 센서 GP26(ADC0) → 밝기 값 0~65535 (밝을수록 큼)
+  · sg90 서보모터 GP16 → 각도 0~180°
+  · rgb 3색 LED GP18 · GP19 · GP20 → 색(#RRGGBB) · 켜기/끄기
+- 고르지 않은 기본 장치의 핀은 확장 부품에 써도 된다.
+- 확장 핀: 아날로그 GP27 · GP28 / 디지털 입력 GP13 · GP14 · GP17 · GP22 / 디지털 출력 GP21 · GP0~GP12
+  · 사용 불가: GP23 · GP24 · GP25 · GP29
+  · 디지털 입력은 풀업(Pull.UP) 방식
+  · sg90 을 쓰면 GP17 을 PWM 으로 쓸 때 50Hz 로 맞춰야 한다
+- 확장 부품은 board · analogio · digitalio · pwmio · time · math · adafruit_motor 로 다룰 수 있는 것만 쓴다.
+  예) 아날로그 센서(토양 수분 · 수위 · 가변저항), 디지털 센서(PIR · 적외선 · 불꽃 · 버튼), LED · 부저 · 릴레이
+  전용 라이브러리가 필요한 부품(초음파 거리 센서 등)은 "선생님과 상의" 라고 적는다.
+- 확장 센서 값은 숫자 하나(0·1 상태 포함)다. key 는 영어 소문자 snake_case 로 쓴다(예: water_level).
+  센서 없이 Pico 가 계산하는 값도 가능하다.
+- 3D 화면으로 할 수 있는 것
+  · 기본 도형(상자 · 원기둥 · 구 · 원뿔 · 평면)으로 만들고, 색 · 투명도 · 빛남을 정한다
+  · 움직임(회전 · 이동 · 깜빡임 · 크기 변화)을 넣을 수 있다
+  · Html 글자 배지를 띄울 수 있다
+  · 오브젝트를 클릭하면 명령 sendCommand('이름', 값) 을 보낸다
+  · 외부 3D 모델 · 이미지 파일은 쓸 수 없다. 반복 오브젝트는 50개 이하로 한다.
+- mock = 하드웨어 없이 시뮬레이션할 때의 값 변화 시나리오다.
+  · 확장 센서 값과 기본 액추에이터(서보 각도 · LED 색)만 만든다(시간에 따라 변화, 명령을 받으면 값 변경).
+  · 기본 센서는 플랫폼이 자동으로 만든다: 기온 18~32℃, 습도 30~75%, 밝기 15000~62000 사이에서 천천히 변한다.
+  · 그래서 기본 센서 기준값은 이 범위 안에서 정해야 시뮬레이션에서도 동작이 보인다.
+
+[작업 순서]
+1. 맨 아래 [우리 팀 정보 카드]를 읽는다.
+   정보가 부족하거나 위 사실과 맞지 않으면(없는 핀, 고르지 않은 장치 사용 등) 먼저 질문한다.
+   - 질문은 최대 5개, 번호를 붙인다.
+   - 고르기 쉬운 보기(①②③)와 너의 추천을 함께 적는다.
+   - 질문할 것이 없으면 바로 2번으로 간다.
+2. 답을 받으면 [채울 템플릿]을 빈칸(____) 없이 채운다.
+   - 결과는 코드 블록 1개로만 출력한다.
+   - 한국어로, 1500자 안팎으로 쓴다.
+3. 코드 블록 아래에 '내가 정한 가정'을 3줄 이내로 적는다.
+
+[채우는 규칙]
+- 모든 규칙에 숫자(기준값 · 각도 · 색 코드 · 시간)를 넣는다. "만약 ~이면 ~한다" 문장으로 쓴다.
+- [3D 장면]은 오브젝트마다 위치(왼쪽 · 가운데 · 오른쪽 · 앞 · 뒤), 대략 크기, 색을 적는다.
+  센서 값에 따라 바뀌는 모습도 적는다.
+- 관람객이 "와!" 할 연출을 1~2개 넣는다.
+- [mock 규칙]은 확장 센서 값만 시간 순서로 쓰고, 60초 안팎에 정상 → 경고 → 회복이 한 번씩 나오게 한다.
+  서보 · LED 를 규칙으로 움직이면 mock 에서도 같은 동작을 한다고 적는다.
+- [사용 기본 장치]에 없는 장치는 다른 블록에서 쓰지 않는다.
+
+[금지] 코드 작성, 위 범위 밖의 부품 · 라이브러리, 기본 장치 핀 변경, 외부 3D 모델 · 이미지
+
+[채울 템플릿]
+[주제] 우리 팀은 ____ (누가, 어떤 문제를 해결하는) ____ 를 만듭니다.
+[사용 기본 장치 (baseDevices)] ____ / 연결 안 함: ____
+[기본 장치 역할] (사용하는 장치만)
+- DHT11(GP15): ____
+- Cds(GP26): ____ (기준값: ____)
+- SG90 서보(GP16): ____ (0°일 때 ____, 90°일 때 ____)
+- RGB LED(GP18~20): ____ (색상 규칙: ____)
+[확장 센서] key: ____ / 이름: ____ / 단위: ____ / 범위: ____~____ / 핀: GP__ (여러 개면 줄을 늘리고, 없으면 "없음")
+[규칙]
+1. 만약 ____ 이면 ____ 한다.
+2. ____
+3. ____
+[확장 동작] 3D 화면에서 ____ 를 클릭하면 sendCommand('____', ____) 로 ____ 한다.
+[3D 장면] 바닥: ____ / 주요 오브젝트(위치 · 크기 · 색): ____ / 움직임: ____ / 배지(Html): ____
+[mock 규칙] 하드웨어가 없을 때 확장 센서 값은 ____ 처럼 변한다. (시간 순서, 반복 주기 ____초)
+[하지 말 것] 외부 3D 모델 · 이미지 금지, 오브젝트 ____개 이하, ____
+
+[형식 견본 — 이런 수준으로 (다른 주제)]
+[주제] 집을 비워도 물고기를 지켜 주는 스마트 수족관
+[사용 기본 장치] dht11(실내 온도), sg90(먹이통 뚜껑), rgb(수조 조명) / 연결 안 함: cds
+[확장 센서] key: water_level / 수위 / % / 0~100 / GP27
+[규칙] 1. 수위가 20% 미만이면 RGB 빨강(#EF4444), 배지 "물 보충 필요"
+[확장 동작] 먹이통을 클릭하면 sendCommand('feed', true) → SG90 90° 로 3초 열렸다 닫힘
+[3D 장면] 바닥 가운데 가로 3 · 높이 1.8 투명 하늘색 수조, 주황 물고기 5마리가 원을 그리며 헤엄 …
+[mock 규칙] 수위 100% 에서 1초에 1%씩 감소, 30% 아래가 되면 15초 뒤 100% 로 회복
+
+[우리 팀 정보 카드]
+1. 주제(한 줄):
+2. 해결하고 싶은 문제:
+3. 누가 쓰나요:
+4. 어떤 장소인가요:
+5. 사용할 기본 장치 ('새 공간 추가'에서 고른 것, dht11 / cds / sg90 / rgb):
+   그 장치로 하고 싶은 일:
+6. 추가 부품과 핀 (없으면 '없음', 모르면 '추천해 주세요'):
+7. 3D 화면에서 꼭 보여주고 싶은 장면 · 감탄 포인트:
+8. 관람객이 클릭하면 일어날 일:
+9. 하지 말 것 · 걱정되는 점:</pre>
+      </div>
+
+      <!-- STEP C -->
+      <h3 style="margin:24px 0 10px; font-size:16px;">STEP C · AI 와 주고받기 (같은 대화창 ① 에서 이어서)</h3>
+      <div class="grid-3">
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>① 질문에 답하기</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-helper-answer', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-helper-answer">질문에 답합니다.
+1. (예: 네, PIR 센서를 GP17 에 씁니다)
+2. (예: ① 로 할게요)
+3. (예: 추천대로 해 주세요)
+이 답을 반영해서 [채울 템플릿]을 빈칸 없이 완성해 코드 블록 1개로만 보내 주세요.</pre>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>② 장면 더 구체적으로</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-helper-detail', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-helper-detail">완성본에서 [3D 장면] 과 [mock 규칙] 만 더 구체적으로 다시 써 주세요. 나머지 블록은 그대로 둡니다.
+- 오브젝트마다 위치 · 대략 크기 · 색
+- 센서 값에 따라 바뀌는 모습(색 · 크기 · 움직임)을 상태별로
+- 관람객이 "와!" 할 연출 1~2개 추가 (예: 경고 깜빡임, 떨어지는 알갱이, 다가오는 움직임)
+- mock 은 60초 안에 정상 → 경고 → 회복이 한 번씩 나오게
+결과는 전체 템플릿을 코드 블록 1개로 보내 주세요.</pre>
+        </div>
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>③ 스스로 점검시키기</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-helper-check', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-helper-check">완성본을 아래 기준으로 스스로 점검해 결과를 짧은 표로 보여 주고, 고친 최종본을 코드 블록 1개로 보내 주세요.
+1. 빈칸(____)이 남아 있지 않은가
+2. [사용 기본 장치]에 없는 장치를 다른 블록에서 쓰지 않았나
+3. 확장 핀이 사용하는 기본 장치 핀이나 GP23 · GP24 · GP25 · GP29 와 겹치지 않나
+4. key 가 영어 소문자 snake_case 이고 모든 블록에서 같은 이름인가
+5. 모든 규칙에 숫자(기준값 · 각도 · 시간 · 색 코드)가 있나
+6. 클릭 동작에 sendCommand('이름', 값) 이 있나
+7. mock 규칙이 시간 순서로 적혀 있나
+8. 1500자 안팎인가 (너무 길면 꼭 필요한 것만 남기기)</pre>
+        </div>
+      </div>
+
+      <table class="meta-table" style="margin-top:8px;">
+        <thead><tr><th>AI 가 이럴 때</th><th>이렇게 말하세요 (복사해서 고쳐 쓰기)</th></tr></thead>
+        <tbody>
+          <tr><td>코드를 써 버렸다</td><td>"지금은 코드 말고 [채울 템플릿] 만 완성해 주세요. 코드는 다음 단계에서 만들 거예요."</td></tr>
+          <tr><td>빈칸(____)이 남았다</td><td>"[확장 동작] 이 비어 있어요. 추천하는 내용으로 채워서 전체를 다시 보내 주세요."</td></tr>
+          <tr><td>숫자가 없다 ("어두우면", "가끔")</td><td>"규칙 2 의 '어두우면' 을 cds 기준값 숫자로, '가끔' 을 초 단위로 바꿔 주세요."</td></tr>
+          <tr><td>고르지 않은 장치를 썼다</td><td>"우리는 sg90 을 연결하지 않아요. sg90 없이 같은 효과를 내도록 고쳐 주세요."</td></tr>
+          <tr><td>규격에 없는 부품 · 핀을 넣었다</td><td>"GP16 은 서보 핀이라 쓸 수 없어요. 확장 핀 목록 안에서 다시 골라 주세요."</td></tr>
+          <tr><td>너무 길다 · 너무 거창하다</td><td>"1500자 안팎으로 줄이고, 오브젝트는 40개 이하, 규칙은 핵심 4개만 남겨 주세요."</td></tr>
+          <tr><td>대화가 엉켜서 답이 이상하다</td><td>새 대화창을 열고 STEP B 의 도우미 프롬프트부터 다시 보냅니다. (지금까지 받은 답을 카드에 반영해서)</td></tr>
+        </tbody>
+      </table>
+
+      <!-- STEP D -->
+      <h3 style="margin:24px 0 10px; font-size:16px;">STEP D · 플랫폼에 붙여넣기 전 8가지 체크리스트</h3>
+      <div class="grid-2">
+        <div class="meta-box warning">
+          <ul class="check-list">
+            <li>☐ <strong>[사용 기본 장치]</strong> 가 업로드 창의 '연결하는 기본 장치' 와 같다. [AI 프롬프트 복사] 는 공간 설정의 장치 목록을 AI 에게 함께 보내므로, 다르면 AI 가 헷갈립니다. 다르면 아이디어를 공간 설정에 맞추거나, 아직 업로드 전이라면 '새 공간 추가' 로 장치를 다시 골라 공간을 새로 만드세요.</li>
+            <li>☐ 확장 핀이 기본 장치 핀(GP15 · GP16 · GP18~20 · GP26 중 사용하는 것)과 겹치지 않는다</li>
+            <li>☐ 확장 센서 key 가 영어 소문자이고, 모든 블록에서 같은 이름이다</li>
+            <li>☐ 모든 규칙에 숫자(기준값 · 각도 · 시간 · 색)가 있다</li>
+          </ul>
+        </div>
+        <div class="meta-box warning">
+          <ul class="check-list">
+            <li>☐ 클릭 동작과 <code>sendCommand('이름', 값)</code> 이 적혀 있다</li>
+            <li>☐ [mock 규칙] 이 시간 순서로 적혀 있다 (하드웨어 없이도 화면이 움직이게)</li>
+            <li>☐ 오브젝트 수가 적당하다 (40개 안팎, 외부 모델 · 이미지 없음)</li>
+            <li>☐ 우리 팀이 <strong>설명할 수 있는 내용</strong>이다 (전시 때 관람객에게 설명해야 해요!) · 개인정보가 없다</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- STEP E -->
+      <h3 style="margin:24px 0 10px; font-size:16px;">STEP E · 본격 바이브 코딩으로 이어가기 (대화창 ②)</h3>
+      <div class="grid-3">
+        <div class="meta-box highlight">
+          <h3>1. 아이디어 칸에 붙여넣기</h3>
+          <ul>
+            <li>플랫폼 왼쪽 우리 공간 ⋮ → <strong>코드 업로드 · 관리</strong></li>
+            <li>'① 아이디어 작성' 칸에 완성본 코드 블록 <strong>안의 내용만</strong> 붙여넣기</li>
+          </ul>
+        </div>
+        <div class="meta-box highlight">
+          <h3>2. 새 대화창에서 4개 파일 받기</h3>
+          <ul>
+            <li><strong>[AI 프롬프트 복사]</strong> 클릭 (규격 + 우리 공간 정보 + 아이디어가 함께 복사됨)</li>
+            <li>AI 의 <strong>새 대화창</strong>에 붙여넣기 → 코드 블록 4개 확인</li>
+          </ul>
+        </div>
+        <div class="meta-box success">
+          <h3>3. 업로드 → 다듬기</h3>
+          <ul>
+            <li>4개 파일 업로드 → 시뮬레이션으로 확인</li>
+            <li>오류는 STEP 09 수정 프롬프트, 모양 · 연출은 STEP 07 의 <strong>2차 · 3차 요청</strong>으로 대화창 ② 에서 이어서</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- 전체 예시 -->
+      <h3 style="margin:24px 0 10px; font-size:16px;">🚌 처음부터 끝까지 예시 — 스마트 버스정류장 쉼터</h3>
+      <div class="grid-2">
+        <div class="prompt-box">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>① 학생이 쓴 팀 정보 카드</span><span class="prompt-badge">짧고 서툴러도 OK</span></div>
+          </div>
+          <pre class="code-block">[우리 팀 정보 카드]
+1. 주제(한 줄): 겨울에 버스 기다리는 사람들을 위한 따뜻한 버스정류장
+2. 해결하고 싶은 문제: 추운 날 오래 기다리면 춥고, 밤에는 어둡고, 버스가 언제 오는지 모름
+3. 누가 쓰나요: 등하교 학생, 어르신
+4. 어떤 장소인가요: 학교 앞 버스정류장
+5. 사용할 기본 장치: dht11, cds, rgb
+   그 장치로 하고 싶은 일: 온도 재기, 밤 되면 불 켜기, 조명
+6. 추가 부품과 핀: 사람 감지 센서? 모르겠음 추천해 주세요
+7. 3D 화면에서 꼭 보여주고 싶은 장면 · 감탄 포인트: 정류장 지붕이랑 벤치, 버스가 들어오는 모습. 추우면 벤치가 빨갛게 따뜻해지는 거
+8. 관람객이 클릭하면 일어날 일: 벤치 누르면 히터 켜지기
+9. 하지 말 것 · 걱정되는 점: 너무 복잡하지 않게</pre>
+        </div>
+        <div class="meta-box">
+          <h3>② AI 의 질문과 학생의 답</h3>
+          <ol>
+            <li><strong>AI:</strong> 사람 감지는 PIR 센서를 GP17(디지털 입력)에 연결하는 것을 추천해요. 쓸까요? ① 예 ② 아니오<br><strong>학생:</strong> ① 예</li>
+            <li><strong>AI:</strong> 벤치 히터는 어떻게 표시할까요? ① GP21 에 빨간 LED 를 달아 히터 대신 표시 (추천) ② 3D 화면에만 표시<br><strong>학생:</strong> ① 로 할게요</li>
+            <li><strong>AI:</strong> 버스 도착 시간은 센서가 없으니 Pico 가 계산하는 값(15분 주기)으로 보여줘도 될까요?<br><strong>학생:</strong> 네, 추천대로 해 주세요</li>
+          </ol>
+          <p style="margin-top:8px;">AI 가 정한 가정: ① 히터는 GP21 빨간 LED 로 표시하고 SG90 은 쓰지 않음 ② 버스 도착 시간은 Pico 가 계산 ③ 전시장 실내(시뮬레이션 기온 18~32℃)에서 보여 주려고 히터 기준을 24℃ 로 정함. 실제 정류장이라면 10℃ 로 바꿈</p>
+        </div>
+      </div>
+      <div class="prompt-box" style="margin-top:4px;">
+        <div class="prompt-header">
+          <div class="prompt-title-text"><span>③ AI 가 돌려준 완성 아이디어 프롬프트</span><span class="prompt-badge">→ 플랫폼 아이디어 칸에 붙여넣기</span></div>
+          <button class="copy-btn" onclick="copyFullPrompt('p-helper-result', this)">📋 복사</button>
+        </div>
+        <pre class="code-block" id="p-helper-result" style="max-height:420px;">[주제] 우리 팀은 추운 날과 밤에도 학생 · 어르신이 따뜻하고 안전하게 버스를 기다리는 '스마트 버스정류장 쉼터' 를 만듭니다.
+[사용 기본 장치 (baseDevices)] dht11, cds, rgb / 연결 안 함: sg90
+[기본 장치 역할]
+- DHT11(GP15): 정류장 안 기온 · 습도 측정 → 히터 자동 제어 기준
+- Cds(GP26): 주변 밝기로 밤 판단 (기준값: 25000 미만이면 밤, 시연할 때는 센서를 손으로 가림)
+- RGB LED(GP18~20): 지붕 아래 조명 (색상 규칙: 낮 OFF, 밤 따뜻한 흰색 #FFE4B5, 버스 2분 이내 초록 #22C55E)
+[확장 센서]
+- key: waiting / 이름: 대기 승객 감지 / 단위: 없음 / 범위: 0~1 / 핀: GP17 (PIR, 디지털 입력, 감지되면 1)
+- key: heater_on / 이름: 벤치 히터 / 단위: 없음 / 범위: 0~1 / 핀: GP21 (디지털 출력, 빨간 LED 로 히터 표시)
+- key: bus_min / 이름: 버스 도착까지 / 단위: 분 / 범위: 0~15 / 핀: 없음 (Pico 가 15분 주기로 계산)
+[규칙]
+1. 만약 waiting 이 1 이고 기온이 24℃ 미만이면 heater_on = 1 (GP21 LED 켜짐), 30초 동안 감지가 없으면 heater_on = 0
+2. 만약 밤(cds 25000 미만)이고 waiting 이 1 이면 RGB 따뜻한 흰색 ON, 사람이 없으면 RGB OFF (절전)
+3. 만약 bus_min 이 2 이하이면 RGB 초록, 배지에 "곧 도착!" 을 크게 표시 (규칙 2 보다 먼저)
+4. 만약 heater_on 이 1 이면 배지 배경을 주황으로 바꾸고 "히터 ON · 따뜻해요" 표시
+[확장 동작] 3D 화면에서 벤치를 클릭하면 sendCommand('heater', 1 또는 0) 로 히터를 켜고 끈다 (누를 때마다 전환).
+[3D 장면]
+- 바닥: 회색 보도블록 (가로 10 · 깊이 6), 앞쪽에 진회색 도로와 흰 차선
+- 가운데: 투명 유리 벽 3면 (opacity 0.3) + 남색 지붕 (가로 4 · 깊이 1.5), 지붕 아래 조명 막대가 RGB 색으로 빛남
+- 유리 벽 안: 갈색 나무 벤치 (가로 2.5), 히터가 켜지면 벤치 윗면이 주황으로 빛나고 작은 구 5개가 아지랑이처럼 천천히 위로 올라감
+- 벤치 옆: waiting 이 1 이면 사람 모형 2명 (원기둥 몸 + 구 머리) 이 나타남
+- 도로: 노란 버스 (상자 몸통 + 원기둥 바퀴 4개) 가 bus_min 이 줄수록 왼쪽 멀리(x=-12)에서 정류장(x=0) 쪽으로 다가오고, 0분이면 3초 정차 후 오른쪽으로 떠남
+- 배지(Html): 지붕 위 "기온 21℃ · 버스 4분 · 히터 ON"
+- 배경: 밤이면 짙은 남색, 낮이면 하늘색
+[mock 규칙] 60초 주기 전시 시나리오 (기온 · 밝기는 플랫폼 시뮬레이션 값을 그대로 사용)
+- bus_min 은 15 에서 4초마다 1씩 줄고, 0 이 되면 다시 15
+- waiting 은 10초 감지(1) → 5초 없음(0) 반복
+- heater_on 은 규칙 1 대로 정하고, heater 명령을 받으면 바로 바꿈
+- RGB 색도 규칙 2 · 3 과 같은 동작 (시뮬레이션에서도 조명 색이 바뀌게)
+[하지 말 것] 외부 3D 모델 · 이미지 금지, 사람 · 버스는 단순 도형, 오브젝트 40개 이하, SG90 사용 금지</pre>
+      </div>
+      <p style="font-size:12px; color:var(--meta-slate); margin-top:8px;">이 완성본을 아이디어 칸에 붙여넣고 [AI 프롬프트 복사] → 새 대화창 → 4개 파일 → 업로드하면, 버스가 다가오고 벤치가 빛나는 3D 정류장이 만들어집니다. 그다음은 STEP 07 의 2 · 3차 요청으로 다듬습니다.</p>
+
+      <div class="meta-box success" style="margin-top:16px;">
+        <h3>💡 생성형 AI 를 처음 쓰는 친구를 위한 6가지 약속</h3>
+        <ul>
+          <li><strong>학교에서 허용한 AI</strong> 를 씁니다. 개인정보(이름 · 학번 · 연락처 · 비밀번호 · Wi-Fi 암호)는 절대 붙여 넣지 않습니다.</li>
+          <li><strong>대화창 ① 은 아이디어, 대화창 ② 는 코드</strong>로 나눕니다. 섞으면 AI 가 앞 내용을 헷갈립니다.</li>
+          <li><strong>한 번에 한 가지</strong>만 요청합니다. ("장면만 더 자세히", "규칙 2 만 고쳐 줘")</li>
+          <li>AI 의 답을 <strong>그대로 믿지 말고</strong> STEP D 체크리스트로 확인합니다. AI 도 틀립니다.</li>
+          <li>답이 계속 이상하면 <strong>새 대화창</strong>에서 처음부터 다시 보냅니다. 고치는 것보다 빠를 때가 많습니다.</li>
+          <li>완성본은 팀 노트에 저장해 둡니다. 나중에 아이디어를 바꿀 때 그 글을 고쳐서 다시 쓰면 됩니다.</li>
+        </ul>
+      </div>
+    </article>
+
   </main>
 
   <!-- 3. Bottom Floating Slide Controller Dock -->
@@ -1659,10 +2097,11 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
       <div class="dock-dot" onclick="goToSlide(9)">9</div>
       <div class="dock-dot" onclick="goToSlide(10)">10</div>
       <div class="dock-dot" onclick="goToSlide(11)">11</div>
+      <div class="dock-dot" onclick="goToSlide(12)" title="부록 A · AI 로 아이디어 완성하기">A</div>
     </div>
 
     <div class="dock-info" id="dock-page-counter">
-      1 / 11
+      1 / 12
     </div>
 
     <button class="dock-btn" id="next-btn" onclick="changeSlide(1)">
@@ -1679,7 +2118,8 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
   <!-- 4. Client Presentation Controller Script -->
   <script>
     let currentSlide = 1;
-    const totalSlides = 11;
+    const totalSlides = 12;
+    const APPENDIX_START = 12; // 12번부터 부록 A
     let isScrollMode = false;
 
     function updateSlideView() {
@@ -1698,7 +2138,8 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
       // Update Top Header Counter
       const headerIndicator = document.getElementById('header-step-indicator');
       if (headerIndicator) {
-        headerIndicator.innerHTML = `<span>STEP ${String(currentSlide).padStart(2, '0')}</span><span style="color:var(--meta-slate);">/</span><span>${String(totalSlides).padStart(2, '0')}</span>`;
+        const stepLabel = currentSlide >= APPENDIX_START ? '부록 A' : `STEP ${String(currentSlide).padStart(2, '0')}`;
+        headerIndicator.innerHTML = `<span>${stepLabel}</span><span style="color:var(--meta-slate);">/</span><span>${String(totalSlides).padStart(2, '0')}</span>`;
       }
 
       // Update Top Progress Bar
@@ -1832,6 +2273,36 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           btn.classList.remove('copied');
           btn.innerHTML = originalText;
         }, 2500);
+      });
+    }
+
+    // 부록 A: 팀 정보 카드 입력값 + 도우미 프롬프트 본문(#p-helper) → 클립보드
+    function buildHelperPrompt(btn) {
+      const helper = document.getElementById('p-helper').textContent;
+      const head = helper.slice(0, helper.lastIndexOf('[우리 팀 정보 카드]')); // 맨 아래 카드 자리 (본문에도 같은 말이 있어 lastIndexOf)
+      const val = (id) => document.getElementById(id).value.trim() || '(모름 — AI 가 질문해 주세요)';
+      const devices = Array.from(document.querySelectorAll('.hf-checks input:checked')).map((c) => c.value);
+      const card = [
+        '[우리 팀 정보 카드]',
+        `1. 주제(한 줄): ${val('hf-topic')}`,
+        `2. 해결하고 싶은 문제: ${val('hf-problem')}`,
+        `3. 누가 쓰나요: ${val('hf-user')}`,
+        `4. 어떤 장소인가요: ${val('hf-place')}`,
+        `5. 사용할 기본 장치 ('새 공간 추가'에서 고른 것): ${devices.length ? devices.join(', ') : '없음 (확장 부품만 사용)'}`,
+        `   그 장치로 하고 싶은 일: ${val('hf-roles')}`,
+        `6. 추가 부품과 핀: ${val('hf-extra')}`,
+        `7. 3D 화면에서 꼭 보여주고 싶은 장면 · 감탄 포인트: ${val('hf-scene')}`,
+        `8. 관람객이 클릭하면 일어날 일: ${val('hf-click')}`,
+        `9. 하지 말 것 · 걱정되는 점: ${val('hf-avoid')}`,
+      ].join('\n');
+      navigator.clipboard.writeText(head + card).then(() => {
+        const originalText = btn.innerHTML;
+        btn.classList.add('copied');
+        btn.innerHTML = '✓ 도우미 프롬프트 복사 완료! AI 새 대화창(대화창 ①)에 붙여넣으세요';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerHTML = originalText;
+        }, 3000);
       });
     }
 

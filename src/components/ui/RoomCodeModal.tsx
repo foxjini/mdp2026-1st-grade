@@ -256,7 +256,7 @@ export function RoomCodeModal({
           />
           <p className="text-[10px] text-indigo-800">
             💡 장면(위치 · 크기 · 색) · 숫자(기준값 · 각도 · 주기) · "만약 ~이면 ~한다" 규칙 · 상태별 변화 · 클릭 동작 · mock 시나리오를 적을수록
-            작품이 좋아집니다. 자세한 작성법과 예시문: 매뉴얼 STEP 06 · 07
+            작품이 좋아집니다. 자세한 작성법과 예시문: 매뉴얼 STEP 06 · 07 · 빈칸을 AI 로 채우려면 매뉴얼 부록 A
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <button
