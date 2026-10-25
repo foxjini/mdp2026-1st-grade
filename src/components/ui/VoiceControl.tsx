@@ -9,11 +9,17 @@ import {
   useVoiceStore,
   VOICE_CATEGORY_LABELS,
   VoiceCategory,
+  pickVoice,
+  useKoreanVoices,
+  voiceLabel,
 } from '@/core/voice/voice';
 
 // NavRail 스피커 버튼 → 음성 안내 설정 (전체 on/off · 항목 · 속도 · 들어 보기)
 export function VoiceControl() {
-  const { enabled: savedEnabled, categories, rate, lastSpoken, setEnabled, setCategory, setRate } = useVoiceStore();
+  const { enabled: savedEnabled, categories, rate, pitch, voiceURI, lastSpoken, lastVoice, setEnabled, setCategory, setRate, setPitch, setVoiceURI } =
+    useVoiceStore();
+  const koVoices = useKoreanVoices();
+  const recommended = koVoices.length ? pickVoice('') : null;
   const [open, setOpen] = useState(false);
   const [supported, setSupported] = useState(true);
   // 저장된 설정(localStorage)은 브라우저에서만 읽히므로 마운트 뒤에 반영 (서버 렌더와 어긋나지 않게)
@@ -96,6 +102,47 @@ export function VoiceControl() {
             ))}
           </div>
 
+          {/* 목소리: 자동 = Google 한국의(크롬 · 밝은 여성) 우선 */}
+          <div className={`flex flex-col gap-1 ${enabled ? '' : 'opacity-50'}`}>
+            <span className="text-[11px] font-bold text-slate-500">목소리</span>
+            <select
+              value={voiceURI}
+              disabled={!enabled}
+              onChange={(e) => setVoiceURI(e.target.value)}
+              aria-label="목소리 선택"
+              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-xs text-slate-700"
+            >
+              <option value="">자동 (추천: {recommended ? recommended.name : '브라우저 기본'})</option>
+              {koVoices.map((v) => (
+                <option key={v.voiceURI} value={v.voiceURI}>
+                  {v.name}
+                  {v.localService ? '' : ' · 온라인'}
+                  {v === recommended ? ' ⭐' : ''}
+                </option>
+              ))}
+            </select>
+            {mounted && supported && koVoices.length === 0 && (
+              <span className="text-[10px] text-amber-700 leading-relaxed">
+                한국어 목소리를 찾지 못했습니다. 윈도우 설정 → 시간 및 언어 → 음성에서 한국어 음성을 설치하거나 크롬 · 엣지 최신 버전을 쓰세요.
+              </span>
+            )}
+          </div>
+
+          <div className={`flex flex-col gap-1 ${enabled ? '' : 'opacity-50'}`}>
+            <span className="text-[11px] font-bold text-slate-500">목소리 높낮이 {pitch.toFixed(2)} (높을수록 밝게)</span>
+            <input
+              type="range"
+              min="0.8"
+              max="1.5"
+              step="0.05"
+              value={pitch}
+              disabled={!enabled}
+              onChange={(e) => setPitch(Number(e.target.value))}
+              aria-label="목소리 높낮이"
+              className="w-full accent-blue-600"
+            />
+          </div>
+
           <div className={`flex flex-col gap-1 ${enabled ? '' : 'opacity-50'}`}>
             <span className="text-[11px] font-bold text-slate-500">말하기 속도 {rate.toFixed(1)}배</span>
             <input
@@ -118,11 +165,19 @@ export function VoiceControl() {
             <Play className="w-3.5 h-3.5" /> 들어 보기
           </button>
 
-          {lastSpoken && (
-            <p className="text-[10px] text-slate-500 leading-relaxed border-t border-slate-100 pt-2">
-              <b className="text-slate-600">최근 안내:</b> {lastSpoken}
-            </p>
-          )}
+          <p className="text-[10px] text-slate-500 leading-relaxed border-t border-slate-100 pt-2">
+            <b className="text-slate-600">지금 목소리:</b>{' '}
+            <span data-testid="current-voice">{voiceLabel(koVoices.length ? pickVoice(voiceURI) : null)}</span>
+            {lastVoice && lastVoice !== voiceLabel(koVoices.length ? pickVoice(voiceURI) : null) && (
+              <span className="text-slate-400"> (마지막 안내: {lastVoice})</span>
+            )}
+            {lastSpoken && (
+              <>
+                <br />
+                <b className="text-slate-600">최근 안내:</b> {lastSpoken}
+              </>
+            )}
+          </p>
           <p className="text-[10px] text-slate-400">설정은 이 PC 에 저장됩니다. 새로고침 후에는 화면을 한 번 클릭해야 소리가 납니다.</p>
         </div>
       )}

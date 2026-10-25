@@ -4,10 +4,11 @@
 // Pico 폴링 · mock.js 가 스스로 바꾼 상태(syncReportedActuators)는 자주 바뀌므로 읽지 않음
 import { useEffect } from 'react';
 import { useIoTStore } from '@/core/store/useIoTStore';
-import { announce, colorName, isAutomationAck } from '@/core/voice/voice';
+import { announce, colorName, isAutomationAck, prepareVoices } from '@/core/voice/voice';
 
 export function VoiceAnnouncer() {
   useEffect(() => {
+    prepareVoices();
     return useIoTStore.subscribe((s, prev) => {
       const uploaded = !!s.activeRoomPackage;
       const servoName = uploaded ? '서보모터' : '스마트 도어';
