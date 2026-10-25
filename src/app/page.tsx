@@ -19,6 +19,8 @@ import { ExhibitionOverlay } from '@/components/ui/ExhibitionOverlay';
 import { PlatformInfoModal } from '@/components/ui/PlatformInfoModal';
 import { VoiceAnnouncer } from '@/components/VoiceAnnouncer';
 import { GraphicsToggle } from '@/components/ui/GraphicsToggle';
+import { PanelDrawer } from '@/components/ui/PanelDrawer';
+import { useLayoutStore } from '@/core/ui/useLayoutStore';
 import { useAutomationStore } from '@/core/automation/useAutomationStore';
 import { useAutomationEngine } from '@/core/automation/useAutomationEngine';
 import { announce, markAutomation } from '@/core/voice/voice';
@@ -65,6 +67,17 @@ export default function HomePage() {
 
   // 사용자 확인(승인) 상태: 자동화 규칙(고온 감지)도 요청하므로 스토어에서 관리
   const approvalStatus = useAutomationStore((s) => s.approval.status);
+
+  // 좌 · 우 패널 서랍 (저장된 값은 마운트 후에 반영 → 서버 렌더와 어긋나지 않게)
+  const [layoutMounted, setLayoutMounted] = useState(false);
+  useEffect(() => setLayoutMounted(true), []);
+  const savedLeftOpen = useLayoutStore((s) => s.leftOpen);
+  const savedRightOpen = useLayoutStore((s) => s.rightOpen);
+  const toggleLeft = useLayoutStore((s) => s.toggleLeft);
+  const toggleRight = useLayoutStore((s) => s.toggleRight);
+  const setRightOpen = useLayoutStore((s) => s.setRightOpen);
+  const leftOpen = !layoutMounted || savedLeftOpen;
+  const rightOpen = !layoutMounted || savedRightOpen;
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
   const setServoAngle = useIoTStore((s) => s.setServoAngle);
@@ -310,6 +323,28 @@ export default function HomePage() {
     }
   };
 
+  const anyModalOpen =
+    showIpModal ||
+    showDeviceManageModal ||
+    showScheduleModal ||
+    showAddRoomModal ||
+    showReviewModal ||
+    showCodeModal ||
+    showInfoModal;
+
+  // 단축키: [ 왼쪽 패널, ] 오른쪽 패널 (입력 중 · 모달이 열려 있으면 무시)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (anyModalOpen || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+      if (e.key === '[') toggleLeft();
+      else if (e.key === ']') toggleRight();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [anyModalOpen, toggleLeft, toggleRight]);
+
   return (
     <main className="relative w-screen h-screen overflow-hidden bg-[#EFF2F6] text-slate-800 flex select-none">
       {/* 1. 최좌측 슬림 세로 내비게이션 레일 (NavRail) */}
@@ -321,7 +356,9 @@ export default function HomePage() {
       />
 
       {/* 2. 좌측 모니터링 공간 목록 사이드바 (스마트 공간) */}
+      <PanelDrawer side="left" open={leftOpen} width={280} onToggle={toggleLeft} label="공간 목록" shortcut="[">
       <RoomsSidebar
+        onCollapse={toggleLeft}
         activeRoomId={activeRoomId}
         roomList={roomList}
         onSelectRoom={selectRoom}
@@ -343,6 +380,7 @@ export default function HomePage() {
           }
         }}
       />
+      </PanelDrawer>
 
       {/* 3. 중앙 3D 가상 공간 워크스페이스 */}
       <section className="flex-1 flex flex-col relative h-full overflow-hidden bg-gradient-to-b from-[#F2F4F8] via-[#EDF1F7] to-[#E6EBF2]">
@@ -350,7 +388,10 @@ export default function HomePage() {
         <CenterHeader
           roomName={currentRoom.name}
           activeTab={activeCenterTab}
-          onTabChange={setActiveCenterTab}
+          onTabChange={(tab) => {
+            setActiveCenterTab(tab);
+            setRightOpen(true); // 접혀 있던 오른쪽 패널을 펼쳐서 보여 줌
+          }}
           onOpenIpModal={() => setShowIpModal(true)}
           onChangeMode={(mode) => {
             // 하드웨어로 바꾸려는데 이 공간의 Pico IP 가 없으면 연결 설정부터
@@ -369,15 +410,7 @@ export default function HomePage() {
             onReview={() => setShowReviewModal(true)}
             cameraPreset={cameraPreset}
             cameraTrigger={cameraTrigger}
-            isModalOpen={
-              showIpModal ||
-              showDeviceManageModal ||
-              showScheduleModal ||
-              showAddRoomModal ||
-              showReviewModal ||
-              showCodeModal ||
-              showInfoModal
-            }
+            isModalOpen={anyModalOpen}
           />
 
           {/* 3D 뷰 캔버스 하단 오버레이 버튼들 */}
@@ -422,18 +455,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 4. 우측 탭 연동 패널: 장치 인스펙터 vs 센서 출력 vs 제어 로그 */}
-      {activeCenterTab === 'inspector' && (
-        <InspectorPanel
-          approvalStatus={approvalStatus}
-          onApproveProposal={handleApproveProposal}
-          onOpenReviewModal={() => setShowReviewModal(true)}
-        />
-      )}
+      {/* 4. 우측 탭 연동 패널: 장치 인스펙터 vs 센서 출력 vs 제어 로그 (서랍으로 접기 가능) */}
+      <PanelDrawer
+        side="right"
+        open={rightOpen}
+        width={340}
+        onToggle={toggleRight}
+        label="오른쪽 패널"
+        shortcut="]"
+        attention={approvalStatus === 'pending'}
+      >
+        {activeCenterTab === 'inspector' && (
+          <InspectorPanel
+            approvalStatus={approvalStatus}
+            onApproveProposal={handleApproveProposal}
+            onOpenReviewModal={() => setShowReviewModal(true)}
+          />
+        )}
 
-      {activeCenterTab === 'output' && <SensorOutputPanel />}
+        {activeCenterTab === 'output' && <SensorOutputPanel />}
 
-      {activeCenterTab === 'thread' && <ControlLogPanel />}
+        {activeCenterTab === 'thread' && <ControlLogPanel />}
+      </PanelDrawer>
 
       {/* 5. 피드백 토스트 알림 */}
       {feedbackToast && (

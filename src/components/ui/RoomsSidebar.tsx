@@ -49,6 +49,8 @@ interface RoomsSidebarProps {
   onOpenCodeModal?: (roomId: string) => void;
   onOpenConnectionModal?: (roomId: string) => void;
   onCopyRoomId?: (roomId: string) => void;
+  /** 공간 목록 패널 접기 (3D 화면 넓게) */
+  onCollapse?: () => void;
   roomList: RoomItem[];
 }
 
@@ -65,6 +67,7 @@ export function RoomsSidebar({
   onOpenCodeModal = () => {},
   onOpenConnectionModal = () => {},
   onCopyRoomId = () => {},
+  onCollapse = () => {},
   roomList,
 }: RoomsSidebarProps) {
   // 열려있는 점 3개 메뉴의 공간 ID
@@ -107,8 +110,9 @@ export function RoomsSidebar({
         {/* 1. 상단 타이틀 */}
         <div className="flex items-center gap-2 pt-1 pb-0.5">
           <button
+            onClick={onCollapse}
             className="w-7 h-7 rounded-lg bg-white border border-slate-200/80 text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 flex items-center justify-center transition-all shadow-2xs"
-            title="이전으로"
+            title="공간 목록 접기 ([)"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
