@@ -7,11 +7,6 @@ import {
   Clock,
   Plus,
   MoreVertical,
-  Home,
-  Sprout,
-  Factory,
-  Sparkles,
-  ShieldCheck,
   SlidersHorizontal,
   Bell,
   BellOff,
@@ -22,7 +17,8 @@ import {
   Upload,
   Wifi,
 } from 'lucide-react';
-import { RoomConnection, RoomIconType } from '@/core/types/iot';
+import { BaseDeviceId, RoomConnection, RoomIconType } from '@/core/types/iot';
+import { ROOM_ICONS } from './roomIcons';
 
 // 공간마다 Pico 2 W 1대: picoIp / mode 는 공간별로 저장되어 공간 선택 시 자동 연결
 export interface RoomItem extends RoomConnection {
@@ -36,6 +32,8 @@ export interface RoomItem extends RoomConnection {
   // builtin: 플랫폼 기본 예제 공간 / uploaded: 팀이 '새 공간 추가'로 만든 공간 (rooms-data/)
   source: 'builtin' | 'uploaded';
   team?: string;
+  // 업로드 공간의 room.json baseDevices (기본 예제 공간은 생략 = 4종 모두)
+  baseDevices?: BaseDeviceId[];
 }
 
 interface RoomsSidebarProps {
@@ -194,11 +192,10 @@ export function RoomsSidebar({
                   <div
                     className={`relative w-8 h-8 rounded-xl ${room.iconBg} ${room.iconColor} flex items-center justify-center shrink-0`}
                   >
-                    {room.iconType === 'home' && <Home className="w-4 h-4" />}
-                    {room.iconType === 'farm' && <Sprout className="w-4 h-4" />}
-                    {room.iconType === 'factory' && <Factory className="w-4 h-4" />}
-                    {room.iconType === 'sparkles' && <Sparkles className="w-4 h-4" />}
-                    {room.iconType === 'shield' && <ShieldCheck className="w-4 h-4" />}
+                    {(() => {
+                      const RoomIcon = (ROOM_ICONS[room.iconType] || ROOM_ICONS.sparkles).Icon;
+                      return <RoomIcon className="w-4 h-4" />;
+                    })()}
 
                     {/* 빨간 알림 뱃지 점 */}
                     {room.hasNotification && (

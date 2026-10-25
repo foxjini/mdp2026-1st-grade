@@ -23,7 +23,7 @@ const SENSOR_KEY_RE = /^[a-z][a-z0-9_]{0,31}$/;
 const PIN_RE = /^GP([0-9]|1[0-9]|2[0-8])$/;
 // 예: 192.168.0.51, 192.168.0.51:80, 127.0.0.1:5051, localhost:5051
 const PICO_IP_RE = /^(((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)|localhost)(:\d{1,5})?$/;
-const ICONS: RoomIconType[] = ['home', 'farm', 'factory', 'sparkles', 'shield'];
+const ICONS: RoomIconType[] = ['home', 'farm', 'factory', 'sparkles', 'shield', 'school', 'car', 'health', 'pet', 'energy'];
 const BUILTIN_ROOM_IDS = ['builtin_home', 'builtin_farm', 'builtin_factory'];
 
 // Pico 2 W 내부(무선 모듈)가 사용하는 핀: 어떤 공간도 사용 불가

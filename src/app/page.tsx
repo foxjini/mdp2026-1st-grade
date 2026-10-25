@@ -16,6 +16,7 @@ import { AddRoomModal } from '@/components/ui/AddRoomModal';
 import { RoomCodeModal } from '@/components/ui/RoomCodeModal';
 import { ReviewModal } from '@/components/ui/ReviewModal';
 import { ExhibitionOverlay } from '@/components/ui/ExhibitionOverlay';
+import { PlatformInfoModal } from '@/components/ui/PlatformInfoModal';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { RoomConnection, RoomPackage } from '@/core/types/iot';
 import { BUILTIN_ROOMS, metaToRoomItem, roomsApi } from '@/core/rooms/roomsApi';
@@ -55,6 +56,7 @@ export default function HomePage() {
   const [showAddRoomModal, setShowAddRoomModal] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showCodeModal, setShowCodeModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved'>('pending');
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
@@ -153,6 +155,22 @@ export default function HomePage() {
   };
 
   const findRoom = (roomId: string) => roomList.find((r) => r.id === roomId);
+
+  // 공간 선택 (사이드바 · 플랫폼 소개 창 공용): 카메라 기본 시점으로
+  const selectRoom = (id: string) => {
+    setActiveRoomId(id);
+    setCameraPreset('default');
+    setCameraTrigger((prev) => prev + 1);
+    const found = findRoom(id);
+    if (found) showToast(`"${found.name}" 구역으로 모니터링이 전환되었습니다.`);
+  };
+
+  // 학교 마크 → [첫 화면으로]: 첫 공간 · 기본 시점 · 장치 인스펙터 탭
+  const goHome = () => {
+    selectRoom(BUILTIN_ROOMS[0].id);
+    setActiveNavTab('space');
+    setActiveCenterTab('inspector');
+  };
 
   // 현재 공간의 Pico 연결 설정 저장 (업로드 공간: room.json / 기본 예제 공간: _builtin.json)
   const handleSaveConnection = async (conn: RoomConnection) => {
@@ -282,19 +300,14 @@ export default function HomePage() {
         activeNavTab={activeNavTab}
         setActiveNavTab={handleNavTabChange}
         onOpenIpModal={() => setShowIpModal(true)}
+        onOpenAbout={() => setShowInfoModal(true)}
       />
 
       {/* 2. 좌측 모니터링 공간 목록 사이드바 (스마트 공간) */}
       <RoomsSidebar
         activeRoomId={activeRoomId}
         roomList={roomList}
-        onSelectRoom={(id) => {
-          setActiveRoomId(id);
-          setCameraPreset('default');
-          setCameraTrigger((prev) => prev + 1);
-          const found = roomList.find((r) => r.id === id);
-          if (found) showToast(`"${found.name}" 구역으로 모니터링이 전환되었습니다.`);
-        }}
+        onSelectRoom={selectRoom}
         onOpenAddRoomModal={() => setShowAddRoomModal(true)}
         onOpenScheduleModal={() => setShowScheduleModal(true)}
         onOpenDeviceManageModal={() => setShowDeviceManageModal(true)}
@@ -345,7 +358,8 @@ export default function HomePage() {
               showScheduleModal ||
               showAddRoomModal ||
               showReviewModal ||
-              showCodeModal
+              showCodeModal ||
+              showInfoModal
             }
           />
 
@@ -454,6 +468,15 @@ export default function HomePage() {
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
         onApprove={handleApproveProposal}
+      />
+
+      <PlatformInfoModal
+        isOpen={showInfoModal}
+        onClose={() => setShowInfoModal(false)}
+        roomList={roomList}
+        activeRoomId={activeRoomId}
+        onSelectRoom={selectRoom}
+        onGoHome={goHome}
       />
 
       {/* 7. 부스 전시 모드 오버레이 */}

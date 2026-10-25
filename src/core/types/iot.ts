@@ -45,7 +45,9 @@ export interface LogEntry {
 // ------------------------------------------------------------------------------
 // 공간 꾸러미 (Room Package): 팀별 공간 = room.json + Scene.tsx + mock.js + code.py
 // ------------------------------------------------------------------------------
-export type RoomIconType = 'home' | 'farm' | 'factory' | 'sparkles' | 'shield';
+export type RoomIconType =
+  | 'home' | 'farm' | 'factory' | 'sparkles' | 'shield'
+  | 'school' | 'car' | 'health' | 'pet' | 'energy';
 
 export const ROOM_FILE_NAMES = ['room.json', 'Scene.tsx', 'mock.js', 'code.py'] as const;
 export type RoomFileName = (typeof ROOM_FILE_NAMES)[number];

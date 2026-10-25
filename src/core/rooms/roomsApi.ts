@@ -58,6 +58,11 @@ export const ICON_COLORS: Record<RoomIconType, { bg: string; color: string }> = 
   factory: { bg: 'bg-blue-100', color: 'text-blue-700' },
   sparkles: { bg: 'bg-purple-100', color: 'text-purple-700' },
   shield: { bg: 'bg-rose-100', color: 'text-rose-700' },
+  school: { bg: 'bg-sky-100', color: 'text-sky-700' },
+  car: { bg: 'bg-slate-200', color: 'text-slate-700' },
+  health: { bg: 'bg-pink-100', color: 'text-pink-700' },
+  pet: { bg: 'bg-orange-100', color: 'text-orange-700' },
+  energy: { bg: 'bg-yellow-100', color: 'text-yellow-700' },
 };
 
 export function metaToRoomItem(meta: RoomMeta): RoomItem {
@@ -73,6 +78,7 @@ export function metaToRoomItem(meta: RoomMeta): RoomItem {
     team: meta.team,
     picoIp: meta.picoIp,
     mode: meta.mode,
+    baseDevices: meta.baseDevices,
   };
 }
 

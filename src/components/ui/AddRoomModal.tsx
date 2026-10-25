@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Plus, Home, Sprout, Factory, Sparkles, ShieldCheck, Loader2 } from 'lucide-react';
+import { X, Plus, Loader2 } from 'lucide-react';
 import { BaseDeviceId, BASE_DEVICE_IDS, BASE_DEVICE_INFO, RoomIconType, RoomPackage } from '@/core/types/iot';
 import { roomsApi } from '@/core/rooms/roomsApi';
+import { ROOM_ICONS, ROOM_ICON_TYPES } from './roomIcons';
 
 interface AddRoomModalProps {
   isOpen: boolean;
@@ -120,20 +121,14 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-bold text-slate-700">대표 아이콘 선택</label>
-            <div className="flex items-center gap-2">
-              {[
-                { type: 'home' as const, label: '거실/홈', icon: Home },
-                { type: 'farm' as const, label: '팜/온실', icon: Sprout },
-                { type: 'factory' as const, label: '공장', icon: Factory },
-                { type: 'sparkles' as const, label: '조명', icon: Sparkles },
-                { type: 'shield' as const, label: '보안', icon: ShieldCheck },
-              ].map(({ type, label, icon: IconComponent }) => (
+            <label className="text-xs font-bold text-slate-700">대표 아이콘 선택 (10종)</label>
+            <div className="grid grid-cols-5 gap-2">
+              {ROOM_ICON_TYPES.map((type) => ({ type, ...ROOM_ICONS[type] })).map(({ type, label, Icon: IconComponent }) => (
                 <button
                   type="button"
                   key={type}
                   onClick={() => setIconType(type)}
-                  className={`flex-1 py-2 px-1 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                  className={`py-2 px-1 rounded-xl border flex flex-col items-center gap-1 transition-all ${
                     iconType === type
                       ? 'bg-blue-50 border-blue-500 text-blue-600 shadow-2xs font-bold'
                       : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'

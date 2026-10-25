@@ -53,7 +53,7 @@
 }
 ```
 
-- `iconType`: `home` | `farm` | `factory` | `sparkles` | `shield`
+- `iconType`: `home`(거실/홈) | `farm`(팜/온실) | `factory`(공장) | `sparkles`(조명) | `shield`(보안) | `school`(교실) | `car`(교통) | `health`(헬스케어) | `pet`(반려동물) | `energy`(에너지)
 - `baseDevices`: 우리 팀 Pico 에 연결하는 기본 장치 (`dht11` · `cds` · `sg90` · `rgb` 중 선택, 생략하면 이전 값 유지 / 처음이면 4종 전부)
 - `picoIp`: 우리 팀 Pico 의 IP (선택, 예: `192.168.0.52`). 비워 두면 기존 값을 유지합니다. 시뮬레이션/하드웨어 모드는 room.json 이 아니라 화면의 **Pico 연결 설정**에서 바꿉니다.
 - `customSensors[].key`: 영문 소문자로 시작, 소문자/숫자/`_` 만 (최대 32자). 이 key가 Scene.tsx · mock.js · code.py 에서 **똑같이** 쓰입니다.
