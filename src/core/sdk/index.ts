@@ -48,3 +48,6 @@ export function sendCommand(action: string, value: CustomCommand['value'] = true
 export function usePlatformMode() {
   return useIoTStore((s) => s.mode);
 }
+
+// 3D 디자인 킷 (팔레트 · PBR 재질 · DataPin · HoverLift · 값 스무딩)
+export * from './design';

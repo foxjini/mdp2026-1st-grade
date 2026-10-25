@@ -8,16 +8,23 @@
   <hemisphereLight />               {/* RGB LED 색에 따라 은은하게 물듦 */}
   <ambientLight />                  {/* Cds 조도 값에 따라 밝기 변화 */}
   <directionalLight castShadow />   {/* 그림자 범위: -6 ~ 6 */}
+  <Environment> + <Lightformer />   {/* 절차적 스튜디오 환경광 (PBR 반사, 네트워크 없음) */}
+  <EffectComposer>                  {/* '고급 그래픽'에서만: SSAO(N8AO) · 블룸(강한 발광만) · SMAA · ACES 톤매핑 */}
   <Scene isModalOpen={...} />       {/* ← 팀 Scene.tsx 가 여기에 들어감 */}
   <CameraRig />                     {/* OrbitControls + 조감도 전환 */}
 </Canvas>
 ```
 
+> 화면 왼쪽 아래 **[고급 그래픽 / 절전]** 버튼으로 품질을 바꿀 수 있고, 화면이 느려지면 자동으로 절전이 됩니다. 두 모드 모두에서 보기 좋게 만드세요.
+
 ## 2. 장면 구성 요령
 - **크기:** 바닥은 원점 중심 7 × 7 이내, 높이 0 ~ 3. 카메라가 이 범위를 비추도록 맞춰져 있습니다.
 - **기본 도형 조합:** `boxGeometry`, `cylinderGeometry`, `sphereGeometry`, `planeGeometry` 를 `<group>` 으로 묶어 가구/설비를 만듭니다.
 - **그림자:** 물체에는 `castShadow`, 바닥에는 `receiveShadow`.
-- **재질:** `meshStandardMaterial` 의 `color`, `roughness`, `metalness`, `transparent + opacity`(유리), `emissive`(발광).
+- **재질:** 디자인 킷 `MAT` 프리셋을 펼쳐 씁니다. `<meshStandardMaterial {...MAT.oak} />`, 유리는 `<meshPhysicalMaterial {...MAT.glass} />`, 표시등은 `{...MAT.glow(color, on)}`.
+- **색:** `PALETTE` 의 차분한 색을 넓은 면에, 상태색(`ok` `warn` `alert`)은 데이터에만.
+- **둥근 모서리:** `<RoundedBox args={[w, h, d]} radius={0.04} smoothness={4}>` (drei) 로 가구가 장난감처럼 보이지 않게.
+- **반복 물체:** 마루 · 책 · 잎처럼 10개 이상이면 drei `<Instances>` + `<Instance position={...} />` (드로우 콜 1번).
 - **외부 모델/텍스처 금지:** `useGLTF`, `useTexture` 는 전시 PC 에 파일이 없어 오류가 납니다.
 
 ## 3. 하드웨어 연동 패턴
@@ -62,6 +69,22 @@ const warmColor = new THREE.Color('#38BDF8').lerp(new THREE.Color('#EF4444'), (t
     </div>
   </Html>
 )}
+```
+
+### 3.6 디자인 킷 예시
+```tsx
+import { MAT, PALETTE, DataPin, HoverLift, useSmoothValue, useCustomSensor } from '@/core/sdk';
+import { DocentBot } from '@/components/3d/DocentBot';
+
+const soil = useCustomSensor('soil_moisture');
+const smooth = useSmoothValue(soil?.value);          // 끊기면 마지막 값 유지, 튀는 값은 부드럽게
+useFrame(() => { water.current.scale.y = 0.2 + smooth.current / 100; });
+
+<HoverLift position={[1, 0, 0]} onClick={() => sendCommand('water', true)}>
+  <mesh castShadow><cylinderGeometry args={[0.3, 0.34, 0.5, 32]} /><meshStandardMaterial {...MAT.ceramic} /></mesh>
+</HoverLift>
+<DataPin position={[1, 0.6, 0]} label="토양 수분" sensor={soil} isModalOpen={isModalOpen} />
+<DocentBot position={[-2, 0, 1.5]} rotationY={0.6} name="안내 로봇" isModalOpen={isModalOpen} />
 ```
 
 ## 4. 성능 주의

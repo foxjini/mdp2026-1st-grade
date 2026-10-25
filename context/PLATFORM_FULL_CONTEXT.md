@@ -84,8 +84,8 @@
 import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
-import { useSensor, useCustomValue, useServo, useRgb, sendCommand } from '@/core/sdk';
+import { Html, RoundedBox } from '@react-three/drei';
+import { useSensor, useCustomValue, useServo, useRgb, sendCommand, MAT, PALETTE, DataPin, HoverLift } from '@/core/sdk';
 
 export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }) {
   // ...
@@ -95,7 +95,7 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 
 ### 3.1 규칙
 1. **`export default` 컴포넌트 1개**를 내보냅니다. `isModalOpen` prop 을 받습니다.
-2. `<Canvas>`, 조명(ambient/hemisphere/directional), 카메라, OrbitControls 는 **플랫폼이 이미 제공**합니다. 만들지 마세요. (필요하면 `pointLight`/`spotLight` 정도만 추가)
+2. `<Canvas>`, 조명(ambient/hemisphere/directional), **환경광(Environment)**, 카메라, OrbitControls, **후처리(SSAO · 블룸 · 톤매핑)** 는 **플랫폼이 이미 제공**합니다. 만들지 마세요. (필요하면 `pointLight`/`spotLight` 정도만 추가)
 3. 공간 크기: 바닥은 원점 기준 약 **7 × 7** 안쪽, 높이 0 ~ 3.
 4. `<Html>` 배지는 **반드시** `zIndexRange={[10, 0]}` 를 주고 `{!isModalOpen && ...}` 로 감쌉니다. (모달 가림 방지)
 5. 클릭 이벤트는 `onClick={(e) => { e.stopPropagation(); ... }}` (빈 곳 클릭 시 선택 해제와 충돌 방지)
@@ -116,6 +116,7 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 | `@/components/3d/CdsSensorNode` | `<CdsSensorNode isModalOpen={isModalOpen} />` 조도 센서 노드 |
 | `@/components/3d/DoorObject` | `<DoorObject />` SG90 연동 문 |
 | `@/components/3d/DhtSensorBadge` | `<DhtSensorBadge />` 온습도 배지 |
+| `@/components/3d/DocentBot` | `<DocentBot position={[x,0,z]} name="안내 로봇" isModalOpen={isModalOpen} />` 가상 도슨트 (음성 안내에 맞춰 입모양 · 자막) |
 
 ### 3.3 SDK (`@/core/sdk`)
 | 함수 | 반환 / 동작 |
@@ -127,6 +128,27 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 | `useRgb()` | `{ color, on, pending, setColor('#RRGGBB'), setOn(true/false) }` |
 | `sendCommand(action, value)` | 팀 확장 명령 전송. 시뮬레이션 → `mock.js onCommand()`, 하드웨어 → `code.py handle()` |
 | `usePlatformMode()` | `'simulation'` \| `'hardware'` |
+
+**디자인 킷 (같은 `@/core/sdk` 에서 import)**
+
+| 이름 | 사용법 |
+| :--- | :--- |
+| `PALETTE` | 차분한 색: `wall` `floor` `oak` `walnut` `linen` `sage` `clay` `sand` `charcoal` `ink` · 상태색 `ok` `warn` `alert` `info` `off` |
+| `MAT` | PBR 재질 프리셋: `<meshStandardMaterial {...MAT.oak} />` — `oak` `walnut` `linen` `sage` `leather` `ceramic` `matteWhite` `plaster` `brushedMetal` `chrome` `brass` `concrete` `plant` `rubber` / 함수 `MAT.glow(color, on)`(발광 표시등) · `MAT.screen(color)`(화면) / 유리는 `<meshPhysicalMaterial {...MAT.glass} />` |
+| `<DataPin position label sensor isModalOpen />` | 데이터 핀 배지. `sensor` 에 `useSensor()` · `useCustomSensor()` 결과를 주면 값 · 경고 · 수신 대기를 자동 표시 (또는 `value` `unit` `status` 직접) |
+| `<HoverLift position onClick>…</HoverLift>` | 클릭할 수 있는 물체를 감싸면 마우스를 올릴 때 살짝 떠오르고 커서가 바뀜 (튕김 없는 감쇠) |
+| `useSmoothValue(value, { lambda })` | 센서 값을 부드럽게 따라가는 ref. `useFrame` 안에서 `.current` 사용. 값이 끊기면 마지막 값 유지 |
+| `usePrefersReducedMotion()` | 시스템 '동작 줄이기' 설정이면 `true` (장식 움직임 끄기) |
+
+### 3.4 디자인 규칙 (전문 디자인 수준)
+1. **색:** 넓은 면(벽 · 바닥 · 가구)은 `PALETTE` 의 차분한 색. `#FF0000` 같은 원색 · 순흑(`#000`) · 순회색 금지. **강조색(`ok` `warn` `alert` `info`)은 상태 · 데이터에만** 씁니다.
+2. **재질:** 모든 물체에 `MAT` 프리셋 (나무 · 패브릭 · 세라믹 · 금속을 구분). 모든 것을 반짝이게(metalness 1) 하지 않습니다.
+3. **형태 · 비례:** 1 단위 = 1 m 실제 크기 비율 (책상 높이 0.75, 의자 0.45, 문 2.0). 가구는 `RoundedBox` 로 모서리를 둥글게. 물체는 바닥에 붙여 공중에 뜨지 않게.
+4. **조명:** 플랫폼 조명을 그대로 쓰고, 발광(`MAT.glow`)은 표시등 · 화면 · 조명 기구에만. `pointLight` 는 2개 이하.
+5. **모션:** `useFrame` + `THREE.MathUtils.damp` 로 감속하며 멈추게. **통통 튀는 bounce · elastic 금지.** 계속 움직이는 장식은 1~2개, 경고 같은 의미가 있을 때만 깜빡임.
+6. **데이터:** 수치는 `DataPin` 으로 통일 (상태를 색 + 글자로 함께). 배지는 5개 이하, 서로 겹치지 않게 배치. 글자는 `<Html>` 로 (drei `Text` 는 글꼴 파일을 내려받으므로 피함).
+7. **클릭:** 클릭할 물체는 `HoverLift` 로 감싸 '누를 수 있음'을 보여 줍니다.
+8. **성능:** `useFrame` 안에서 `new THREE.Vector3()` 등 객체 생성 금지 (`useMemo`), 같은 물체를 10개 이상 반복하면 drei `<Instances>`, 오브젝트 80개 이하, 외부 모델 · 텍스처 금지.
 
 ---
 

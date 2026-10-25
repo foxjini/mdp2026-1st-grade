@@ -3,6 +3,7 @@
 import React from 'react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { Html } from '@react-three/drei';
+import { MAT, PALETTE, badgeStyle } from '@/core/sdk/design';
 
 interface DhtSensorBadgeProps {
   isModalOpen?: boolean;
@@ -24,46 +25,51 @@ export function DhtSensorBadge({ isModalOpen = false }: DhtSensorBadgeProps) {
         setSelectedDevice('dht11_temp');
       }}
     >
-      {/* DHT11 센서 모듈 본체 (파란색 플라스틱 그릴) */}
+      {/* DHT11 센서 모듈 본체: 무광 화이트 케이스 + 세이지 그릴 */}
       <mesh position={[0, 0, 0]} castShadow>
         <boxGeometry args={[0.22, 0.3, 0.1]} />
-        <meshStandardMaterial
-          color={isSelected ? '#38BDF8' : '#0284C7'}
-          roughness={0.5}
-          metalness={0.1}
-        />
+        <meshStandardMaterial {...MAT.matteWhite} />
+      </mesh>
+      <mesh position={[0, 0.03, 0.052]}>
+        <boxGeometry args={[0.16, 0.16, 0.006]} />
+        <meshStandardMaterial {...MAT.sage} emissive={isSelected ? PALETTE.info : '#000000'} emissiveIntensity={isSelected ? 0.6 : 0} />
+      </mesh>
+      {/* 상태 표시등 (수신 중 초록 · 수신 대기 회색) */}
+      <mesh position={[0, -0.1, 0.052]}>
+        <circleGeometry args={[0.012, 16]} />
+        <meshStandardMaterial {...MAT.glow(PALETTE.ok, !temp.isStale)} />
       </mesh>
 
       {/* PCB 베이스 */}
       <mesh position={[0, -0.05, -0.06]}>
         <boxGeometry args={[0.25, 0.42, 0.02]} />
-        <meshStandardMaterial color="#064E3B" roughness={0.7} />
+        <meshStandardMaterial color="#2F4A3F" roughness={0.7} />
       </mesh>
 
-      {/* 실시간 수치 플로팅 배지 */}
+      {/* 실시간 수치 배지 (디자인 킷 배지 카드) */}
       {!isModalOpen && (
         <Html position={[0, 0.45, 0]} center distanceFactor={7} zIndexRange={[10, 0]}>
           <div
-            className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border backdrop-blur-md transition-all shadow-lg cursor-pointer ${
-              isSelected
-                ? 'bg-blue-600/90 border-blue-400 text-white scale-105'
-                : 'bg-slate-900/80 border-slate-700/80 text-slate-100 hover:bg-slate-800/90'
-            }`}
+            style={{ ...badgeStyle(isSelected), cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation();
               setSelectedDevice('dht11_temp');
             }}
           >
-            <div className="flex flex-col">
-              <span className="text-[10px] text-slate-300 font-medium leading-none">DHT11 센서</span>
-              <div className="flex items-center gap-1.5 text-xs font-bold mt-0.5">
-                <span className="text-rose-400">{temp.value.toFixed(1)}℃</span>
-                <span className="text-slate-500">|</span>
-                <span className="text-sky-400">{humi.value.toFixed(1)}%</span>
-              </div>
-            </div>
-            {temp.isStale && (
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" title="데이터 지연" />
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: PALETTE.inkSoft }}>온습도 · DHT11</span>
+            {temp.isStale ? (
+              <span style={{ fontSize: 12, fontWeight: 800, color: PALETTE.off }}>수신 대기</span>
+            ) : (
+              <span style={{ fontSize: 14, fontWeight: 800, fontVariantNumeric: 'tabular-nums', display: 'flex', gap: 8 }}>
+                <span>
+                  {temp.value.toFixed(1)}
+                  <small style={{ fontSize: 10, color: PALETTE.inkSoft, marginLeft: 1 }}>℃</small>
+                </span>
+                <span>
+                  {humi.value.toFixed(0)}
+                  <small style={{ fontSize: 10, color: PALETTE.inkSoft, marginLeft: 1 }}>%</small>
+                </span>
+              </span>
             )}
           </div>
         </Html>

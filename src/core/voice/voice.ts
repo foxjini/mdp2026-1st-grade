@@ -20,6 +20,10 @@ interface VoiceState {
   voiceURI: string;       // '' = 자동 추천 (Google 한국의 우선)
   lastSpoken: string;
   lastVoice: string;      // 실제로 읽은 목소리 이름 (설정 창 표시)
+  // 지금 말하는 중인지 (도슨트 입모양 · 자막). 저장하지 않음
+  speaking: boolean;
+  speakingText: string;
+  boundaryAt: number;     // 마지막 단어 경계 시각 (performance.now)
   setEnabled: (enabled: boolean) => void;
   setCategory: (category: VoiceCategory, on: boolean) => void;
   setRate: (rate: number) => void;
@@ -38,6 +42,9 @@ export const useVoiceStore = create<VoiceState>()(
       voiceURI: '',
       lastSpoken: '',
       lastVoice: '',
+      speaking: false,
+      speakingText: '',
+      boundaryAt: 0,
       setEnabled: (enabled) => set({ enabled }),
       setCategory: (category, on) => set((s) => ({ categories: { ...s.categories, [category]: on } })),
       setRate: (rate) => set({ rate }),
@@ -154,11 +161,19 @@ function speakNow(text: string, voice: SpeechSynthesisVoice | null, retried = fa
   utter.rate = s.rate;
   utter.pitch = s.pitch;
   if (voice) utter.voice = voice;
+  const stopIfLast = () => {
+    if (useVoiceStore.getState().speakingText === text) useVoiceStore.setState({ speaking: false });
+  };
+  // 도슨트 입모양 · 자막용 (onboundary 가 없는 목소리도 speaking 동안 입이 움직임)
+  utter.onstart = () => useVoiceStore.setState({ speaking: true, speakingText: text, boundaryAt: performance.now() });
+  utter.onboundary = () => useVoiceStore.setState({ boundaryAt: performance.now() });
   utter.onend = () => {
     queued = Math.max(0, queued - 1);
+    stopIfLast();
   };
   utter.onerror = (e) => {
     queued = Math.max(0, queued - 1);
+    stopIfLast();
     // 온라인 목소리(Google)가 인터넷 문제 등으로 실패하면 로컬 한국어 목소리로 한 번 다시
     const reason = (e as SpeechSynthesisErrorEvent).error;
     if (!retried && voice && !voice.localService && reason !== 'interrupted' && reason !== 'canceled') {
@@ -194,6 +209,7 @@ export function announce(category: VoiceCategory | null, text: string, force = f
 export function stopSpeaking(): void {
   if (isSpeechSupported()) window.speechSynthesis.cancel();
   queued = 0;
+  useVoiceStore.setState({ speaking: false });
 }
 
 // 자동화가 보낸 명령의 완료(ack)는 자동화 안내와 겹치므로 잠시 읽지 않음

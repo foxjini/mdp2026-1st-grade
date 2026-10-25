@@ -18,6 +18,7 @@ import { ReviewModal } from '@/components/ui/ReviewModal';
 import { ExhibitionOverlay } from '@/components/ui/ExhibitionOverlay';
 import { PlatformInfoModal } from '@/components/ui/PlatformInfoModal';
 import { VoiceAnnouncer } from '@/components/VoiceAnnouncer';
+import { GraphicsToggle } from '@/components/ui/GraphicsToggle';
 import { useAutomationStore } from '@/core/automation/useAutomationStore';
 import { useAutomationEngine } from '@/core/automation/useAutomationEngine';
 import { announce, markAutomation } from '@/core/voice/voice';
@@ -381,7 +382,8 @@ export default function HomePage() {
 
           {/* 3D 뷰 캔버스 하단 오버레이 버튼들 */}
           {/* 좌하단: 전체 조감도 토글 버튼 (입체 투시 ↔ 상공 탑다운 조감도) */}
-          <div className="absolute left-6 bottom-6 z-10 pointer-events-auto">
+          {/* 그래픽 품질 버튼은 조감도 버튼 위에 (가운데 명령창과 겹치지 않게) */}
+          <div className="absolute left-6 bottom-6 z-10 pointer-events-auto flex flex-col-reverse items-start gap-2">
             <button
               onClick={handleToggleOverview}
               className={`px-4 py-2 rounded-full text-xs font-bold shadow-[0_4px_14px_rgba(0,0,0,0.08)] border transition-all flex items-center gap-1.5 ${
@@ -394,6 +396,7 @@ export default function HomePage() {
               <Eye className="w-3.5 h-3.5" />
               <span>{cameraPreset === 'overview' ? '기본 입체 뷰' : '전체 조감도'}</span>
             </button>
+            <GraphicsToggle />
           </div>
 
           {/* 우하단: 장치 관리 & 스케줄 캘린더 */}

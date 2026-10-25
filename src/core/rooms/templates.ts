@@ -21,23 +21,26 @@ export function roomJsonTemplate(meta: RoomMeta): string {
 }
 
 export function sceneTemplate(meta: RoomMeta): string {
-  const key = meta.customSensors[0]?.key || 'my_sensor';
+  const def = meta.customSensors[0];
+  const key = def?.key || 'my_sensor';
+  const label = def?.name || '확장 센서';
   return `// Scene.tsx — "${meta.name}" 3D 공간 (팀: ${meta.team || '미정'})
-// 규칙: 허용 모듈만 import / export default 컴포넌트 1개 / <Canvas>·조명·카메라는 플랫폼이 제공
+// 규칙: 허용 모듈만 import / export default 컴포넌트 1개 / <Canvas>·조명·카메라·환경광은 플랫폼이 제공
+// 디자인 킷: PALETTE(차분한 색) · MAT(PBR 재질) · HoverLift(부드러운 호버) · DataPin(데이터 배지) · useSmoothValue
 import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
-import { Html } from '@react-three/drei';
-import { useSensor, useCustomValue, useServo, useRgb, sendCommand } from '@/core/sdk';
+import { RoundedBox } from '@react-three/drei';
+import { useSensor, useCustomSensor, useServo, useRgb, sendCommand, MAT, PALETTE, HoverLift, DataPin } from '@/core/sdk';
 
 export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }) {
-  const temp = useSensor('dht11_temp').value;
-  const myValue = useCustomValue('${key}');
+  const temp = useSensor('dht11_temp');
+  const mySensor = useCustomSensor('${key}');
   const { angle } = useServo();
   const { color, on } = useRgb();
-  const armRef = useRef<THREE.Mesh>(null);
+  const armRef = useRef<THREE.Group>(null);
 
-  // SG90 각도(0~180°)에 맞춰 부드럽게 회전
+  // SG90 각도(0~180°)에 맞춰 감쇠(damp)로 부드럽게 회전 (튕김 없음)
   useFrame((_, delta) => {
     if (armRef.current) {
       armRef.current.rotation.y = THREE.MathUtils.damp(armRef.current.rotation.y, (angle / 180) * Math.PI, 5, delta);
@@ -46,33 +49,45 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 
   return (
     <group>
-      {/* 바닥 */}
+      {/* 바닥: 오크 마루 + 러그 (넓은 면은 차분한 색) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[7, 7]} />
-        <meshStandardMaterial color="#E2E8F0" />
+        <meshStandardMaterial {...MAT.oak} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.005, 0]} receiveShadow>
+        <circleGeometry args={[1.8, 48]} />
+        <meshStandardMaterial {...MAT.linen} />
       </mesh>
 
-      {/* 서보 연동 오브젝트 (클릭하면 확장 명령 전송) */}
-      <mesh ref={armRef} position={[0, 0.5, 0]} castShadow onClick={(e) => { e.stopPropagation(); sendCommand('toggle', true); }}>
-        <boxGeometry args={[1.6, 0.3, 0.3]} />
-        <meshStandardMaterial color="#3B82F6" />
-      </mesh>
+      {/* 서보 연동 오브젝트: 마우스를 올리면 살짝 떠오르고, 클릭하면 확장 명령 */}
+      <HoverLift position={[0, 0, 0]} onClick={() => sendCommand('toggle', true)}>
+        <mesh position={[0, 0.3, 0]} castShadow receiveShadow>
+          <cylinderGeometry args={[0.35, 0.42, 0.6, 32]} />
+          <meshStandardMaterial {...MAT.ceramic} />
+        </mesh>
+        <group ref={armRef} position={[0, 0.66, 0]}>
+          <RoundedBox args={[1.4, 0.12, 0.22]} radius={0.05} smoothness={4} castShadow>
+            <meshStandardMaterial {...MAT.brushedMetal} />
+          </RoundedBox>
+        </group>
+      </HoverLift>
 
-      {/* RGB LED 연동 조명 */}
+      {/* RGB LED: 켜지면 발광(고급 그래픽에서 은은한 빛 번짐) */}
       <mesh position={[0, 2.4, 0]}>
-        <sphereGeometry args={[0.25, 24, 24]} />
-        <meshStandardMaterial color={on ? color : '#94A3B8'} emissive={on ? color : '#000000'} emissiveIntensity={on ? 1.5 : 0} />
+        <sphereGeometry args={[0.2, 32, 32]} />
+        <meshStandardMaterial {...MAT.glow(color, on)} />
       </mesh>
       {on && <pointLight position={[0, 2.2, 0]} color={color} intensity={1.2} distance={6} />}
 
-      {/* 센서 값 배지 (모달이 열리면 숨김) */}
-      {!isModalOpen && (
-        <Html position={[0, 1.4, 0]} center zIndexRange={[10, 0]}>
-          <div className="px-3 py-1.5 rounded-xl bg-white/95 border border-slate-200 shadow text-xs font-bold text-slate-800 whitespace-nowrap">
-            온도 {temp.toFixed(1)}℃ · ${key} {myValue.toFixed(1)}
-          </div>
-        </Html>
-      )}
+      {/* 데이터 핀: 값 · 상태(색 + 글자) · 수신 대기를 자동으로 (모달이 열리면 숨김) */}
+      <DataPin position={[-1.2, 0, 0.6]} label="온도" sensor={temp} isModalOpen={isModalOpen} />
+      <DataPin position={[1.2, 0, 0.6]} label="${label}" sensor={mySensor} isModalOpen={isModalOpen} />
+
+      {/* 벽 · 가구는 PALETTE 의 차분한 색, 강조색(PALETTE.ok/warn/alert)은 상태 표시에만 */}
+      <mesh position={[0, 1.5, -3.4]} receiveShadow>
+        <boxGeometry args={[7, 3, 0.12]} />
+        <meshStandardMaterial color={PALETTE.wall} roughness={0.92} />
+      </mesh>
     </group>
   );
 }

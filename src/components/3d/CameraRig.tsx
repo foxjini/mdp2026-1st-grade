@@ -42,9 +42,10 @@ export function CameraRig({ viewPreset = 'default', presetTrigger = 0 }: CameraR
 
   useFrame((_, delta) => {
     if (isTransitioningRef.current && controlsRef.current) {
-      const step = Math.min(1, delta * 4.5);
-      camera.position.lerp(destPosRef.current, step);
-      controlsRef.current.target.lerp(destTargetRef.current, step);
+      // 지수 감쇠(damp): 프레임 속도와 관계없이 같은 시간에 부드럽게 감속하며 도착 (관성 있는 카메라 워크)
+      const t = 1 - Math.exp(-3.2 * Math.min(delta, 0.1));
+      camera.position.lerp(destPosRef.current, t);
+      controlsRef.current.target.lerp(destTargetRef.current, t);
       controlsRef.current.update();
 
       const posDist = camera.position.distanceTo(destPosRef.current);
@@ -62,8 +63,14 @@ export function CameraRig({ viewPreset = 'default', presetTrigger = 0 }: CameraR
     <OrbitControls
       ref={controlsRef}
       makeDefault
+      // 사용자가 직접 돌리기 시작하면 자동 시점 전환을 멈춤 (서로 끌어당기지 않게)
+      onStart={() => {
+        isTransitioningRef.current = false;
+      }}
       enableDamping
-      dampingFactor={0.06}
+      dampingFactor={0.05}
+      rotateSpeed={0.6}
+      zoomSpeed={0.7}
       autoRotate={isAutoRotate}
       autoRotateSpeed={0.8}
       minDistance={3.5}

@@ -12,6 +12,7 @@ import * as LightObjectModule from '@/components/3d/LightObject';
 import * as CdsSensorNodeModule from '@/components/3d/CdsSensorNode';
 import * as DoorObjectModule from '@/components/3d/DoorObject';
 import * as DhtSensorBadgeModule from '@/components/3d/DhtSensorBadge';
+import * as DocentBotModule from '@/components/3d/DocentBot';
 
 // sucrase 의 interop 헬퍼가 그대로 쓰도록 ES 모듈 형태로 감쌉니다.
 function esm(mod: object): object {
@@ -32,6 +33,7 @@ export const ALLOWED_MODULES: Record<string, object> = {
   '@/components/3d/CdsSensorNode': esm(CdsSensorNodeModule),
   '@/components/3d/DoorObject': esm(DoorObjectModule),
   '@/components/3d/DhtSensorBadge': esm(DhtSensorBadgeModule),
+  '@/components/3d/DocentBot': esm(DocentBotModule),
 };
 
 // 상대 경로 import 를 허용 목록으로 연결 (예: './LightObject' → '@/components/3d/LightObject')

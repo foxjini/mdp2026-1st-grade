@@ -1,12 +1,22 @@
 'use client';
 
-import React from 'react';
+// 스마트 거실 허브 — 디자인 모범 사례 (부록 B)
+// 색: 웜 오프화이트 · 오크 · 세이지 리넨 · 브러시드 메탈, 강조색은 장치 상태 · 데이터에만 (PALETTE)
+// 형태: RoundedBox 가구, 반복 물체(마루 · 책 · 잎)는 <Instances> 로 드로우 콜 최소화
+// 모션: 감쇠(damp) · HoverLift, 데이터: useSmoothValue 로 끊김 · 튐 완화, 도슨트: 음성 안내 입모양 · 자막
+import React, { useMemo, useRef } from 'react';
+import * as THREE from 'three';
+import { useFrame } from '@react-three/fiber';
+import { ContactShadows, Html, Instance, Instances, RoundedBox } from '@react-three/drei';
 import { DoorObject } from './DoorObject';
 import { LightObject } from './LightObject';
 import { DhtSensorBadge } from './DhtSensorBadge';
 import { CdsSensorNode } from './CdsSensorNode';
 import { NeedsYouCallout3D } from './NeedsYouCallout3D';
-import { Html } from '@react-three/drei';
+import { DocentBot } from './DocentBot';
+import { useIoTStore } from '@/core/store/useIoTStore';
+import { HoverLift, MAT, PALETTE, badgeStyle, useSmoothValue } from '@/core/sdk/design';
+import { announce } from '@/core/voice/voice';
 
 interface SmartHomeRoomProps {
   approvalStatus?: 'pending' | 'approved';
@@ -15,268 +25,358 @@ interface SmartHomeRoomProps {
   isModalOpen?: boolean;
 }
 
+// 마루 이음매 · 책 · 잎 배치 (컴포넌트 밖 상수 → 매 렌더 새로 만들지 않음)
+const FLOOR_SEAMS = Array.from({ length: 13 }, (_, i) => -2.6 + i * 0.4333);
+const BOOK_COLORS = [PALETTE.sage, PALETTE.clay, PALETTE.sand, PALETTE.linen, '#6E8A99', PALETTE.walnut];
+const BOOKS = Array.from({ length: 16 }, (_, i) => {
+  const shelf = i < 9 ? 0 : 1;
+  const idx = shelf === 0 ? i : i - 9;
+  const h = 0.2 + ((i * 37) % 7) * 0.012;
+  return {
+    position: [-0.42 + idx * 0.075 + (shelf ? 0.12 : 0), (shelf ? 2.18 : 1.73) + h / 2, 0] as [number, number, number],
+    scale: [0.055, h, 0.17] as [number, number, number],
+    color: BOOK_COLORS[(i * 5) % BOOK_COLORS.length],
+    tilt: i === 8 ? -0.25 : 0,
+  };
+});
+const LEAVES = Array.from({ length: 9 }, (_, i) => {
+  const a = (i / 9) * Math.PI * 2 + (i % 2) * 0.3;
+  const r = 0.16 + (i % 3) * 0.06;
+  return {
+    position: [Math.cos(a) * r, 0.72 + (i % 3) * 0.17, Math.sin(a) * r] as [number, number, number],
+    // 바깥쪽으로 비스듬히 펼쳐진 잎 (Y 축으로 방향, X 축으로 아래로 처짐)
+    rotation: [0, -a, -0.35 - (i % 3) * 0.12] as [number, number, number],
+  };
+});
+
+// 벽면 스마트 디스플레이: 온도 · 습도 · 조도를 막대로 (useSmoothValue 로 부드럽게, 수신 대기면 마지막 값 유지)
+function LiveDisplay({ isModalOpen }: { isModalOpen: boolean }) {
+  const temp = useIoTStore((s) => s.sensors.dht11_temp);
+  const humi = useIoTStore((s) => s.sensors.dht11_humi);
+  const light = useIoTStore((s) => s.sensors.cds_light);
+  const t = useSmoothValue(temp.isStale ? null : (temp.value - 15) / 20);
+  const h = useSmoothValue(humi.isStale ? null : humi.value / 100);
+  const l = useSmoothValue(light.isStale ? null : light.value / 65535);
+  const bars = useRef<(THREE.Mesh | null)[]>([]);
+
+  useFrame(() => {
+    [t, h, l].forEach((v, i) => {
+      const bar = bars.current[i];
+      if (!bar) return;
+      const k = THREE.MathUtils.clamp(v.current, 0.04, 1);
+      bar.scale.y = k;
+      bar.position.y = -0.22 + (0.32 * k) / 2;
+    });
+  });
+
+  const colors = [PALETTE.clay, PALETTE.info, PALETTE.warn];
+  return (
+    <group position={[0.68, 1.62, -2.66]} scale={0.85}>
+      <RoundedBox args={[1.0, 0.62, 0.04]} radius={0.03} smoothness={4} castShadow>
+        <meshStandardMaterial {...MAT.rubber} />
+      </RoundedBox>
+      <mesh position={[0, 0, 0.022]}>
+        <planeGeometry args={[0.92, 0.54]} />
+        <meshStandardMaterial color="#12171C" roughness={0.3} emissive="#1B2733" emissiveIntensity={0.6} />
+      </mesh>
+      {colors.map((c, i) => (
+        <mesh key={c} ref={(m) => {
+            bars.current[i] = m;
+          }} position={[-0.22 + i * 0.22, 0, 0.03]}>
+          <boxGeometry args={[0.1, 0.32, 0.01]} />
+          <meshStandardMaterial color={c} emissive={c} emissiveIntensity={1.15} roughness={0.4} />
+        </mesh>
+      ))}
+      {!isModalOpen && (
+        <Html position={[0, 0.19, 0.03]} center distanceFactor={8} zIndexRange={[10, 0]}>
+          <div style={{ pointerEvents: 'none', display: 'flex', gap: 8, fontSize: 8, fontWeight: 700, color: '#C9D3DD', whiteSpace: 'nowrap' }}>
+            {['온도', '습도', '조도'].map((name, i) => (
+              <span key={name} style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 2, background: colors[i], display: 'inline-block' }} />
+                {name}
+              </span>
+            ))}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
+
+// 미팅 테이블 위 Pico 2 W 허브: 연결 상태를 표시등 색 + 글자로
+function PicoHub({ isModalOpen }: { isModalOpen: boolean }) {
+  const mode = useIoTStore((s) => s.mode);
+  const conn = useIoTStore((s) => s.connectionState);
+  const ring = useRef<THREE.MeshStandardMaterial>(null);
+  const [color, text] =
+    mode === 'simulation'
+      ? [PALETTE.info, '시뮬레이션']
+      : conn === 'connected'
+        ? [PALETTE.ok, '연결됨']
+        : conn === 'connecting'
+          ? [PALETTE.warn, '연결 중']
+          : [PALETTE.alert, '응답 없음'];
+
+  useFrame(({ clock }) => {
+    // 연결 문제일 때만 천천히 숨쉬듯 (평소에는 고정 → 시선 분산 방지)
+    if (ring.current) ring.current.emissiveIntensity = conn === 'error' && mode === 'hardware' ? 1.4 + Math.sin(clock.elapsedTime * 3) * 0.8 : 1.6;
+  });
+
+  return (
+    <HoverLift position={[0, 0.77, 0]} onClick={() => useIoTStore.getState().setSelectedDevice(null)} lift={0.03}>
+      <RoundedBox args={[0.26, 0.07, 0.18]} radius={0.03} smoothness={4} position={[0, 0.035, 0]} castShadow>
+        <meshStandardMaterial {...MAT.rubber} />
+      </RoundedBox>
+      <mesh position={[0, 0.072, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.035, 0.05, 32]} />
+        <meshStandardMaterial ref={ring} color={color} emissive={color} emissiveIntensity={1.6} />
+      </mesh>
+      {!isModalOpen && (
+        <Html position={[0, 0.24, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
+          <div style={{ ...badgeStyle(), pointerEvents: 'none', flexDirection: 'row', alignItems: 'center', gap: 6, padding: '4px 9px' }}>
+            <span style={{ width: 6, height: 6, borderRadius: 3, background: color, display: 'inline-block' }} />
+            <span style={{ fontSize: 10, fontWeight: 800 }}>Pico 2 W</span>
+            <span style={{ fontSize: 10, fontWeight: 700, color: PALETTE.inkSoft }}>{text}</span>
+          </div>
+        </Html>
+      )}
+    </HoverLift>
+  );
+}
+
 export function SmartHomeRoom({
   approvalStatus = 'pending',
   onApprove = () => {},
   onReview = () => {},
   isModalOpen = false,
 }: SmartHomeRoomProps) {
+  const sensors = useIoTStore((s) => s.sensors);
+  const sunBeam = useMemo(() => new THREE.Color('#FFF1D6'), []);
+
+  // 도슨트를 누르면 지금 상태를 음성 · 자막으로 안내 (사용자가 직접 누른 경우라 설정과 관계없이)
+  const greet = () => {
+    const t = sensors.dht11_temp;
+    const h = sensors.dht11_humi;
+    const msg = t.isStale
+      ? '안녕하세요, 스마트 거실 허브입니다. 지금은 센서 값을 기다리는 중입니다.'
+      : `안녕하세요, 스마트 거실 허브입니다. 지금 온도는 ${t.value.toFixed(1)}도, 습도는 ${h.value.toFixed(0)}퍼센트입니다.`;
+    announce(null, msg, true);
+  };
+
   return (
     <group position={[0, 0, 0]}>
-      {/* 0. Nomadian 스타일 입체 플로팅 아키텍처 페데스탈 베이스 (Floating White Pedestal) */}
-      <mesh position={[0, -0.15, 0]} receiveShadow castShadow>
-        <boxGeometry args={[5.8, 0.28, 5.8]} />
-        <meshStandardMaterial color="#FFFFFF" roughness={0.3} metalness={0.05} />
-      </mesh>
-      {/* 바닥 베이스 베벨 테두리 */}
-      <mesh position={[0, -0.01, 0]}>
-        <boxGeometry args={[5.9, 0.04, 5.9]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.4} />
-      </mesh>
+      {/* 0. 플로팅 페데스탈 베이스 */}
+      <RoundedBox args={[5.9, 0.28, 5.9]} radius={0.06} smoothness={3} position={[0, -0.15, 0]} receiveShadow castShadow>
+        <meshStandardMaterial {...MAT.matteWhite} />
+      </RoundedBox>
 
-      {/* 1. 밝고 따뜻한 내추럴 오크 원목 바닥 (Oak Wood Floor) */}
+      {/* 1. 오크 마루 + 이음매 (Instances: 13개를 드로우 콜 1번) */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, 0]} receiveShadow>
         <planeGeometry args={[5.6, 5.6]} />
-        <meshStandardMaterial color="#F2E6D5" roughness={0.4} metalness={0.05} />
+        <meshStandardMaterial {...MAT.oak} />
       </mesh>
+      <Instances limit={FLOOR_SEAMS.length} position={[0, 0.012, 0]}>
+        <boxGeometry args={[0.006, 0.002, 5.6]} />
+        <meshStandardMaterial color="#A8845E" roughness={0.8} />
+        {FLOOR_SEAMS.map((x) => (
+          <Instance key={x} position={[x, 0, 0]} />
+        ))}
+      </Instances>
 
-      {/* 포근한 크림 아이보리 패브릭 러그 (Carpet Rug) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0.2]} receiveShadow>
-        <planeGeometry args={[3.2, 3.2]} />
-        <meshStandardMaterial color="#FAF9F6" roughness={0.9} />
-      </mesh>
+      {/* 러그 (리넨 + 샌드 테두리) */}
+      <RoundedBox args={[3.3, 0.014, 2.5]} radius={0.007} smoothness={2} position={[0.15, 0.018, 0.55]} receiveShadow>
+        <meshStandardMaterial color={PALETTE.sand} roughness={0.95} />
+      </RoundedBox>
+      <RoundedBox args={[3.1, 0.016, 2.3]} radius={0.008} smoothness={2} position={[0.15, 0.02, 0.55]} receiveShadow>
+        <meshStandardMaterial {...MAT.linen} />
+      </RoundedBox>
 
-      {/* 2. 산뜻하고 화사한 웜 화이트 뒷벽 (Back Wall) */}
+      {/* 2. 뒷벽 · 좌측 벽 (플라스터) + 걸레받이 */}
       <mesh position={[0, 1.5, -2.75]} receiveShadow>
         <boxGeometry args={[5.6, 3.0, 0.1]} />
-        <meshStandardMaterial color="#F8FAFC" roughness={0.5} />
+        <meshStandardMaterial {...MAT.plaster} />
       </mesh>
-
-      {/* 뒷벽 하단 화이트 몰딩 걸레받이 (Baseboard) */}
       <mesh position={[0, 0.07, -2.69]} receiveShadow>
         <boxGeometry args={[5.6, 0.12, 0.03]} />
-        <meshStandardMaterial color="#E2E8F0" roughness={0.4} />
+        <meshStandardMaterial color={PALETTE.trim} roughness={0.7} />
       </mesh>
-
-      {/* 3. 좌측 벽 (Left Wall - 도어 개구부 z: 0.58 ~ 1.82 사이 완전 개방) */}
-      {/* 좌측 벽 뒤쪽 영역 (z: -2.75 ~ 0.58) */}
+      {/* 좌측 벽 (도어 개구부 z: 0.58 ~ 1.82 비움) */}
       <mesh position={[-2.75, 1.5, -1.08]} receiveShadow>
         <boxGeometry args={[0.1, 3.0, 3.33]} />
-        <meshStandardMaterial color="#F8FAFC" roughness={0.5} />
+        <meshStandardMaterial color={PALETTE.wallShade} roughness={0.92} />
       </mesh>
-      {/* 도어 상단 인방 벽체 (z: 0.58 ~ 1.82, y: 2.5 ~ 3.0) */}
       <mesh position={[-2.75, 2.75, 1.2]} receiveShadow>
         <boxGeometry args={[0.1, 0.5, 1.24]} />
-        <meshStandardMaterial color="#F8FAFC" roughness={0.5} />
+        <meshStandardMaterial color={PALETTE.wallShade} roughness={0.92} />
       </mesh>
-      {/* 좌측 벽 앞쪽 영역 (z: 1.82 ~ 2.8) */}
       <mesh position={[-2.75, 1.5, 2.31]} receiveShadow>
         <boxGeometry args={[0.1, 3.0, 0.98]} />
-        <meshStandardMaterial color="#F8FAFC" roughness={0.5} />
+        <meshStandardMaterial color={PALETTE.wallShade} roughness={0.92} />
       </mesh>
 
-      {/* 4. 시원한 대형 통유리창 (Large Sunlit Window on Back Wall) */}
+      {/* 3. 통유리창: 하늘빛 + 유리 + 얇은 프레임, 창가에서 들어오는 빛 줄기 */}
       <group position={[-0.8, 1.75, -2.7]}>
-        <mesh>
-          <boxGeometry args={[1.8, 1.35, 0.08]} />
-          <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
+        <mesh position={[0, 0, -0.03]}>
+          <planeGeometry args={[1.6, 1.15]} />
+          <meshStandardMaterial color="#DCEBF5" emissive="#DCEBF5" emissiveIntensity={0.55} roughness={1} />
         </mesh>
         <mesh position={[0, 0, 0.01]}>
           <planeGeometry args={[1.6, 1.15]} />
-          <meshStandardMaterial
-            color="#E0F2FE"
-            transparent
-            opacity={0.3}
-            roughness={0.05}
-          />
+          <meshPhysicalMaterial {...MAT.glass} />
         </mesh>
-        <mesh position={[0, 0, 0.02]}>
-          <boxGeometry args={[0.04, 1.15, 0.03]} />
-          <meshStandardMaterial color="#E2E8F0" />
-        </mesh>
-        <mesh position={[0, 0, 0.02]}>
-          <boxGeometry args={[1.6, 0.04, 0.03]} />
-          <meshStandardMaterial color="#E2E8F0" />
-        </mesh>
-      </group>
-
-      {/* 5. 창가 선반 (Window Shelf - Cds 조도 센서 위치) */}
-      <mesh position={[-0.8, 0.98, -2.1]} castShadow receiveShadow>
-        <boxGeometry args={[1.3, 0.05, 0.45]} />
-        <meshStandardMaterial color="#FAF5EE" roughness={0.3} />
-      </mesh>
-      <mesh position={[-1.3, 0.75, -2.2]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.45]} />
-        <meshStandardMaterial color="#94A3B8" metalness={0.7} />
-      </mesh>
-      <mesh position={[-0.3, 0.75, -2.2]}>
-        <cylinderGeometry args={[0.015, 0.015, 0.45]} />
-        <meshStandardMaterial color="#94A3B8" metalness={0.7} />
-      </mesh>
-
-      {/* 6. Nomadian 스타일 프레젠테이션 화이트보드 차트 스탠드 (Whiteboard with Analytics) */}
-      <group position={[-1.6, 0, -1.2]} rotation={[0, 0.35, 0]}>
-        {/* 화이트보드 판 */}
-        <mesh position={[0, 1.3, 0]} castShadow>
-          <boxGeometry args={[1.4, 0.9, 0.04]} />
-          <meshStandardMaterial color="#FFFFFF" roughness={0.2} />
-        </mesh>
-        {/* 테두리 프레임 */}
-        <mesh position={[0, 1.3, -0.01]}>
-          <boxGeometry args={[1.46, 0.96, 0.03]} />
-          <meshStandardMaterial color="#E2E8F0" metalness={0.3} />
-        </mesh>
-        {/* 스탠드 지지대 */}
-        <mesh position={[-0.5, 0.65, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, 1.3]} />
-          <meshStandardMaterial color="#94A3B8" metalness={0.5} />
-        </mesh>
-        <mesh position={[0.5, 0.65, 0]}>
-          <cylinderGeometry args={[0.02, 0.02, 1.3]} />
-          <meshStandardMaterial color="#94A3B8" metalness={0.5} />
-        </mesh>
-        {/* 스탠드 하단 바퀴 지지대 */}
-        <mesh position={[-0.5, 0.04, 0]}>
-          <boxGeometry args={[0.05, 0.05, 0.4]} />
-          <meshStandardMaterial color="#64748B" />
-        </mesh>
-        <mesh position={[0.5, 0.04, 0]}>
-          <boxGeometry args={[0.05, 0.05, 0.4]} />
-          <meshStandardMaterial color="#64748B" />
-        </mesh>
-
-        {/* 차트 시각화 미니 큐브들 */}
-        {/* 오렌지색 상승 꺾은선/막대 */}
-        <mesh position={[-0.35, 1.15, 0.03]}>
-          <boxGeometry args={[0.08, 0.22, 0.01]} />
-          <meshStandardMaterial color="#F97316" />
-        </mesh>
-        <mesh position={[-0.2, 1.25, 0.03]}>
-          <boxGeometry args={[0.08, 0.42, 0.01]} />
-          <meshStandardMaterial color="#3B82F6" />
-        </mesh>
-        <mesh position={[-0.05, 1.35, 0.03]}>
-          <boxGeometry args={[0.08, 0.62, 0.01]} />
-          <meshStandardMaterial color="#10B981" />
-        </mesh>
-        <mesh position={[0.2, 1.4, 0.03]}>
-          <circleGeometry args={[0.14, 16]} />
-          <meshStandardMaterial color="#8B5CF6" />
-        </mesh>
-      </group>
-
-      {/* 7. 모던 화이트오크 데스크 (Desk Table - DHT11 위치) */}
-      <group position={[1.65, 0, -1.2]}>
-        <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
-          <boxGeometry args={[1.4, 0.05, 0.8]} />
-          <meshStandardMaterial color="#F5E6D3" roughness={0.4} />
-        </mesh>
-        {[[-0.6, -0.3], [0.6, -0.3], [-0.6, 0.3], [0.6, 0.3]].map(([dx, dz], idx) => (
-          <mesh key={idx} position={[dx, 0.42, dz]} castShadow>
-            <cylinderGeometry args={[0.02, 0.02, 0.84]} />
-            <meshStandardMaterial color="#FFFFFF" metalness={0.2} roughness={0.2} />
+        {[
+          [0, 0.6, 1.7, 0.05],
+          [0, -0.6, 1.7, 0.05],
+          [-0.82, 0, 0.05, 1.25],
+          [0.82, 0, 0.05, 1.25],
+          [0, 0, 0.03, 1.15],
+        ].map(([x, y, w, hgt], i) => (
+          <mesh key={i} position={[x, y, 0.03]}>
+            <boxGeometry args={[w, hgt, 0.04]} />
+            <meshStandardMaterial {...MAT.matteWhite} />
           </mesh>
         ))}
+      </group>
+      <mesh position={[-0.8, 1.0, -1.6]} rotation={[-0.75, 0, 0]}>
+        <planeGeometry args={[1.5, 2.2]} />
+        <meshBasicMaterial color={sunBeam} transparent opacity={0.07} depthWrite={false} side={THREE.DoubleSide} />
+      </mesh>
 
-        {/* 데스크 위 작은 화분 */}
-        <group position={[-0.45, 0.95, -0.2]}>
-          <mesh position={[0, 0, 0]} castShadow>
-            <cylinderGeometry args={[0.08, 0.06, 0.12, 16]} />
-            <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
-          </mesh>
-          <mesh position={[0, 0.1, 0]}>
-            <sphereGeometry args={[0.1, 8, 8]} />
-            <meshStandardMaterial color="#16A34A" roughness={0.6} />
-          </mesh>
-        </group>
+      {/* 4. 창가 선반 (Cds 조도 센서 위치) */}
+      <RoundedBox args={[1.3, 0.05, 0.45]} radius={0.015} smoothness={3} position={[-0.8, 0.98, -2.1]} castShadow receiveShadow>
+        <meshStandardMaterial {...MAT.oak} />
+      </RoundedBox>
+      {[-1.3, -0.3].map((x) => (
+        <mesh key={x} position={[x, 0.75, -2.2]}>
+          <cylinderGeometry args={[0.012, 0.012, 0.45]} />
+          <meshStandardMaterial {...MAT.brushedMetal} />
+        </mesh>
+      ))}
 
-        {/* 데스크 이름표 뱃지 */}
-        {!isModalOpen && (
-          <Html position={[0, 1.05, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
-            <div className="px-2 py-0.5 rounded-full bg-white/90 border border-slate-200 shadow-2xs text-[10px] font-bold text-slate-700 whitespace-nowrap">
-              DHT11 센서 노드
-            </div>
-          </Html>
-        )}
+      {/* 5. 벽걸이 선반 + 책 (Instances) */}
+      <group position={[1.7, 0, -2.58]}>
+        {[1.72, 2.17].map((y) => (
+          <RoundedBox key={y} args={[1.0, 0.035, 0.22]} radius={0.01} smoothness={2} position={[0, y, 0]} castShadow receiveShadow>
+            <meshStandardMaterial {...MAT.walnut} />
+          </RoundedBox>
+        ))}
+        <Instances limit={BOOKS.length}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial roughness={0.85} />
+          {BOOKS.map((b, i) => (
+            <Instance key={i} position={b.position} scale={b.scale} color={b.color} rotation={[0, 0, b.tilt]} />
+          ))}
+        </Instances>
       </group>
 
-      {/* 8. 중앙 라운드 미팅 테이블 (Round Meeting Table - Miro 자리) */}
+      {/* 6. 벽면 스마트 디스플레이 (실시간 데이터 막대) */}
+      <LiveDisplay isModalOpen={isModalOpen} />
+
+      {/* 7. 오크 데스크 (DHT11 위치) + 노트북 + 작은 화분 */}
+      <group position={[1.65, 0, -1.2]}>
+        <RoundedBox args={[1.4, 0.05, 0.8]} radius={0.02} smoothness={3} position={[0, 0.85, 0]} castShadow receiveShadow>
+          <meshStandardMaterial {...MAT.oak} />
+        </RoundedBox>
+        {[[-0.62, -0.32], [0.62, -0.32], [-0.62, 0.32], [0.62, 0.32]].map(([dx, dz], idx) => (
+          <mesh key={idx} position={[dx, 0.42, dz]} castShadow>
+            <cylinderGeometry args={[0.016, 0.016, 0.84, 12]} />
+            <meshStandardMaterial {...MAT.brushedMetal} />
+          </mesh>
+        ))}
+        <group position={[-0.25, 0.875, 0.05]} rotation={[0, 0.25, 0]}>
+          <RoundedBox args={[0.42, 0.015, 0.3]} radius={0.006} smoothness={2} castShadow>
+            <meshStandardMaterial {...MAT.brushedMetal} />
+          </RoundedBox>
+          <group position={[0, 0.01, -0.15]} rotation={[-0.35, 0, 0]}>
+            <RoundedBox args={[0.42, 0.28, 0.012]} radius={0.006} smoothness={2} position={[0, 0.14, 0]} castShadow>
+              <meshStandardMaterial {...MAT.brushedMetal} />
+            </RoundedBox>
+            <mesh position={[0, 0.14, 0.007]}>
+              <planeGeometry args={[0.38, 0.24]} />
+              <meshStandardMaterial {...MAT.screen('#7FA7D9')} />
+            </mesh>
+          </group>
+        </group>
+        <group position={[0.5, 0.875, -0.22]}>
+          <mesh castShadow position={[0, 0.06, 0]}>
+            <cylinderGeometry args={[0.07, 0.055, 0.12, 24]} />
+            <meshStandardMaterial {...MAT.ceramic} />
+          </mesh>
+          {[0, 1.3, 2.6, 3.9, 5.2].map((a) => (
+            <mesh key={a} position={[Math.cos(a) * 0.04, 0.18, Math.sin(a) * 0.04]} rotation={[0.5 * Math.cos(a), a, 0.5 * Math.sin(a)]} scale={[1, 0.35, 0.6]} castShadow>
+              <sphereGeometry args={[0.07, 12, 12]} />
+              <meshStandardMaterial {...MAT.plant} />
+            </mesh>
+          ))}
+        </group>
+      </group>
+
+      {/* 8. 라운드 미팅 테이블 + Pico 2 W 허브 */}
       <group position={[0.2, 0, -0.2]}>
         <mesh position={[0, 0.75, 0]} castShadow receiveShadow>
-          <cylinderGeometry args={[0.65, 0.65, 0.04, 32]} />
-          <meshStandardMaterial color="#FFFFFF" roughness={0.2} />
+          <cylinderGeometry args={[0.65, 0.65, 0.035, 48]} />
+          <meshStandardMaterial {...MAT.ceramic} />
         </mesh>
         <mesh position={[0, 0.37, 0]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 0.74, 16]} />
-          <meshStandardMaterial color="#E2E8F0" metalness={0.4} />
+          <cylinderGeometry args={[0.045, 0.06, 0.74, 24]} />
+          <meshStandardMaterial {...MAT.brushedMetal} />
         </mesh>
         <mesh position={[0, 0.02, 0]} receiveShadow>
-          <cylinderGeometry args={[0.35, 0.35, 0.03, 24]} />
-          <meshStandardMaterial color="#CBD5E1" metalness={0.4} />
+          <cylinderGeometry args={[0.32, 0.34, 0.025, 32]} />
+          <meshStandardMaterial {...MAT.brushedMetal} />
         </mesh>
-
-        {/* 미팅 테이블 위 웹캠/스마트 허브 */}
-        <mesh position={[0, 0.82, 0]} castShadow>
-          <sphereGeometry args={[0.06, 16, 16]} />
-          <meshStandardMaterial color="#0F172A" metalness={0.8} />
-        </mesh>
-
-        {/* Pico 2 W 태그 */}
-        {!isModalOpen && (
-          <Html position={[0, 0.98, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
-            <div className="px-2 py-0.5 rounded-full bg-slate-900 text-white shadow-2xs text-[10px] font-bold whitespace-nowrap flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-              <span>Pico 2 W 제어기</span>
-            </div>
-          </Html>
-        )}
+        <PicoHub isModalOpen={isModalOpen} />
       </group>
 
-      {/* 9. 트렌디한 파스텔 틸 모던 소파 (Modern Sofa) */}
+      {/* 9. 세이지 리넨 소파 (RoundedBox) + 쿠션 + 월넛 다리 */}
       <group position={[0, 0, 1.4]}>
-        <mesh position={[0, 0.32, 0]} castShadow receiveShadow>
-          <boxGeometry args={[1.9, 0.28, 0.85]} />
-          <meshStandardMaterial color="#0284C7" roughness={0.6} />
-        </mesh>
-        <mesh position={[0, 0.65, 0.33]} castShadow receiveShadow>
-          <boxGeometry args={[1.9, 0.42, 0.22]} />
-          <meshStandardMaterial color="#0369A1" roughness={0.6} />
-        </mesh>
-        <mesh position={[-0.98, 0.48, 0.02]} castShadow receiveShadow>
-          <boxGeometry args={[0.16, 0.38, 0.85]} />
-          <meshStandardMaterial color="#0369A1" roughness={0.6} />
-        </mesh>
-        <mesh position={[0.98, 0.48, 0.02]} castShadow receiveShadow>
-          <boxGeometry args={[0.16, 0.38, 0.85]} />
-          <meshStandardMaterial color="#0369A1" roughness={0.6} />
-        </mesh>
+        <RoundedBox args={[1.9, 0.26, 0.85]} radius={0.08} smoothness={4} position={[0, 0.33, 0]} castShadow receiveShadow>
+          <meshStandardMaterial {...MAT.sage} />
+        </RoundedBox>
+        <RoundedBox args={[1.9, 0.46, 0.22]} radius={0.09} smoothness={4} position={[0, 0.66, 0.32]} castShadow receiveShadow>
+          <meshStandardMaterial {...MAT.sage} />
+        </RoundedBox>
+        {[-0.97, 0.97].map((x) => (
+          <RoundedBox key={x} args={[0.18, 0.42, 0.85]} radius={0.08} smoothness={4} position={[x, 0.48, 0.02]} castShadow receiveShadow>
+            <meshStandardMaterial {...MAT.sage} />
+          </RoundedBox>
+        ))}
+        {[-0.45, 0.45].map((x) => (
+          <RoundedBox key={x} args={[0.78, 0.1, 0.62]} radius={0.05} smoothness={4} position={[x, 0.5, -0.04]} castShadow receiveShadow>
+            <meshStandardMaterial color="#9DB4A7" roughness={0.95} />
+          </RoundedBox>
+        ))}
+        <RoundedBox args={[0.42, 0.38, 0.12]} radius={0.05} smoothness={4} position={[-0.55, 0.72, 0.15]} rotation={[-0.25, 0.15, 0.08]} castShadow>
+          <meshStandardMaterial color={PALETTE.clay} roughness={0.95} />
+        </RoundedBox>
+        <RoundedBox args={[0.38, 0.34, 0.12]} radius={0.05} smoothness={4} position={[0.6, 0.7, 0.16]} rotation={[-0.25, -0.2, -0.06]} castShadow>
+          <meshStandardMaterial color={PALETTE.sand} roughness={0.95} />
+        </RoundedBox>
         {[[-0.85, -0.3], [0.85, -0.3], [-0.85, 0.3], [0.85, 0.3]].map(([sx, sz], i) => (
-          <mesh key={i} position={[sx, 0.09, sz]} castShadow>
-            <cylinderGeometry args={[0.02, 0.015, 0.18]} />
-            <meshStandardMaterial color="#B45309" roughness={0.5} />
+          <mesh key={i} position={[sx, 0.1, sz]} castShadow>
+            <cylinderGeometry args={[0.022, 0.016, 0.2, 12]} />
+            <meshStandardMaterial {...MAT.walnut} />
           </mesh>
         ))}
-
-        {/* 휴식 공간 태그 */}
-        {!isModalOpen && (
-          <Html position={[0.7, 0.9, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
-            <div className="px-2 py-0.5 rounded-full bg-white/90 border border-slate-200 shadow-2xs text-[10px] font-bold text-slate-700 whitespace-nowrap">
-              스마트 휴식 공간
-            </div>
-          </Html>
-        )}
       </group>
 
-      {/* 10. 거실 플로어 대형 관엽식물 (Monstera Plant in Corner) */}
+      {/* 10. 몬스테라 화분 (잎 9장 Instances) */}
       <group position={[2.1, 0, 1.8]}>
         <mesh position={[0, 0.25, 0]} castShadow>
-          <cylinderGeometry args={[0.22, 0.17, 0.5, 16]} />
-          <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
+          <cylinderGeometry args={[0.22, 0.17, 0.5, 32]} />
+          <meshStandardMaterial {...MAT.ceramic} />
         </mesh>
-        <mesh position={[0, 0.65, 0]} castShadow>
-          <sphereGeometry args={[0.35, 12, 12]} />
-          <meshStandardMaterial color="#15803D" roughness={0.5} />
+        <mesh position={[0, 0.505, 0]}>
+          <cylinderGeometry args={[0.19, 0.19, 0.01, 24]} />
+          <meshStandardMaterial color="#5B4636" roughness={1} />
         </mesh>
+        <Instances limit={LEAVES.length}>
+          <sphereGeometry args={[0.17, 16, 12]} />
+          <meshStandardMaterial {...MAT.plant} side={THREE.DoubleSide} />
+          {LEAVES.map((leaf, i) => (
+            <Instance key={i} position={leaf.position} rotation={leaf.rotation} scale={[0.62, 0.06, 1.05]} />
+          ))}
+        </Instances>
       </group>
 
       {/* 11. 하드웨어 연동 장치 4종 */}
@@ -285,13 +385,16 @@ export function SmartHomeRoom({
       <DhtSensorBadge isModalOpen={isModalOpen} />
       <CdsSensorNode isModalOpen={isModalOpen} />
 
-      {/* 12. Nomadian 스타일 3D 승인 말풍선 (NEEDS YOU Callout Bubble) */}
-      <NeedsYouCallout3D
-        approvalStatus={approvalStatus}
-        onApprove={onApprove}
-        onReview={onReview}
-        isModalOpen={isModalOpen}
-      />
+      {/* 12. 가상 도슨트: 음성 안내에 맞춰 입모양 · 자막, 누르면 지금 상태 안내 */}
+      <HoverLift position={[-1.7, 0, 0.15]} onClick={greet}>
+        <DocentBot rotationY={0.7} name="거실 도슨트" isModalOpen={isModalOpen} />
+      </HoverLift>
+
+      {/* 13. 3D 승인 말풍선 */}
+      <NeedsYouCallout3D approvalStatus={approvalStatus} onApprove={onApprove} onReview={onReview} isModalOpen={isModalOpen} />
+
+      {/* 바닥 접촉 그림자 (한 번만 굽기 → 가벼움): 물체가 바닥에 붙어 보이게 */}
+      <ContactShadows position={[0, 0.013, 0]} scale={6} resolution={512} blur={2.6} opacity={0.32} far={2.5} frames={1} color="#3B2F25" />
     </group>
   );
 }

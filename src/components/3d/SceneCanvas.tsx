@@ -7,6 +7,8 @@ import { SmartFarmRoom } from './SmartFarmRoom';
 import { SmartFactoryRoom } from './SmartFactoryRoom';
 import { CameraRig } from './CameraRig';
 import { DynamicRoom } from './DynamicRoom';
+import { RenderPipeline } from './RenderPipeline';
+import { useGraphicsStore } from '@/core/graphics/useGraphicsStore';
 import { RoomPackage } from '@/core/types/iot';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { roomUsesDevice } from '@/core/rooms/devices';
@@ -44,8 +46,10 @@ export function SceneCanvas({
   const isLightOn = usesRgb && rgbState === 'ON';
   const normalizedLight = usesCds ? Math.min(1, Math.max(0, lightVal / 65535)) : 0.6;
 
-  // 밝고 화사한 스튜디오 조명 (Nomadian 스타일)
-  const ambientIntensity = 0.75 + normalizedLight * 0.15;
+  // 고급 품질은 환경광(IBL)이 채움광을 맡으므로 앰비언트를 줄여 입체감을 살림
+  const quality = useGraphicsStore((s) => s.quality);
+  const high = quality === 'high';
+  const ambientIntensity = (high ? 0.16 : 0.75) + normalizedLight * (high ? 0.08 : 0.15);
   const ambientColor = '#FFFFFF';
 
   return (
@@ -57,13 +61,17 @@ export function SceneCanvas({
         shadows
         camera={{ position: [6.8, 5.2, 7.2], fov: 38 }}
         className="w-full h-full"
-        gl={{ antialias: true, alpha: true }}
+        dpr={[1, high ? 1.75 : 1]}
+        gl={{ antialias: !high, alpha: true, powerPreference: 'high-performance' }}
       >
+        {/* 0. 환경광 · 후처리 · 자동 품질 조절 */}
+        <RenderPipeline />
+
         {/* 1. 화사하고 부드러운 헤미스피어 라이트 */}
         <hemisphereLight
           color={isLightOn ? rgbColor : '#FFFFFF'}
           groundColor="#E2E8F0"
-          intensity={0.45}
+          intensity={high ? 0.22 : 0.45}
         />
 
         {/* 2. Cds 조도 센서 연동 앰비언트 라이트 */}
@@ -72,8 +80,8 @@ export function SceneCanvas({
         {/* 3. 부드러운 자연광 (Studio Key Light) */}
         <directionalLight
           position={[7.0, 9.0, 5.0]}
-          intensity={1.1}
-          color="#FFFDF7"
+          intensity={high ? 1.25 : 1.1}
+          color="#FFF6E8"
           castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
@@ -84,6 +92,8 @@ export function SceneCanvas({
           shadow-camera-top={6}
           shadow-camera-bottom={-6}
           shadow-bias={-0.0005}
+          shadow-normalBias={0.02}
+          shadow-radius={high ? 6 : 3}
         />
 
         {/* 4. 창문 측 부드러운 보조광 (Fill Light) */}

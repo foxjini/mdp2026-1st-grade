@@ -3,6 +3,7 @@
 import React from 'react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { Html } from '@react-three/drei';
+import { MAT, PALETTE, badgeStyle } from '@/core/sdk/design';
 
 interface LightObjectProps {
   isModalOpen?: boolean;
@@ -30,22 +31,22 @@ export function LightObject({ isModalOpen = false }: LightObjectProps) {
       {/* 1. 천장 마운트 & 전선 */}
       <mesh position={[0, 0.45, 0]}>
         <cylinderGeometry args={[0.08, 0.08, 0.04, 16]} />
-        <meshStandardMaterial color="#475569" metalness={0.7} />
+        <meshStandardMaterial {...MAT.brushedMetal} />
       </mesh>
       <mesh position={[0, 0.22, 0]}>
         <cylinderGeometry args={[0.012, 0.012, 0.45, 8]} />
-        <meshStandardMaterial color="#1E293B" />
+        <meshStandardMaterial {...MAT.rubber} />
       </mesh>
 
       {/* 2. 모던 펜던트 조명 갓 (Pendant Shade - 색상에 따라 환하게 발광) */}
       <mesh position={[0, 0, 0]}>
         <cylinderGeometry args={[0.18, 0.48, 0.36, 24, 1, true]} />
         <meshStandardMaterial
-          color={isOn ? lightColor : '#E2E8F0'}
+          color={isOn ? lightColor : MAT.matteWhite.color}
           emissive={isOn ? lightColor : '#000000'}
-          emissiveIntensity={isOn ? 1.4 : 0}
-          roughness={0.2}
-          metalness={0.3}
+          emissiveIntensity={isOn ? 1.1 : 0}
+          roughness={0.55}
+          metalness={0.05}
           side={2}
         />
       </mesh>
@@ -68,7 +69,7 @@ export function LightObject({ isModalOpen = false }: LightObjectProps) {
           <meshBasicMaterial
             color={lightColor}
             transparent
-            opacity={0.35}
+            opacity={0.16}
             depthWrite={false}
           />
         </mesh>
@@ -100,13 +101,12 @@ export function LightObject({ isModalOpen = false }: LightObjectProps) {
       {/* 선택 시 상단 3D 배지 */}
       {isSelected && !isModalOpen && (
         <Html position={[0, 0.7, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/95 text-white text-xs font-bold whitespace-nowrap shadow-2xl backdrop-blur-md border border-slate-700 animate-bounce">
-            <span
-              className="w-3.5 h-3.5 rounded-full border border-white/60 shadow-sm"
-              style={{ backgroundColor: lightColor }}
-            />
-            <span>RGB 무드등 [{isOn ? '켜짐' : '꺼짐'}]</span>
-            {isPending && <span className="text-amber-400">...</span>}
+          <div style={{ ...badgeStyle(true), pointerEvents: 'none' }}>
+            <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: PALETTE.inkSoft }}>무드등 · RGB LED</span>
+            <span style={{ fontSize: 13, fontWeight: 800, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 10, height: 10, borderRadius: 5, background: isOn ? lightColor : PALETTE.off, display: 'inline-block' }} />
+              {isPending ? '변경 중' : isOn ? '켜짐' : '꺼짐'}
+            </span>
           </div>
         </Html>
       )}

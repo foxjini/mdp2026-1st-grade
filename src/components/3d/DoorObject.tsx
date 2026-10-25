@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { Html } from '@react-three/drei';
+import { MAT, PALETTE, badgeStyle } from '@/core/sdk/design';
 
 interface DoorObjectProps {
   isModalOpen?: boolean;
@@ -42,22 +43,22 @@ export function DoorObject({ isModalOpen = false }: DoorObjectProps) {
         {/* 뒤쪽 기둥 (Hinge Side Post) */}
         <mesh position={[0, 1.25, -0.62]} castShadow receiveShadow>
           <boxGeometry args={[0.12, 2.5, 0.08]} />
-          <meshStandardMaterial color="#475569" roughness={0.5} />
+          <meshStandardMaterial {...MAT.matteWhite} />
         </mesh>
         {/* 앞쪽 기둥 (Latch Side Post) */}
         <mesh position={[0, 1.25, 0.62]} castShadow receiveShadow>
           <boxGeometry args={[0.12, 2.5, 0.08]} />
-          <meshStandardMaterial color="#475569" roughness={0.5} />
+          <meshStandardMaterial {...MAT.matteWhite} />
         </mesh>
         {/* 상단 인방 (Header) */}
         <mesh position={[0, 2.46, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.12, 0.08, 1.32]} />
-          <meshStandardMaterial color="#475569" roughness={0.5} />
+          <meshStandardMaterial {...MAT.matteWhite} />
         </mesh>
         {/* 바닥 문턱 (Threshold) */}
         <mesh position={[0, 0.02, 0]} receiveShadow>
           <boxGeometry args={[0.14, 0.04, 1.32]} />
-          <meshStandardMaterial color="#334155" roughness={0.4} />
+          <meshStandardMaterial {...MAT.oak} />
         </mesh>
       </group>
 
@@ -74,20 +75,20 @@ export function DoorObject({ isModalOpen = false }: DoorObjectProps) {
         <mesh position={[0, 1.22, 0.58]} castShadow receiveShadow>
           <boxGeometry args={[0.05, 2.4, 1.16]} />
           <meshStandardMaterial
-            color={isSelected ? '#38BDF8' : '#D97706'}
-            roughness={0.3}
-            metalness={0.05}
+            {...MAT.walnut}
+            emissive={isSelected ? PALETTE.info : '#000000'}
+            emissiveIntensity={isSelected ? 0.25 : 0}
           />
         </mesh>
 
         {/* 문 인테리어 장식 몰딩 패널 (앞/뒤 음각 디테일) */}
         <mesh position={[0.028, 1.45, 0.58]}>
           <boxGeometry args={[0.01, 0.85, 0.9]} />
-          <meshStandardMaterial color="#B45309" roughness={0.4} />
+          <meshStandardMaterial color="#6A482D" roughness={0.6} />
         </mesh>
         <mesh position={[0.028, 0.65, 0.58]}>
           <boxGeometry args={[0.01, 0.55, 0.9]} />
-          <meshStandardMaterial color="#B45309" roughness={0.4} />
+          <meshStandardMaterial color="#6A482D" roughness={0.6} />
         </mesh>
 
         {/* 고급 메탈 도어 핸들 (앞/뒤 손잡이) */}
@@ -95,20 +96,23 @@ export function DoorObject({ isModalOpen = false }: DoorObjectProps) {
           {/* 실내 손잡이 레버 */}
           <mesh position={[0.05, 0, 0]}>
             <boxGeometry args={[0.03, 0.03, 0.14]} />
-            <meshStandardMaterial color="#F8FAFC" metalness={0.9} roughness={0.15} />
+            <meshStandardMaterial {...MAT.brass} />
           </mesh>
           {/* 손잡이 축 */}
           <mesh position={[0.03, 0, -0.05]} rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[0.012, 0.012, 0.04]} />
-            <meshStandardMaterial color="#94A3B8" metalness={0.8} />
+            <meshStandardMaterial {...MAT.brushedMetal} />
           </mesh>
         </group>
 
         {/* 선택 시 상단 3D 배지 */}
         {isSelected && !isModalOpen && (
           <Html position={[0, 2.6, 0.6]} center distanceFactor={8} zIndexRange={[10, 0]}>
-            <div className="px-2.5 py-1 rounded-lg bg-blue-600/95 text-white text-xs font-bold whitespace-nowrap shadow-xl backdrop-blur-md pointer-events-none animate-bounce border border-blue-300">
-              SG90 도어 [{reportedAngle}°] {isPending ? '동작 중...' : reportedAngle === 0 ? '닫힘' : '열림'}
+            <div style={{ ...badgeStyle(true), pointerEvents: 'none' }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: PALETTE.inkSoft }}>스마트 도어 · SG90</span>
+              <span style={{ fontSize: 13, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>
+                {reportedAngle}° · {isPending ? '동작 중' : reportedAngle === 0 ? '닫힘' : '열림'}
+              </span>
             </div>
           </Html>
         )}
