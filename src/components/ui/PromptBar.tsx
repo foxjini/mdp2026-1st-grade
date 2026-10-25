@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Paperclip, Send, Sparkles } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
+import { useRoomDevices } from '@/core/rooms/useRoomDevices';
+import { describeCustom } from '@/core/rooms/devices';
 
 interface PromptBarProps {
   onFeedbackMessage?: (msg: string) => void;
@@ -16,7 +18,46 @@ export function PromptBar({ onFeedbackMessage }: PromptBarProps) {
   const setRgbColor = useIoTStore((s) => s.setRgbColor);
   const setRgbState = useIoTStore((s) => s.setRgbState);
   const sensors = useIoTStore((s) => s.sensors);
+  const customSensors = useIoTStore((s) => s.customSensors);
   const addLog = useIoTStore((s) => s.addLog);
+  const devices = useRoomDevices();
+
+  const reply = (msg: string, type: 'success' | 'info' | 'warn' = 'success') => {
+    addLog(type, `Pico AI 코어: "${msg}"`, 'SYSTEM');
+    if (onFeedbackMessage) onFeedbackMessage(msg);
+  };
+
+  // 이 공간에 없는 기본 장치면 명령 대신 안내 (스토어 가드와 같은 기준)
+  const missing = (device: 'sg90' | 'rgb') => {
+    if (devices[device]) return false;
+    reply(
+      `이 공간의 Pico 에는 ${device === 'sg90' ? 'SG90 서보모터가' : 'RGB LED가'} 연결되어 있지 않습니다. 3D 화면의 우리 팀 장치를 클릭해 조작하세요.`,
+      'warn'
+    );
+    return true;
+  };
+
+  const setColor = (color: string, name: string) => {
+    if (missing('rgb')) return;
+    setRgbColor(color);
+    setRgbState('ON');
+    reply(`LED 색상을 ${name}(으)로 설정했습니다.`);
+  };
+
+  // 현재 공간에서 쓰는 센서 값만 답함 (기본 센서 + 팀 확장 센서)
+  const statusMessage = () => {
+    const parts: string[] = [];
+    if (devices.dht11) {
+      parts.push(
+        sensors.dht11_temp.isStale
+          ? '온습도 수신 대기'
+          : `온도 ${sensors.dht11_temp.value.toFixed(1)}℃, 습도 ${sensors.dht11_humi.value.toFixed(0)}%`
+      );
+    }
+    if (devices.cds) parts.push(sensors.cds_light.isStale ? '조도 수신 대기' : `조도 ${sensors.cds_light.value} ADC`);
+    devices.customDefs.forEach((def) => parts.push(`${def.name} ${describeCustom(def, customSensors[def.key]).text}`));
+    return parts.length ? `현재 ${parts.join(', ')} 입니다.` : '이 공간에는 표시할 센서가 없습니다.';
+  };
 
   const handleSend = () => {
     const text = inputText.trim();
@@ -31,50 +72,34 @@ export function PromptBar({ onFeedbackMessage }: PromptBarProps) {
     setTimeout(() => {
       setIsReplying(false);
 
-      if (lower.includes('열') || lower.includes('open') || lower.includes('90')) {
+      if (lower.includes('온도') || lower.includes('습도') || lower.includes('상태') || lower.includes('날씨') || lower.includes('센서')) {
+        reply(statusMessage());
+      } else if (lower.includes('열') || lower.includes('open') || lower.includes('90')) {
+        if (missing('sg90')) return;
         setServoAngle(90);
-        addLog('success', 'Pico AI 코어: "스마트 도어를 90도로 개방했습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('스마트 도어를 90도로 개방했습니다.');
-      } else if (lower.includes('닫') || lower.includes('close') || lower.includes('0도') || lower.includes('0')) {
+        reply(devices.isUploaded ? '서보모터를 90°로 돌렸습니다.' : '스마트 도어를 90도로 개방했습니다.');
+      } else if (lower.includes('닫') || lower.includes('close') || lower.includes('0도')) {
+        if (missing('sg90')) return;
         setServoAngle(0);
-        addLog('success', 'Pico AI 코어: "스마트 도어를 닫았습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('스마트 도어를 닫았습니다.');
+        reply(devices.isUploaded ? '서보모터를 0°로 돌렸습니다.' : '스마트 도어를 닫았습니다.');
       } else if (lower.includes('불 꺼') || lower.includes('조명 꺼') || lower.includes('off')) {
+        if (missing('rgb')) return;
         setRgbState('OFF');
-        addLog('success', 'Pico AI 코어: "실내 무드등을 껐습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('실내 무드등을 껐습니다.');
+        reply('LED 를 껐습니다.');
       } else if (lower.includes('불 켜') || lower.includes('조명 켜') || lower.includes('on')) {
+        if (missing('rgb')) return;
         setRgbState('ON');
-        addLog('success', 'Pico AI 코어: "실내 무드등을 켰습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('실내 무드등을 켰습니다.');
+        reply('LED 를 켰습니다.');
       } else if (lower.includes('빨간') || lower.includes('레드') || lower.includes('red')) {
-        setRgbColor('#EF4444');
-        setRgbState('ON');
-        addLog('success', 'Pico AI 코어: "무드등 색상을 선셋 레드로 설정했습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('무드등을 선셋 레드로 변경했습니다.');
+        setColor('#EF4444', '선셋 레드');
       } else if (lower.includes('파란') || lower.includes('블루') || lower.includes('blue')) {
-        setRgbColor('#3B82F6');
-        setRgbState('ON');
-        addLog('success', 'Pico AI 코어: "무드등 색상을 오션 블루로 설정했습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('무드등을 오션 블루로 변경했습니다.');
+        setColor('#3B82F6', '오션 블루');
       } else if (lower.includes('초록') || lower.includes('그린') || lower.includes('green')) {
-        setRgbColor('#10B981');
-        setRgbState('ON');
-        addLog('success', 'Pico AI 코어: "무드등 색상을 네온 에메랄드로 설정했습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('무드등을 네온 에메랄드로 변경했습니다.');
+        setColor('#10B981', '네온 에메랄드');
       } else if (lower.includes('보라') || lower.includes('퍼플') || lower.includes('purple')) {
-        setRgbColor('#A855F7');
-        setRgbState('ON');
-        addLog('success', 'Pico AI 코어: "무드등 색상을 로맨틱 퍼플로 설정했습니다."', 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage('무드등을 로맨틱 퍼플로 변경했습니다.');
-      } else if (lower.includes('온도') || lower.includes('습도') || lower.includes('상태') || lower.includes('날씨')) {
-        const msg = `현재 실내 온도는 ${sensors.dht11_temp.value.toFixed(1)}℃, 습도는 ${sensors.dht11_humi.value.toFixed(0)}%, 조도는 ${sensors.cds_light.value} ADC 입니다.`;
-        addLog('success', `Pico AI 코어: "${msg}"`, 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage(msg);
+        setColor('#A855F7', '로맨틱 퍼플');
       } else {
-        const msg = `명령 "${text}"을(를) 확인했습니다. 정상적으로 자동화 제어를 수행합니다.`;
-        addLog('info', `Pico AI 코어: "${msg}"`, 'SYSTEM');
-        if (onFeedbackMessage) onFeedbackMessage(msg);
+        reply(`명령 "${text}"을(를) 이해하지 못했습니다. 예: "문 열어줘", "조명 파란색", "현재 상태 어때?"`, 'info');
       }
     }, 350);
   };

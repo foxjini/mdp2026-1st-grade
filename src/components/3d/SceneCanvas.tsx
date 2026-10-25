@@ -9,6 +9,7 @@ import { CameraRig } from './CameraRig';
 import { DynamicRoom } from './DynamicRoom';
 import { RoomPackage } from '@/core/types/iot';
 import { useIoTStore } from '@/core/store/useIoTStore';
+import { roomUsesDevice } from '@/core/rooms/devices';
 
 interface SceneCanvasProps {
   approvalStatus?: 'pending' | 'approved';
@@ -37,8 +38,11 @@ export function SceneCanvas({
   const rgbColor = useIoTStore((s) => s.actuators.rgb_light.reportedColor) || '#3B82F6';
   const setSelectedDevice = useIoTStore((s) => s.setSelectedDevice);
 
-  const isLightOn = rgbState === 'ON';
-  const normalizedLight = Math.min(1, Math.max(0, lightVal / 65535));
+  // RGB · Cds 를 연결하지 않은 업로드 공간은 그 값으로 방 조명을 바꾸지 않음 (기본 파란색 물듦 방지)
+  const usesRgb = roomUsesDevice(roomPackage, 'rgb');
+  const usesCds = roomUsesDevice(roomPackage, 'cds');
+  const isLightOn = usesRgb && rgbState === 'ON';
+  const normalizedLight = usesCds ? Math.min(1, Math.max(0, lightVal / 65535)) : 0.6;
 
   // 밝고 화사한 스튜디오 조명 (Nomadian 스타일)
   const ambientIntensity = 0.75 + normalizedLight * 0.15;

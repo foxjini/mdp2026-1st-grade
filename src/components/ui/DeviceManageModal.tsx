@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { BaseDeviceId } from '@/core/types/iot';
+import { describeCustom, roomUsesDevice } from '@/core/rooms/devices';
 
 interface DeviceManageModalProps {
   isOpen: boolean;
@@ -114,6 +115,8 @@ export function DeviceManageModal({
   const roomPackage = useIoTStore((s) => s.activeRoomPackage);
   const customSensors = useIoTStore((s) => s.customSensors);
   const picoIp = useIoTStore((s) => s.picoIpAddress);
+  const sensors = useIoTStore((s) => s.sensors);
+  const actuators = useIoTStore((s) => s.actuators);
   const addLog = useIoTStore((s) => s.addLog);
 
   const [activeTab, setActiveTab] = useState<'current' | 'vibe'>('current');
@@ -138,7 +141,7 @@ export function DeviceManageModal({
       pin: 'GP15',
       type: '디지털 단선 버스',
       role: '실내 온도 및 습도 2초 주기 샘플링',
-      status: '정상 가동',
+      status: '',
     },
     {
       id: 'cds',
@@ -146,7 +149,7 @@ export function DeviceManageModal({
       pin: 'GP26 (ADC0)',
       type: '16비트 아날로그 전압',
       role: '주변 밝기 측정 및 3D 앰비언트 광 연동',
-      status: '정상 가동',
+      status: '',
     },
     {
       id: 'sg90',
@@ -154,7 +157,7 @@ export function DeviceManageModal({
       pin: 'GP16',
       type: '50Hz PWM (0~180°)',
       role: '스마트 도어 개폐 각도 물리적 제어',
-      status: '정상 가동',
+      status: '',
     },
     {
       id: 'rgb',
@@ -162,12 +165,22 @@ export function DeviceManageModal({
       pin: 'GP18, GP19, GP20',
       type: '3채널 PWM 출력',
       role: '실내 조명 색상 및 밝기 물리적 발광',
-      status: '정상 가동',
+      status: '',
     },
   ].map((dev) => {
     // 업로드 공간은 room.json baseDevices 에 있는 장치만 이 공간의 Pico 에 연결됨
-    const used = !roomPackage || roomPackage.meta.baseDevices.includes(dev.id as BaseDeviceId);
-    return { ...dev, used, status: used ? dev.status : '미사용 (핀 확장 가능)' };
+    const used = roomUsesDevice(roomPackage, dev.id as BaseDeviceId);
+    // 실제 상태: 센서는 값 수신 여부, 액추에이터는 마지막 명령 오류
+    const live =
+      dev.id === 'dht11'
+        ? sensors.dht11_temp.isStale ? '수신 대기' : `${sensors.dht11_temp.value.toFixed(1)}℃ · ${sensors.dht11_humi.value.toFixed(0)}%`
+        : dev.id === 'cds'
+          ? sensors.cds_light.isStale ? '수신 대기' : `${sensors.cds_light.value.toLocaleString()} ADC`
+          : dev.id === 'sg90'
+            ? actuators.sg90_door.errorMessage ? '명령 오류' : `${actuators.sg90_door.reportedAngle}°`
+            : actuators.rgb_light.errorMessage ? '명령 오류' : `${actuators.rgb_light.reportedColor} ${actuators.rgb_light.reportedState}`;
+    const ok = live !== '수신 대기' && live !== '명령 오류';
+    return { ...dev, used, ok, status: used ? live : '미사용 (핀 확장 가능)' };
   });
 
   const handleSelectPreset = (p: PresetItem) => {
@@ -274,7 +287,7 @@ export function DeviceManageModal({
             }`}
           >
             <Cpu className="w-4 h-4 text-slate-500" />
-            <span>현재 연결 핀맵 (기본 4종)</span>
+            <span>현재 연결 핀맵 (이 공간)</span>
           </button>
           <button
             onClick={() => setActiveTab('vibe')}
@@ -317,8 +330,14 @@ export function DeviceManageModal({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    {dev.used && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                    <span className={`text-xs font-bold ${dev.used ? 'text-emerald-600' : 'text-slate-400'}`}>{dev.status}</span>
+                    {dev.used && dev.ok && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                    <span
+                      className={`text-xs font-bold ${
+                        !dev.used ? 'text-slate-400' : dev.ok ? 'text-emerald-600' : dev.status === '명령 오류' ? 'text-rose-600' : 'text-amber-600'
+                      }`}
+                    >
+                      {dev.status}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -346,7 +365,7 @@ export function DeviceManageModal({
                         <span className="text-[11px] text-slate-500">단위 {def.unit || '-'}</span>
                       </div>
                       <span className={`text-xs font-bold ${live && !live.isStale ? 'text-emerald-600' : 'text-slate-400'}`}>
-                        {live && !live.isStale ? `${live.value} ${def.unit}` : '수신 대기'}
+                        {live && !live.isStale ? describeCustom(def, live).text : '수신 대기'}
                       </span>
                     </div>
                   );

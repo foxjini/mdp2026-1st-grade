@@ -108,6 +108,12 @@ export interface CustomCommand {
   value: number | string | boolean;
 }
 
+// 확장 명령 처리 결과 (시뮬레이션: mock.js onCommand / 하드웨어: code.py handle)
+export interface CustomCommandResult extends CustomCommand {
+  ok: boolean;
+  at: number;
+}
+
 export interface IoTPlatformState {
   mode: PlatformMode;
   connectionState: ConnectionState;
@@ -135,6 +141,7 @@ export interface IoTPlatformState {
   activeRoomPackage: RoomPackage | null;
   // 마지막 확장 명령 (IoTProvider가 감지하여 어댑터로 전달)
   lastCommand: CustomCommand | null;
+  lastCommandResult: CustomCommandResult | null;
 
   // System Logs
   logs: LogEntry[];
@@ -163,9 +170,12 @@ export interface IoTPlatformState {
   confirmRgbAck: (color: string, state: 'ON' | 'OFF') => void;
   failCommand: (actuatorId: 'sg90_door' | 'rgb_light', errorMessage: string) => void;
 
+  // 업로드 공간에서 연결하지 않은 기본 장치면 경고 후 false
+  ensureDevice: (id: BaseDeviceId) => boolean;
   setActiveRoomPackage: (pkg: RoomPackage | null) => void;
   updateCustomSensor: (key: string, value: number) => void;
   sendCommand: (action: string, value: CustomCommand['value']) => void;
+  setCommandResult: (command: CustomCommand, ok: boolean) => void;
 
   addLog: (type: LogEntry['type'], message: string, source?: LogEntry['source']) => void;
   clearLogs: () => void;

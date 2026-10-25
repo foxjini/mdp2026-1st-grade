@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useIoTStore } from '@/core/store/useIoTStore';
+import { useRoomDevices } from '@/core/rooms/useRoomDevices';
 import { RotateCcw, DoorOpen, Lightbulb, Minimize2 } from 'lucide-react';
 
 export function ExhibitionOverlay() {
@@ -11,6 +12,8 @@ export function ExhibitionOverlay() {
   const light = useIoTStore((s) => s.actuators.rgb_light);
   const setServoAngle = useIoTStore((s) => s.setServoAngle);
   const setRgbState = useIoTStore((s) => s.setRgbState);
+  // 이 공간에 연결된 기본 장치의 버튼만 표시
+  const devices = useRoomDevices();
 
   if (!isExhibitionMode) return null;
 
@@ -29,15 +32,18 @@ export function ExhibitionOverlay() {
       </span>
 
       {/* 스마트 도어 원터치 토글 */}
+      {devices.sg90 && (
       <button
         onClick={() => setServoAngle(door.reportedAngle === 0 ? 90 : 0)}
         className="px-3 py-1.5 rounded-xl bg-blue-600/80 hover:bg-blue-500 text-white text-xs font-bold shadow flex items-center gap-1.5 transition-all"
       >
         <DoorOpen className="w-4 h-4" />
-        {door.reportedAngle === 0 ? '문 열기' : '문 닫기'}
+        {door.reportedAngle === 0 ? (devices.isUploaded ? '서보 90°' : '문 열기') : (devices.isUploaded ? '서보 0°' : '문 닫기')}
       </button>
+      )}
 
       {/* 조명 원터치 토글 */}
+      {devices.rgb && (
       <button
         onClick={() => setRgbState(light.reportedState === 'ON' ? 'OFF' : 'ON')}
         className={`px-3 py-1.5 rounded-xl text-white text-xs font-bold shadow flex items-center gap-1.5 transition-all ${
@@ -49,6 +55,7 @@ export function ExhibitionOverlay() {
         <Lightbulb className="w-4 h-4" />
         {light.reportedState === 'ON' ? '조명 끄기' : '조명 켜기'}
       </button>
+      )}
 
       {/* 전시 모드 종료 */}
       <button

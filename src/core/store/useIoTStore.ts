@@ -1,5 +1,9 @@
 import { create } from 'zustand';
-import { IoTPlatformState, LogEntry, SensorData } from '../types/iot';
+import { BASE_DEVICE_INFO, IoTPlatformState, LogEntry, SensorData } from '../types/iot';
+import { roomUsesDevice } from '../rooms/devices';
+
+// 공간 · 장치마다 '연결 안 됨' 경고는 한 번만 (Scene.tsx 가 반복 호출해도 로그가 쌓이지 않도록)
+const warnedMissing = new Set<string>();
 
 export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   mode: 'simulation',
@@ -62,6 +66,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   customSensors: {},
   activeRoomPackage: null,
   lastCommand: null,
+  lastCommandResult: null,
 
   logs: [
     {
@@ -143,6 +148,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   },
 
   setServoAngle: async (angle) => {
+    if (!get().ensureDevice('sg90')) return false;
     const current = get().actuators.sg90_door;
     if (current.pending) return false;
 
@@ -224,6 +230,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   },
 
   setRgbColor: async (color) => {
+    if (!get().ensureDevice('rgb')) return false;
     const current = get().actuators.rgb_light;
     if (current.pending) return false;
 
@@ -245,6 +252,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   },
 
   setRgbState: async (targetState) => {
+    if (!get().ensureDevice('rgb')) return false;
     const current = get().actuators.rgb_light;
     if (current.pending) return false;
 
@@ -315,6 +323,22 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
     get().addLog('error', `명령 실패 (${actuatorId}): ${errorMessage}`, 'SYSTEM');
   },
 
+  // 업로드 공간의 baseDevices 에 없는 기본 장치에는 명령을 보내지 않음 (Pico 펌웨어도 거부함)
+  ensureDevice: (id) => {
+    const pkg = get().activeRoomPackage;
+    if (roomUsesDevice(pkg, id)) return true;
+    const key = `${pkg?.meta.id}:${id}`;
+    if (!warnedMissing.has(key)) {
+      warnedMissing.add(key);
+      get().addLog(
+        'warn',
+        `이 공간의 Pico 에는 ${BASE_DEVICE_INFO[id].name} 이(가) 연결되어 있지 않아 명령을 보내지 않았습니다. (room.json baseDevices)`,
+        'SYSTEM'
+      );
+    }
+    return false;
+  },
+
   setActiveRoomPackage: (pkg) => {
     // 공간이 바뀌면 확장 센서 목록을 room.json 정의대로 초기화 (이전 값은 같은 key면 유지)
     set((state) => {
@@ -332,7 +356,8 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
           maxWarning: def.maxWarning,
         };
       });
-      return { activeRoomPackage: pkg, customSensors: next };
+      const sameRoom = state.activeRoomPackage?.meta.id === pkg?.meta.id;
+      return { activeRoomPackage: pkg, customSensors: next, lastCommandResult: sameRoom ? state.lastCommandResult : null };
     });
   },
 
@@ -368,6 +393,12 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
       },
     });
     get().addLog('info', `확장 명령 전송: ${action} = ${String(value)} (${roomId})`, 'USER');
+  },
+
+  setCommandResult: (command, ok) => {
+    // 그 사이 공간이 바뀌었으면 이전 공간의 결과는 표시하지 않음
+    if (command.roomId !== (get().activeRoomPackage?.meta.id || 'builtin')) return;
+    set({ lastCommandResult: { ...command, ok, at: Date.now() } });
   },
 
   addLog: (type, message, source = 'SYSTEM') => {

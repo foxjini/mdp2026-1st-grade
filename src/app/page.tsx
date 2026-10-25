@@ -81,8 +81,13 @@ export default function HomePage() {
   }, [currentRoom.id, currentRoom.picoIp, currentRoom.mode, applyRoomConnection]);
 
   const handleApproveProposal = () => {
-    setApprovalStatus('approved');
+    // SG90 이 없는 공간이면 승인 처리 · 성공 안내를 하지 않음
+    if (!useIoTStore.getState().ensureDevice('sg90')) {
+      showToast('이 공간의 Pico 에는 SG90 이 연결되어 있지 않아 승인 동작을 실행할 수 없습니다.');
+      return;
+    }
     setServoAngle(90);
+    setApprovalStatus('approved');
     addLog('success', '스마트 환기 제어 요청 승인: 스마트 도어가 90°로 개방되었습니다.', 'USER');
     showToast('승인 완료: 스마트 도어가 90°로 개방되었습니다.');
   };

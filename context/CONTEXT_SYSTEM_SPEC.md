@@ -20,8 +20,8 @@
    ├── RoomsSidebar ─ AddRoomModal(1/2 공간 정보) → RoomCodeModal(2/2 코드 업로드)
    ├── SceneCanvas (R3F) ─ 기본 예제 공간: SmartHomeRoom / SmartFarmRoom / SmartFactoryRoom
    │                      └ 팀 공간: DynamicRoom → compileScene(Scene.tsx) + SceneErrorBoundary
-   └── InspectorPanel / SensorOutputPanel(customSensors 자동 게이지) / DeviceManageModal
-          ↕ Zustand (useIoTStore: sensors, actuators, customSensors, activeRoomPackage, lastCommand)
+   └── InspectorPanel / SensorOutputPanel(customSensors 자동 게이지) / DeviceManageModal  ← useRoomDevices(): baseDevices 에 있는 장치만 표시
+          ↕ Zustand (useIoTStore: sensors, actuators, customSensors, activeRoomPackage, lastCommand, lastCommandResult)
 [Adapter]
    ├── MockIoTAdapter      ─ 기본 4종 난수 + 팀 mock.js tick()/onCommand()
    └── CircuitPythonAdapter ─ GET /api/status (rooms[공간ID] → customSensors), POST /api/servo|rgb|command
@@ -55,7 +55,8 @@
 
 ## 5. 상태 관리 규칙
 - 기본 액추에이터 2-Phase: `setServoAngle/setRgbColor/setRgbState` → `pending=true` → 어댑터 ACK → `confirm*Ack` 또는 `failCommand` 롤백
-- 확장 명령: `sendCommand(action, value)` → `lastCommand` 갱신 → IoTProvider 가 감지해 `adapter.sendCommand()`
+- 확장 명령: `sendCommand(action, value)` → `lastCommand` 갱신 → IoTProvider 가 감지해 `adapter.sendCommand()` → 결과는 `lastCommandResult` (인스펙터 '최근 확장 명령')
+- 기본 장치 가드: 업로드 공간의 `baseDevices` 에 없는 SG90 · RGB 명령은 `ensureDevice()` 가 막고 경고 로그 1회 (`src/core/rooms/devices.ts`)
 - 센서 stale: 10초 이상 미수신 시 `isStale=true` (기본 센서와 확장 센서 모두)
 
 ## 6. 유지보수 명령

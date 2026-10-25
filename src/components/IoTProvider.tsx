@@ -48,7 +48,11 @@ export function IoTProvider({ children }: { children: React.ReactNode }) {
 
       // 3. 팀 확장 명령 (sendCommand) 감지
       if (state.lastCommand && state.lastCommand !== prevState.lastCommand) {
-        adapter.sendCommand(state.lastCommand);
+        const command = state.lastCommand;
+        adapter
+          .sendCommand(command)
+          .catch(() => false)
+          .then((ok) => useIoTStore.getState().setCommandResult(command, ok));
       }
     });
 
