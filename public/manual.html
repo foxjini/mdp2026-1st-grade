@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>바이브 코딩 실전 매뉴얼 - 3D IoT 전시 플랫폼</title>
+  <title>바이브 코딩 실전 매뉴얼 - 인천전자마이스터고 3D IoT 전시 플랫폼</title>
   <style>
     /* -------------------------------------------------------------
        Meta Brand Presentation Theme Tokens
@@ -79,12 +79,12 @@
       width: 38px;
       height: 38px;
       border-radius: 12px;
-      background: linear-gradient(135deg, var(--meta-blue), #00B2FF);
-      color: #FFFFFF;
-      font-weight: 900;
-      font-size: 19px;
-      box-shadow: 0 4px 12px rgba(0, 100, 224, 0.25);
+      background: #FFFFFF;
+      border: 1px solid var(--meta-border);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 100, 224, 0.15);
     }
+    .meta-logo-badge img { width: 32px; height: 32px; object-fit: contain; }
 
     .meta-title-wrap h1 {
       font-size: 15px;
@@ -667,6 +667,14 @@
       .slide-card {
         padding: 24px 20px;
       }
+      /* 표 안의 긴 코드 · 메시지가 화면 밖으로 나가지 않게 */
+      table.meta-table th, table.meta-table td {
+        padding: 8px 8px;
+        overflow-wrap: anywhere;
+      }
+      table.meta-table code {
+        word-break: break-all;
+      }
       .grid-2, .grid-3, .helper-form, .flow-steps {
         grid-template-columns: 1fr;
       }
@@ -686,10 +694,10 @@
   <!-- 1. Top Meta Presentation Header -->
   <header class="meta-header">
     <div class="meta-brand">
-      <div class="meta-logo-badge">M</div>
+      <div class="meta-logo-badge"><img src="/school-logo.png" alt="인천전자마이스터고등학교"></div>
       <div class="meta-title-wrap">
         <h1>
-          <span>3D IoT 전시 플랫폼</span>
+          <span>인천전자마이스터고 3D IoT 전시 플랫폼</span>
           <span style="font-weight:400; color:var(--meta-slate);">|</span>
           <span style="color:var(--meta-blue);">바이브 코딩 실전 매뉴얼</span>
         </h1>
@@ -743,7 +751,7 @@
           <h3>🖥️ 전시 구성</h3>
           <ul>
             <li>윈도우 PC 1대 + 모니터 (이 플랫폼 실행)</li>
-            <li><strong>공간마다 Pico 2 W 1대</strong> (IP 가 서로 다름, 예: 192.168.0.51 · .52 · .53)</li>
+            <li><strong>공간마다 Pico 2 W 1대</strong> (CircuitPython 10.x, IP 가 서로 다름, 예: 192.168.0.51 · .52 · .53)</li>
             <li>기본 장치 4종(DHT11 · Cds · SG90 · RGB LED) 중 우리 팀이 고른 것</li>
             <li>팀 확장 부품 (토양 수분 센서, 릴레이 등)</li>
           </ul>
@@ -774,7 +782,7 @@
         </thead>
         <tbody>
           <tr><td><strong>① 주제 정하기</strong></td><td>해결할 문제, 어떤 기본 장치를 쓸지, 필요한 확장 부품 정리</td><td>팀 회의 (STEP 05~07 작성법 · STEP 08 예시 참고 · 빈칸 채우기가 어렵다면 <a class="appendix-link" onclick="goToSlide(12)">부록 A: AI 로 아이디어 완성하기</a>)</td></tr>
-          <tr><td><strong>② 새 공간 추가</strong></td><td>공간 이름 · 팀 이름 · 아이콘 · 사용할 기본 장치 · (선택) Pico IP → 공간 ID 발급</td><td>대시보드 왼쪽 <strong>+ 새 공간 추가</strong></td></tr>
+          <tr><td><strong>② 새 공간 추가</strong></td><td>공간 이름 · 팀 이름 · 대표 아이콘(10종) · 사용할 기본 장치 · (선택) Pico IP → 공간 ID 발급</td><td>대시보드 왼쪽 <strong>+ 새 공간 추가</strong></td></tr>
           <tr><td><strong>③ AI 프롬프트 복사</strong></td><td>아이디어 작성 → <strong>[AI 프롬프트 복사]</strong> (플랫폼 컨텍스트 + 공간 ID 자동 포함)</td><td>코드 업로드 창 ①</td></tr>
           <tr><td><strong>④ 바이브 코딩</strong></td><td>ChatGPT · Claude · Gemini 에 붙여넣기 → 4개 파일 받기</td><td>생성형 AI</td></tr>
           <tr><td><strong>⑤ 업로드 · 확인</strong></td><td>파일 끌어다 놓기 또는 코드 붙여넣기 → 3D 화면 확인 → 오류는 AI 에게 다시 질문</td><td>코드 업로드 창 ③</td></tr>
@@ -826,6 +834,11 @@
             <li>디지털 출력 (릴레이 · 버저 · LED): <code>GP21</code>, <code>GP0 ~ GP12</code></li>
           </ul>
           <p>사용하는 핀은 <code>room.json</code> 의 <code>"pins": ["GP27"]</code> 에 꼭 적습니다.</p>
+          <p><strong>⚠ RP2350 하드웨어 주의</strong></p>
+          <ul>
+            <li><strong>PWM 짝 핀:</strong> <code>GP16·GP17</code>, <code>GP18·GP19</code> 는 같은 PWM 이라 둘 다 PWM 으로 쓰면 주파수가 같아야 합니다. SG90(50Hz)을 쓰는 공간에서 <code>GP17</code> 은 디지털 입출력으로 쓰거나, PWM(부저 등)이면 <code>frequency=50</code></li>
+            <li><strong>디지털 입력은 <code>Pull.UP</code>:</strong> 감지 · 눌림은 <code>value == False</code> 로 판단합니다. RP2350 내부 풀다운 결함(E9) 때문에 <code>Pull.DOWN</code> 은 쓰지 않습니다.</li>
+          </ul>
         </div>
       </div>
     </article>
@@ -889,6 +902,18 @@
           </ul>
         </div>
       </div>
+
+      <h3 style="margin:22px 0 10px; font-size:16px;">🖥️ 대시보드 화면 읽는 법 (업로드 후 확인 · 디버깅)</h3>
+      <table class="meta-table">
+        <thead><tr><th>위치</th><th>보이는 것</th><th>이렇게 쓰세요</th></tr></thead>
+        <tbody>
+          <tr><td><strong>오른쪽 · 장치 인스펙터</strong></td><td><strong>기본 장치 제어</strong>: 우리 공간에 연결한 기본 장치만 (SG90 슬라이더 · RGB 색 · 온습도 · 조도)<br><strong>팀 확장 장치</strong>: room.json 확장 센서 값 · <code>켜짐/꺼짐</code>(0~1 상태값) · 경고<br><strong>최근 확장 명령</strong>: <code>action = 값 → 처리 완료 / 실패</code><br><strong>실시간 장치 현황</strong>: 장치마다 지금 값 · 구동 중 · 오류</td><td>3D 화면에서 장치를 클릭한 뒤 '최근 확장 명령'이 <strong>처리 완료</strong>인지 확인. 실패면 STEP 09</td></tr>
+          <tr><td><strong>오른쪽 · 센서 출력</strong></td><td>사용하는 센서 게이지 · 경고 범위 · 패킷 로그 · CSV 저장<br>노란 박스 <code>room.json customSensors 에 없는 값</code></td><td>노란 박스가 보이면 <strong>key 오타</strong>이거나 room.json 등록이 빠진 것</td></tr>
+          <tr><td><strong>오른쪽 · 제어 로그</strong></td><td>보낸 명령 · mock.js 로드 · 경고 · 오류 기록</td><td>"연결되어 있지 않아 명령을 보내지 않았습니다" = baseDevices 에 없는 장치를 제어함</td></tr>
+          <tr><td><strong>값 대신 '수신 대기'</strong></td><td>그 값이 아직 들어오지 않음</td><td>시뮬레이션: mock.js 가 그 key 를 돌려주는지 / 하드웨어: code.py read() · 배선 · Pico 연결 확인</td></tr>
+          <tr><td><strong>왼쪽 위 학교 마크</strong></td><td>플랫폼 소개 · 전시 현황 창</td><td>모든 공간의 모드 · Pico IP 를 한눈에 확인 (IP 미지정 · 중복 경고)</td></tr>
+        </tbody>
+      </table>
     </article>
 
     <!-- =========================================================
@@ -1524,7 +1549,10 @@ mock 시나리오 (전시용): (예: 40초 주기 — 0~20초 정상, 20~30초 �
           <tr><td><code>핀 충돌</code> 경고</td><td>우리가 고른 기본 장치(baseDevices)의 핀과 겹침</td><td>room.json pins 와 code.py 핀을 빈 핀으로 변경 (또는 그 기본 장치를 baseDevices 에서 빼기)</td></tr>
           <tr><td><code>Pico IP … 를 다른 공간도 사용합니다</code></td><td>두 공간에 같은 Pico IP 저장</td><td>⋮ → Pico 연결 설정에서 공간마다 다른 IP 로 변경</td></tr>
           <tr><td>헤더에 <code>Pico 2 W … · 응답 없음</code></td><td>우리 Pico 가 꺼져 있음 / IP 가 다름 / 다른 Wi-Fi</td><td>Pico 시리얼 창의 IP 와 Pico 연결 설정 IP 비교, PC 와 같은 Wi-Fi 인지 확인</td></tr>
-          <tr><td><code>이 Pico 에는 SG90 이(가) 연결되어 있지 않습니다</code></td><td>baseDevices 에 없는 장치를 제어함</td><td>Scene.tsx · code.py 에서 그 장치를 빼거나 baseDevices 에 추가 후 펌웨어 다시 설치</td></tr>
+          <tr><td><code>이 Pico 에는 SG90 이(가) 연결되어 있지 않습니다</code> · 제어 로그 <code>… 연결되어 있지 않아 명령을 보내지 않았습니다</code></td><td>baseDevices 에 없는 장치를 Scene.tsx · 명령창에서 제어함</td><td>Scene.tsx · code.py 에서 그 장치를 빼거나 baseDevices 에 추가 후 펌웨어 다시 설치</td></tr>
+          <tr><td>인스펙터 <code>최근 확장 명령 … → 실패 (mock.js onCommand 확인)</code></td><td>mock.js 에 <code>onCommand</code> 가 없거나 action 이름이 Scene.tsx 의 <code>sendCommand('이름')</code> 과 다름</td><td>Scene.tsx · mock.js · code.py 의 action 이름 통일 (하드웨어면 code.py <code>handle()</code> 확인)</td></tr>
+          <tr><td>센서 출력 노란 박스 <code>room.json customSensors 에 없는 값</code></td><td>mock.js · code.py 가 보낸 key 가 room.json 에 없음 (오타 · 등록 누락)</td><td>박스에 나온 key 를 room.json key 와 같게 고치기</td></tr>
+          <tr><td>하드웨어에서 온습도만 <code>수신 대기</code></td><td>DHT11 을 읽지 못함 (<code>/api/status</code> 의 <code>dht_ok: false</code>)</td><td>GP15 배선 · 3.3V/GND 확인. 펌웨어는 가짜 값 대신 '수신 대기'로 보여 줍니다</td></tr>
           <tr><td>실물에서는 서보가 움직이는데 시뮬레이션에서는 안 움직임</td><td>mock.js 가 <code>servo_angle</code> / <code>rgb_color</code> 를 돌려주지 않음</td><td>STEP 04 의 'mock.js 도 똑같이' 참고</td></tr>
           <tr><td><code>포트 … 는 브라우저가 보안상 막는 포트</code></td><td>5060 · 5061 등 막힌 포트</td><td>5051, 5052 처럼 다른 포트 사용</td></tr>
           <tr><td><code>업로드 비밀번호가 올바르지 않습니다</code></td><td>전시 PC 에 비밀번호 설정됨</td><td>선생님께 받은 비밀번호를 업로드 창에 입력</td></tr>
@@ -1594,11 +1622,12 @@ mock 시나리오 (전시용): (예: 40초 주기 — 0~20초 정상, 20~30초 �
       <table class="meta-table">
         <thead><tr><th>순서</th><th>할 일</th><th>어디서 / 명령</th></tr></thead>
         <tbody>
+          <tr><td><strong>0</strong></td><td>(최초 1회) <strong>BOOTSEL</strong> 버튼을 누른 채 USB 연결 → <code>RP2350</code> 드라이브에 Pico 2 W 용 <strong>CircuitPython 10.x</strong> <code>.uf2</code> 복사 → <code>CIRCUITPY</code> 드라이브 확인</td><td><a href="https://circuitpython.org/board/raspberry_pi_pico2_w/" target="_blank" rel="noreferrer">circuitpython.org</a></td></tr>
           <tr><td><strong>1</strong></td><td>선생님께 우리 팀 Pico IP 받기 (예: 팜 <code>192.168.0.51</code>, 펫룸 <code>192.168.0.52</code> …)</td><td>팀마다 다른 IP</td></tr>
           <tr><td><strong>2</strong></td><td>우리 공간 <strong>⋮ → Pico 연결 설정</strong> 에 IP 입력 → <strong>[Pico 2 W 연결 저장]</strong> (Pico 준비 전이면 <strong>[이 공간은 시뮬레이션으로]</strong>)</td><td>대시보드 사이드바</td></tr>
           <tr><td><strong>3</strong></td><td>우리 공간 ID 복사: 공간 <strong>⋮ → 공간 ID 복사</strong> 또는 코드 업로드 창 상단 ID 옆 <strong>📋 아이콘</strong></td><td><code>npm run firmware:bundle</code></td></tr>
           <tr><td><strong>4</strong></td><td>우리 Pico 를 USB 로 연결 → CIRCUITPY 드라이브 문자 확인 (예: <code>E:</code>) → 펌웨어 설치</td><td><code>npm run firmware:bundle -- 공간ID E:\</code><br>(코드 업로드 창의 <strong>[복사]</strong> 버튼)</td></tr>
-          <tr><td><strong>5</strong></td><td><code>settings.toml</code> 에 Wi-Fi 이름 · 암호 입력, <code>lib/</code> 에 스크립트가 알려 준 라이브러리 복사</td><td>CIRCUITPY 드라이브</td></tr>
+          <tr><td><strong>5</strong></td><td><code>settings.toml</code> 에 Wi-Fi 이름 · 암호 입력 (<strong>2.4GHz</strong> Wi-Fi 만 가능), <code>lib/</code> 에 스크립트가 알려 준 라이브러리를 <strong>10.x 번들</strong>에서 복사</td><td>CIRCUITPY 드라이브</td></tr>
           <tr><td><strong>6</strong></td><td>Pico 재부팅 → 시리얼 창에 <code>Pico 2 W IP: 192.168.0.51</code> 확인 → 대시보드에서 우리 공간 선택</td><td>헤더 <code>Pico 2 W 192.168.0.51 · 연결됨</code></td></tr>
         </tbody>
       </table>
@@ -1619,7 +1648,9 @@ mock 시나리오 (전시용): (예: 40초 주기 — 0~20초 정상, 20~30초 �
           <p><strong>① 고정 IP (권장):</strong> 2번에서 저장한 IP 가 <code>settings.toml</code> 의 <code>PICO_STATIC_IP</code> 로 들어갑니다. 공유기와 같은 대역(예: 192.168.0.x) · DHCP 범위 밖 주소를 쓰세요.</p>
           <pre class="code-block">PICO_STATIC_IP = "192.168.0.51"
 PICO_NETMASK   = "255.255.255.0"   # 생략 가능
-PICO_GATEWAY   = "192.168.0.1"     # 생략 시 x.x.x.1</pre>
+PICO_GATEWAY   = "192.168.0.1"     # 생략 시 x.x.x.1
+PICO_DNS       = "8.8.8.8"         # 선택 (없어도 됨)</pre>
+          <p>고정 IP 는 <strong>Wi-Fi 연결 직후</strong> 적용됩니다. 시리얼 창에 <code>고정 IP 적용: 192.168.0.51</code> 이 나오면 성공입니다.</p>
           <p><strong>② 공유기 DHCP 예약:</strong> <code>PICO_STATIC_IP</code> 줄을 지우고 공유기에서 Pico 에 IP 를 예약 → 시리얼 창의 IP 를 Pico 연결 설정에 입력.</p>
         </div>
         <div class="meta-box success">
@@ -1639,7 +1670,28 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           <p>⚠ 5060 · 5061 · 6000 · 6665~6669 포트는 브라우저가 막아서 쓸 수 없습니다.</p>
           <p>확인: 브라우저에서 <code>http://Pico IP/api/teams</code> → 공간 · 기본 장치 · 팀 모듈 오류</p>
         </div>
+        <div class="meta-box warning">
+          <h3>🔄 자동 복구 (Pico 를 다시 꽂지 않아도 됨)</h3>
+          <ul>
+            <li>공유기가 Pico 보다 늦게 켜져도 <strong>10초마다</strong> 다시 연결을 시도합니다.</li>
+            <li>전시 중 Wi-Fi 가 끊기면 5초 안에 알아채고 <strong>재연결 → 같은 고정 IP → 서버 재시작</strong>을 자동으로 합니다.</li>
+            <li>웹 편집기(웹 워크플로)를 쓰려고 <code>CIRCUITPY_WEB_API_PASSWORD</code> 를 넣으면 80 포트를 차지하므로 <code>CIRCUITPY_WEB_API_PORT = 8080</code> 도 함께 넣습니다.</li>
+          </ul>
+        </div>
       </div>
+
+      <h3 style="margin:22px 0 10px; font-size:16px;">📟 Pico 시리얼 창 메시지 읽기 (Thonny · Mu · 웹 시리얼)</h3>
+      <table class="meta-table">
+        <thead><tr><th>시리얼 창 메시지</th><th>뜻</th><th>할 일</th></tr></thead>
+        <tbody>
+          <tr><td><code>Wi-Fi 연결 성공! Pico 2 W IP: 192.168.0.51</code> · <code>HTTP Server 실행 중</code></td><td>정상</td><td>이 IP 가 Pico 연결 설정 IP 와 같은지 확인</td></tr>
+          <tr><td><code>Wi-Fi 연결 실패. 10초마다 다시 시도합니다.</code></td><td>Wi-Fi 에 붙지 못함</td><td>settings.toml 의 SSID · 비밀번호, 2.4GHz 공유기인지 확인</td></tr>
+          <tr><td><code>고정 IP 설정 값 오류 (…)</code> · <code>[주의] 고정 IP … 적용 안 됨</code></td><td>PICO_* 값 형식이 틀림 → 공유기가 준 주소(DHCP)로 동작</td><td>settings.toml 의 <code>PICO_STATIC_IP · PICO_GATEWAY</code> 확인</td></tr>
+          <tr><td><code>HTTP Server 시작 실패</code> + 80 포트 안내</td><td>웹 워크플로가 80 포트를 쓰는 중</td><td>settings.toml 에 <code>CIRCUITPY_WEB_API_PORT = 8080</code> 추가</td></tr>
+          <tr><td><code>[팀 모듈] 공간ID 로드 실패: …</code></td><td>우리 팀 code.py 오류 (기본 장치 · 서버는 계속 동작)</td><td><code>http://Pico IP/api/teams</code> 의 오류를 STEP 09 'Pico 실물에서만 오류' 프롬프트로 AI 에게</td></tr>
+          <tr><td><code>Wi-Fi 연결이 끊겼습니다. 다시 연결합니다...</code></td><td>자동 복구 중 (정상 동작)</td><td>잠시 기다리기. 계속 반복되면 공유기 · 거리 확인</td></tr>
+        </tbody>
+      </table>
     </article>
 
     <!-- =========================================================
@@ -1667,7 +1719,9 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           <tr><td><strong>4</strong></td><td>Pico 를 하나씩 USB 로 연결해 그 공간 펌웨어 설치 (핀 충돌 · 문법 검사 · 고정 IP 포함)</td><td><code>npm run firmware:bundle -- 공간ID E:\</code> (E: = 그 Pico 의 CIRCUITPY)</td></tr>
           <tr><td><strong>5</strong></td><td><code>settings.toml</code> 에 전시장 Wi-Fi 입력, <code>lib/</code> 라이브러리 확인 (스크립트가 필요 lib 안내)</td><td>CIRCUITPY 드라이브</td></tr>
           <tr><td><strong>6</strong></td><td>재부팅 후 공간 · 기본 장치 · 팀 모듈 확인</td><td><code>http://&lt;Pico IP&gt;/api/teams</code></td></tr>
-          <tr><td><strong>7</strong></td><td>공간을 하나씩 선택해 헤더가 <code>Pico 2 W &lt;IP&gt; · 연결됨</code> 인지 확인 → 전시 모드</td><td>상단 헤더</td></tr>
+          <tr><td><strong>7</strong></td><td>왼쪽 위 <strong>학교 마크 → 전시 현황</strong>에서 공간마다 하드웨어 모드 · IP 미지정 · IP 중복 경고가 없는지 확인</td><td>전시 현황 창</td></tr>
+          <tr><td><strong>8</strong></td><td>공간을 하나씩 선택해 헤더가 <code>Pico 2 W &lt;IP&gt; · 연결됨</code>, 인스펙터 배지가 <code>연결됨</code> 인지 확인</td><td>상단 헤더 · 장치 인스펙터</td></tr>
+          <tr><td><strong>9</strong></td><td>공유기를 한 번 껐다 켜서 1분 안에 모든 공간이 다시 <code>연결됨</code> 이 되는지 확인 (자동 복구) → 전시 모드 시작</td><td>전시 현황 창 [전시 모드 시작]</td></tr>
         </tbody>
       </table>
 
@@ -1699,6 +1753,14 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
         <div class="meta-box">
           <h3>Q5. 모든 공간의 Pico 연결을 한 번에 점검하려면?</h3>
           <p>대시보드 왼쪽 위 <strong>학교 마크</strong>를 누르면 '플랫폼 소개 · 전시 현황' 창이 열립니다. 공간마다 하드웨어/시뮬레이션 모드와 Pico IP 가 한눈에 보이고, <strong>IP 미지정 · IP 중복</strong>은 빨간 경고로 표시됩니다. 행을 누르면 그 공간으로 이동합니다. [첫 화면으로] · [매뉴얼 열기] · [전시 모드 시작] 버튼도 있습니다.</p>
+        </div>
+        <div class="meta-box">
+          <h3>Q6. 전시 중 공유기가 꺼졌다 켜지면?</h3>
+          <p>Pico 펌웨어가 연결 끊김을 알아채고 <strong>재연결 → 같은 고정 IP → 서버 재시작</strong>을 자동으로 합니다. 1분 정도 기다리면 화면이 다시 <code>연결됨</code> 이 됩니다. 그동안 값은 '수신 대기'로 보입니다.</p>
+        </div>
+        <div class="meta-box">
+          <h3>Q7. Pico 웹 편집기(웹 워크플로)를 쓰고 싶다면?</h3>
+          <p>settings.toml 에 <code>CIRCUITPY_WEB_API_PASSWORD</code> 와 함께 <code>CIRCUITPY_WEB_API_PORT = 8080</code> 을 넣으세요. 80 포트는 플랫폼 서버용이라, 포트를 옮기지 않으면 시리얼 창에 <code>HTTP Server 시작 실패</code> 가 나옵니다.</p>
         </div>
       </div>
     </article>
