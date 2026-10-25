@@ -1,5 +1,5 @@
 /**
- * Raspberry Pi Pico 2 W (CircuitPython 9.x/10.x) Mock REST Server
+ * Raspberry Pi Pico 2 W (CircuitPython 10.x) Mock REST Server
  * 
  * [목적]
  * 실제 Pico 2 W 하드웨어가 없거나 Wi-Fi 연결 환경이 제한된 교실/실습실 환경에서
@@ -215,7 +215,7 @@ const server = http.createServer((req, res) => {
       status: 'online',
       room: ONLY_ROOM,
       base_devices: devices,
-      ...(devices.includes('dht11') ? { temperature: hardwareState.temperature, humidity: hardwareState.humidity } : {}),
+      ...(devices.includes('dht11') ? { temperature: hardwareState.temperature, humidity: hardwareState.humidity, dht_ok: true } : {}),
       ...(devices.includes('cds') ? { light_adc: hardwareState.lightRaw, light_raw: hardwareState.lightRaw } : {}),
       ...(devices.includes('sg90') ? { servo_angle: hardwareState.servoAngle } : {}),
       ...(devices.includes('rgb') ? { rgb_color: hardwareState.rgbColor, rgb_state: hardwareState.rgbState } : {}),
@@ -330,6 +330,6 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`[Mock Pico 2 W Server] Started on http://127.0.0.1:${PORT}`);
   console.log(ONLY_ROOM ? `공간 "${ONLY_ROOM}" 전용 Pico (기본 장치: ${baseDevices().join(', ') || '없음'})` : '모든 공간 응답 모드');
   console.log(`대시보드 '${ONLY_ROOM || '각'}' 공간의 Pico 연결 설정에 IP 127.0.0.1:${PORT} 입력`);
-  console.log(`CircuitPython 9.x REST Server Emulation Ready`);
+  console.log(`CircuitPython 10.x REST Server Emulation Ready`);
   console.log('=======================================================');
 });

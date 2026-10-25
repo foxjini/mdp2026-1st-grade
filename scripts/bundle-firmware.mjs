@@ -199,7 +199,7 @@ console.log(`  기본 장치 : ${room.baseDevices.join(', ') || '(없음)'}`);
 console.log(`  확장 핀   : ${room.pins.join(', ') || '(없음)'}`);
 console.log(`  팀 모듈   : ${teamFile || '(없음)'}`);
 console.log(`  Pico IP   : ${room.picoIp || '(미지정 · DHCP)'}`);
-console.log(`  필요 lib  : ${libs.join(', ')}`);
+console.log(`  필요 lib  : ${libs.join(', ')}  (CircuitPython 10.x 번들의 lib/ 에서 복사)`);
 if (warnings.length) {
   console.log('\n[주의]');
   warnings.forEach((w) => console.log(`  - ${w}`));

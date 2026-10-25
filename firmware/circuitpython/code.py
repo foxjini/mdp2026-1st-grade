@@ -1,5 +1,5 @@
 # ==============================================================================
-# CircuitPython 9.x/10.x Firmware for Raspberry Pi Pico 2 W
+# CircuitPython 10.x Firmware for Raspberry Pi Pico 2 W
 # 공간(팀)별 펌웨어: Pico 2 W 1대 = 플랫폼의 공간 1개
 #   기본 장치(DHT11, Cds, SG90, RGB LED) 중 config.py 의 BASE_DEVICES 만 사용 + 팀 모듈(teams/*.py)
 #
@@ -113,16 +113,10 @@ class Base:
         return device in BASE_DEVICES
 
     def temperature(self):
-        try:
-            return dht.temperature if dht else None
-        except RuntimeError:
-            return None
+        return read_dht()["temperature"] if dht else None
 
     def humidity(self):
-        try:
-            return dht.humidity if dht else None
-        except RuntimeError:
-            return None
+        return read_dht()["humidity"] if dht else None
 
     def light(self):
         return cds.value if cds else None
@@ -177,47 +171,107 @@ for fname in team_files:
 #      PICO_NETMASK   = "255.255.255.0"   (생략 시 기본값)
 #      PICO_GATEWAY   = "192.168.0.1"     (생략 시 x.x.x.1)
 #      PICO_DNS       = "8.8.8.8"         (선택)
+#    고정 IP 는 연결 '후'에 적용합니다. (connect() 가 DHCP 를 다시 시작하므로 재연결마다 다시 적용)
 # ------------------------------------------------------------------------------
 ssid = os.getenv("CIRCUITPY_WIFI_SSID")
 password = os.getenv("CIRCUITPY_WIFI_PASSWORD")
 static_ip = os.getenv("PICO_STATIC_IP")
+ip_addr = "0.0.0.0"
 
-if static_ip:
+
+def apply_static_ip():
+    """PICO_STATIC_IP 가 있으면 고정 IP 로 바꿉니다. 실패하면 DHCP 주소를 그대로 씁니다."""
+    if not static_ip:
+        return
     try:
         import ipaddress
 
         gateway = os.getenv("PICO_GATEWAY") or ".".join(static_ip.split(".")[:3] + ["1"])
+        netmask = os.getenv("PICO_NETMASK") or "255.255.255.0"
         dns = os.getenv("PICO_DNS")
-        wifi.radio.set_ipv4_address(
-            ipv4=ipaddress.IPv4Address(static_ip),
-            netmask=ipaddress.IPv4Address(os.getenv("PICO_NETMASK") or "255.255.255.0"),
-            gateway=ipaddress.IPv4Address(gateway),
-            ipv4_dns=ipaddress.IPv4Address(dns) if dns else None,
-        )
-        print(f"고정 IP 설정: {static_ip} (게이트웨이 {gateway})")
-    except Exception as e:
-        print(f"고정 IP 설정 실패: {e}. DHCP 로 연결합니다.")
+        # 형식 오류는 DHCP 를 멈추기 전에 미리 확인합니다.
+        addrs = {
+            "ipv4": ipaddress.IPv4Address(static_ip),
+            "netmask": ipaddress.IPv4Address(netmask),
+            "gateway": ipaddress.IPv4Address(gateway),
+        }
+        if dns:
+            addrs["ipv4_dns"] = ipaddress.IPv4Address(dns)  # None 을 넘기면 ValueError 이므로 있을 때만
+    except Exception as err:
+        print(f"고정 IP 설정 값 오류 ({err}). settings.toml 의 PICO_* 값을 확인하세요. DHCP 주소를 씁니다.")
+        return
+    try:
+        wifi.radio.set_ipv4_address(**addrs)
+    except Exception as err:
+        print(f"고정 IP 적용 실패: {err}")
+    now = str(wifi.radio.ipv4_address)
+    if now == static_ip:
+        print(f"고정 IP 적용: {static_ip} (게이트웨이 {gateway})")
+    else:
+        print(f"[주의] 고정 IP {static_ip} 적용 안 됨. 현재 IP: {now}")
 
-print(f"Wi-Fi 연결 시도 중: {ssid}...")
-try:
-    wifi.radio.connect(ssid, password)
-    ip_addr = str(wifi.radio.ipv4_address)
-    print(f"Wi-Fi 연결 성공! Pico 2 W IP: {ip_addr}")
-except Exception as e:
-    print(f"Wi-Fi 연결 실패: {e}. Standalone 모드로 대기합니다.")
+
+def connect_wifi(attempts=3):
+    """Wi-Fi 연결 + 고정 IP 적용. 성공하면 True"""
+    global ip_addr
+    if not ssid:
+        print("settings.toml 에 CIRCUITPY_WIFI_SSID 가 없습니다.")
+        return False
+    for n in range(1, attempts + 1):
+        print(f"Wi-Fi 연결 시도 중 ({n}/{attempts}): {ssid}...")
+        try:
+            wifi.radio.connect(ssid, password)
+        except Exception as err:
+            print(f"Wi-Fi 연결 실패: {err}")
+            time.sleep(2)
+            continue
+        if wifi.radio.connected and wifi.radio.ipv4_address is not None:
+            apply_static_ip()
+            ip_addr = str(wifi.radio.ipv4_address)
+            print(f"Wi-Fi 연결 성공! Pico 2 W IP: {ip_addr}")
+            return True
+        time.sleep(2)
     ip_addr = "0.0.0.0"
+    return False
+
 
 # ------------------------------------------------------------------------------
 # 3. HTTP Server 및 REST API 라우트 (CORS 지원)
 # ------------------------------------------------------------------------------
 pool = socketpool.SocketPool(wifi.radio)
-server = Server(pool, "/static", debug=True)
+server = Server(pool, "/static", debug=False)  # debug=True 는 요청마다 시리얼 출력 (팀 모듈 오류를 찾기 어려움)
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
 }
+server.headers = CORS_HEADERS  # 404 · 오류 응답에도 CORS 헤더
+
+
+# DHT11 은 2초에 한 번만 읽을 수 있고 가끔 실패합니다. 마지막 정상 값을 보관합니다.
+DHT_INTERVAL = 2.0
+dht_cache = {"temperature": None, "humidity": None, "ok": False, "at": -DHT_INTERVAL}
+
+
+def read_dht():
+    if dht is None:
+        return dht_cache
+    now = time.monotonic()
+    if now - dht_cache["at"] >= DHT_INTERVAL:
+        dht_cache["at"] = now
+        try:
+            t = dht.temperature
+            h = dht.humidity
+            if t is not None and h is not None:
+                dht_cache["temperature"] = t
+                dht_cache["humidity"] = h
+                dht_cache["ok"] = True
+            else:
+                dht_cache["ok"] = False
+        except RuntimeError:
+            dht_cache["ok"] = False  # 간헐적 읽기 실패: 마지막 정상 값 유지
+    return dht_cache
 
 
 def unused_device(request, name):
@@ -257,11 +311,11 @@ def handle_status(request: Request):
 
     # 연결된 기본 장치 값만 보냄 (없는 장치는 대시보드에서 '수신 대기')
     if dht:
-        try:
-            data["temperature"] = dht.temperature or 24.0
-            data["humidity"] = dht.humidity or 50.0
-        except RuntimeError:
-            pass  # DHT11 간헐적 읽기 지연 무시
+        reading = read_dht()
+        data["dht_ok"] = reading["ok"]
+        if reading["temperature"] is not None:  # 정상 값이 아직 없으면 보내지 않음 → '수신 대기'
+            data["temperature"] = reading["temperature"]
+            data["humidity"] = reading["humidity"]
     if cds:
         data["light_adc"] = cds.value
     if my_servo:
@@ -341,13 +395,57 @@ def handle_teams(request: Request):
 
 # ------------------------------------------------------------------------------
 # 4. 서버 시작 및 메인 루프
+#    Wi-Fi 가 끊기면 (공유기 재부팅 등) 자동으로 다시 연결하고 서버를 다시 시작합니다.
 # ------------------------------------------------------------------------------
-server.start(str(wifi.radio.ipv4_address), port=80)
-print(f"HTTP Server 실행 중: http://{wifi.radio.ipv4_address}")
+server_running = False
 
-while True:
+
+def start_server():
+    global server_running
     try:
-        server.poll()
+        server.start(ip_addr, port=80)
+        server_running = True
+        print(f"HTTP Server 실행 중: http://{ip_addr}")
     except Exception as err:
-        print(f"Server poll error: {err}")
+        server_running = False
+        print(f"HTTP Server 시작 실패: {err}")
+        print("  → 80 포트를 웹 워크플로가 쓰고 있다면 settings.toml 에 CIRCUITPY_WEB_API_PORT = 8080 을 추가하세요.")
+
+
+def stop_server():
+    global server_running
+    if server_running:
+        try:
+            server.stop()
+        except Exception:
+            pass
+    server_running = False
+
+
+if connect_wifi():
+    start_server()
+else:
+    print("Wi-Fi 연결 실패. 10초마다 다시 시도합니다. (SSID · 비밀번호 · 2.4GHz 공유기 확인)")
+
+last_check = time.monotonic()
+while True:
+    now = time.monotonic()
+    interval = 5 if server_running else 10
+    if now - last_check >= interval:
+        last_check = now
+        if not wifi.radio.connected:
+            if server_running:
+                print("Wi-Fi 연결이 끊겼습니다. 다시 연결합니다...")
+                stop_server()
+            if connect_wifi(attempts=1):
+                start_server()
+        elif not server_running:
+            ip_addr = str(wifi.radio.ipv4_address)
+            start_server()
+
+    if server_running:
+        try:
+            server.poll()
+        except Exception as err:
+            print(f"Server poll error: {err}")
     time.sleep(0.01)

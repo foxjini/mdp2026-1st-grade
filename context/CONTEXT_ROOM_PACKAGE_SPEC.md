@@ -187,7 +187,9 @@ def handle(base, action, value):
     return {"ok": False, "error": "unknown action: " + str(action)}
 ```
 
-- **CircuitPython 9.x** 문법 (MicroPython 전용 `machine` 모듈 금지)
+- **CircuitPython 10.x** 문법 (MicroPython 전용 `machine` 모듈 금지)
+- 디지털 입력은 `Pull.UP` 을 씁니다 (RP2350 내부 풀다운 E9 에라타 → `Pull.DOWN` 금지). 감지/눌림은 `value == False` 로 판단합니다.
+- PWM 짝 핀(`GP16`·`GP17`, `GP18`·`GP19`)은 주파수가 같아야 합니다. `sg90` 을 쓰는 공간에서 `GP17` 을 PWM 으로 쓰면 `frequency=50`
 - Wi-Fi, HTTP 서버, `baseDevices` 기본 장치 초기화는 플랫폼 펌웨어(`code.py` + `config.py`)가 합니다. 팀 모듈에서 **`wifi`, `socketpool`, `adafruit_httpserver` 사용과 `baseDevices` 장치 핀 재초기화 금지** (`baseDevices` 에 없는 기본 핀은 사용 가능)
 - 기본 장치를 쓸 때는 연결 여부를 확인합니다: `if base.has("sg90"): base.set_servo(90)`
 - `while True` 무한 루프, `time.sleep()` 긴 대기 금지 (웹 서버가 멈춤)

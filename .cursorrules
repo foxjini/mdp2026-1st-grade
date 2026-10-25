@@ -14,7 +14,7 @@
    - `export default` 컴포넌트, `isModalOpen` prop, `<Html zIndexRange={[10, 0]}>` + `{!isModalOpen && ...}`
    - Canvas · 기본 조명 · 카메라는 만들지 않는다.
 3. **mock.js**: 순수 JS, `module.exports = { tick(state), onCommand(action, value, state) }`, 확장 센서 값만 반환
-4. **code.py**: CircuitPython 9.x 팀 모듈 `setup(base)`, `read(base)`, `handle(base, action, value)`
+4. **code.py**: CircuitPython 10.x 팀 모듈 `setup(base)`, `read(base)`, `handle(base, action, value)`
    - room.json `baseDevices` 장치 핀 재초기화, Wi-Fi/HTTP 서버, 무한 루프, 긴 sleep 금지. 기본 장치는 `base` 로만 제어 (`base.has("sg90")` 로 연결 확인)
    - `baseDevices` 에 없는 기본 장치는 Scene.tsx · code.py 에서 사용하지 않는다. 그 핀은 확장 부품에 사용 가능
 5. **key 일치**: room.json `customSensors[].key` = mock.js/code.py 반환 key = Scene.tsx `useCustomValue(key)`

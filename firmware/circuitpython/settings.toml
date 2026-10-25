@@ -1,3 +1,16 @@
 # CircuitPython Wi-Fi Credentials for Pico 2 W
+# (CircuitPython 10.x UF2 + Adafruit CircuitPython Bundle 10.x lib 사용)
+# Pico 2 W 는 2.4GHz Wi-Fi 만 연결됩니다.
 CIRCUITPY_WIFI_SSID = "your_wifi_ssid_here"
 CIRCUITPY_WIFI_PASSWORD = "your_wifi_password_here"
+
+# [고정 IP] npm run firmware:bundle 이 room.json 의 picoIp 로 PICO_STATIC_IP 를 자동 기록합니다.
+# 나머지는 필요할 때만 # 를 지우고 공유기에 맞게 고치세요. (고정 IP 는 Wi-Fi 연결 직후 적용됩니다)
+# PICO_NETMASK = "255.255.255.0"
+# PICO_GATEWAY = "192.168.0.1"
+# PICO_DNS = "8.8.8.8"
+
+# [웹 워크플로] CIRCUITPY_WEB_API_PASSWORD 를 넣으면 웹 편집기가 80 포트를 차지해
+# 플랫폼용 서버가 시작되지 않습니다. 쓰려면 아래처럼 웹 편집기 포트를 옮기세요.
+# CIRCUITPY_WEB_API_PASSWORD = "teacher_only"
+# CIRCUITPY_WEB_API_PORT = 8080

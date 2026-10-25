@@ -143,7 +143,7 @@ npm run dev          # http://localhost:3001
    - 포트 5060 · 5061 · 6000 · 6665~6669 등은 브라우저가 막는 포트라 쓸 수 없습니다. (저장 시 거부)
 
 ### 방법 B: 실제 Raspberry Pi Pico 2 W (공간마다 1대)
-1. Pico 2 W 에 CircuitPython 9.x 설치 → `CIRCUITPY` 드라이브 확인 (예: `E:`)
+1. Pico 2 W 에 CircuitPython 10.x 설치 (lib 는 10.x 번들) → `CIRCUITPY` 드라이브 확인 (예: `E:`)
 2. 플랫폼에서 그 공간의 **Pico 연결 설정**에 사용할 IP(예: `192.168.0.51`)를 먼저 저장합니다. (하드웨어 연결 전이면 '시뮬레이션으로' 저장)
 3. `npm run firmware:bundle -- <공간ID> E:\` → `code.py`, `config.py`, `teams/<공간ID>.py`, `settings.toml`(`PICO_STATIC_IP`) 복사
 4. `settings.toml` 에 Wi-Fi 정보 입력, `lib/` 에 필요한 라이브러리 복사 (스크립트가 목록을 알려 줍니다)
