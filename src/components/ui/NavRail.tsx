@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { useExhibitionToggle } from './useExhibitionToggle';
+import { VoiceControl } from './VoiceControl';
 import {
   LayoutGrid,
   Clock,
@@ -30,7 +31,7 @@ export function NavRail({ onOpenIpModal, onOpenAbout, activeNavTab, setActiveNav
   const mode = useIoTStore((s) => s.mode);
 
   return (
-    <aside className="w-[68px] h-full flex flex-col items-center py-4 px-2.5 bg-[#F6F8FB] border-r border-slate-200/80 justify-between shrink-0 select-none z-20">
+    <aside className="w-[68px] h-full flex flex-col items-center py-4 px-2.5 bg-[#F6F8FB] border-r border-slate-200/80 justify-between shrink-0 select-none z-30">
       {/* 1. 상단 로고 & 메인 내비게이션 */}
       <div className="flex flex-col items-center gap-4 w-full">
         {/* 학교 마크: 클릭하면 플랫폼 소개 · 전시 현황 창 */}
@@ -112,6 +113,9 @@ export function NavRail({ onOpenIpModal, onOpenAbout, activeNavTab, setActiveNav
           >
             <BookOpen className="w-5 h-5" />
           </Link>
+
+          {/* 음성 안내 켜기/끄기 · 설정 */}
+          <VoiceControl />
         </nav>
       </div>
 

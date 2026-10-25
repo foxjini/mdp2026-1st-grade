@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { useRoomDevices } from '@/core/rooms/useRoomDevices';
+import { useAutomationStore } from '@/core/automation/useAutomationStore';
 import { baseSensorStatus, describeCustom } from '@/core/rooms/devices';
 
 const PRESET_COLORS = [
@@ -56,6 +57,8 @@ export function InspectorPanel({
   const connectionState = useIoTStore((s) => s.connectionState);
   const picoIp = useIoTStore((s) => s.picoIpAddress);
   const lastResult = useIoTStore((s) => s.lastCommandResult);
+  // 자동화 규칙(고온 감지)이 요청한 승인이면 업로드 공간에서도 카드 표시
+  const approval = useAutomationStore((s) => s.approval);
   const setServoAngle = useIoTStore((s) => s.setServoAngle);
   const setRgbColor = useIoTStore((s) => s.setRgbColor);
   const setRgbState = useIoTStore((s) => s.setRgbState);
@@ -394,8 +397,8 @@ export function InspectorPanel({
         </div>
       )}
 
-      {/* 3. 사용자 확인 필요 (기본 예제 공간 데모: 스마트 도어 환기 승인) */}
-      {!devices.isUploaded && (
+      {/* 3. 사용자 확인 필요 (기본 예제 공간 데모 · 자동화 규칙의 승인 요청) */}
+      {(!devices.isUploaded || approval.ruleId) && (
         <div className="flex flex-col gap-2">
           <span className="text-[11px] font-bold text-slate-400 tracking-wider">사용자 확인 필요</span>
 
@@ -410,7 +413,7 @@ export function InspectorPanel({
 
             <p className="text-xs text-slate-600 font-normal leading-relaxed">
               {approvalStatus === 'pending'
-                ? `실내 온도 ${sensors.dht11_temp.value.toFixed(1)}℃. 쾌적한 실내 환경 유지를 위해 스마트 도어를 90°로 개방할까요?`
+                ? approval.message || `실내 온도 ${sensors.dht11_temp.value.toFixed(1)}℃. 쾌적한 실내 환경 유지를 위해 스마트 도어를 90°로 개방할까요?`
                 : '✅ 승인이 완료되어 스마트 도어 90° 개방 및 자동 환기 시퀀스가 적용되었습니다.'}
             </p>
 

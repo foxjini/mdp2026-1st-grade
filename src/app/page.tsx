@@ -17,6 +17,10 @@ import { RoomCodeModal } from '@/components/ui/RoomCodeModal';
 import { ReviewModal } from '@/components/ui/ReviewModal';
 import { ExhibitionOverlay } from '@/components/ui/ExhibitionOverlay';
 import { PlatformInfoModal } from '@/components/ui/PlatformInfoModal';
+import { VoiceAnnouncer } from '@/components/VoiceAnnouncer';
+import { useAutomationStore } from '@/core/automation/useAutomationStore';
+import { useAutomationEngine } from '@/core/automation/useAutomationEngine';
+import { announce, markAutomation } from '@/core/voice/voice';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { RoomConnection, RoomPackage } from '@/core/types/iot';
 import { BUILTIN_ROOMS, metaToRoomItem, roomsApi } from '@/core/rooms/roomsApi';
@@ -58,7 +62,8 @@ export default function HomePage() {
   const [showCodeModal, setShowCodeModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
-  const [approvalStatus, setApprovalStatus] = useState<'pending' | 'approved'>('pending');
+  // 사용자 확인(승인) 상태: 자동화 규칙(고온 감지)도 요청하므로 스토어에서 관리
+  const approvalStatus = useAutomationStore((s) => s.approval.status);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
   const setServoAngle = useIoTStore((s) => s.setServoAngle);
@@ -82,14 +87,25 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentRoom.id, currentRoom.picoIp, currentRoom.mode, applyRoomConnection]);
 
+  // 자동화 규칙 실행 엔진 (켜 둔 규칙을 2초마다 검사 → 장치 제어 · 음성 안내)
+  useAutomationEngine();
+
+  // 공간을 바꾸면 이전 공간의 승인 요청은 지우고 기본 데모 상태로
+  useEffect(() => {
+    useAutomationStore.setState({ approval: { status: 'pending', message: '' } });
+  }, [currentRoom.id]);
+
   const handleApproveProposal = () => {
     // SG90 이 없는 공간이면 승인 처리 · 성공 안내를 하지 않음
     if (!useIoTStore.getState().ensureDevice('sg90')) {
       showToast('이 공간의 Pico 에는 SG90 이 연결되어 있지 않아 승인 동작을 실행할 수 없습니다.');
+      announce('approval', '이 공간에는 서보모터가 없어 승인 동작을 할 수 없습니다.');
       return;
     }
+    markAutomation('sg90'); // 승인 안내와 서보 완료 안내가 겹치지 않게
     setServoAngle(90);
-    setApprovalStatus('approved');
+    useAutomationStore.getState().resolveApproval();
+    announce('approval', '승인되었습니다. 스마트 도어를 90도로 엽니다.');
     addLog('success', '스마트 환기 제어 요청 승인: 스마트 도어가 90°로 개방되었습니다.', 'USER');
     showToast('승인 완료: 스마트 도어가 90°로 개방되었습니다.');
   };
@@ -478,6 +494,9 @@ export default function HomePage() {
         onSelectRoom={selectRoom}
         onGoHome={goHome}
       />
+
+      {/* 음성 안내 (제어 동작 · 연결 상태) */}
+      <VoiceAnnouncer />
 
       {/* 7. 부스 전시 모드 오버레이 */}
       <ExhibitionOverlay />

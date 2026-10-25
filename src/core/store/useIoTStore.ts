@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { BASE_DEVICE_INFO, IoTPlatformState, LogEntry, SensorData } from '../types/iot';
 import { roomUsesDevice } from '../rooms/devices';
+import { announce } from '../voice/voice';
 
 // 공간 · 장치마다 '연결 안 됨' 경고는 한 번만 (Scene.tsx 가 반복 호출해도 로그가 쌓이지 않도록)
 const warnedMissing = new Set<string>();
@@ -335,6 +336,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
         `이 공간의 Pico 에는 ${BASE_DEVICE_INFO[id].name} 이(가) 연결되어 있지 않아 명령을 보내지 않았습니다. (room.json baseDevices)`,
         'SYSTEM'
       );
+      announce('control', `이 공간의 Pico에는 ${BASE_DEVICE_INFO[id].name}가 연결되어 있지 않습니다.`);
     }
     return false;
   },
