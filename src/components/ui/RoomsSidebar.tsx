@@ -31,6 +31,8 @@ export interface RoomItem extends RoomConnection {
   hasNotification?: boolean;
   // builtin: 플랫폼 기본 예제 공간 / uploaded: 팀이 '새 공간 추가'로 만든 공간 (rooms-data/)
   source: 'builtin' | 'uploaded';
+  // 기본 예제 꾸러미 공간 (source 는 uploaded 로 꾸러미를 불러오지만 이름 변경 · 삭제 · 업로드 불가, 복제 가능)
+  isExample?: boolean;
   team?: string;
   // 업로드 공간의 room.json baseDevices (기본 예제 공간은 생략 = 4종 모두)
   baseDevices?: BaseDeviceId[];
@@ -219,10 +221,10 @@ export function RoomsSidebar({
                     <span className="text-[11px] text-slate-400 font-medium truncate flex items-center gap-1">
                       <span
                         className={`shrink-0 px-1.5 rounded-md text-[9px] font-bold ${
-                          room.source === 'builtin' ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'
+                          room.source === 'builtin' || room.isExample ? 'bg-slate-100 text-slate-500' : 'bg-blue-50 text-blue-600'
                         }`}
                       >
-                        {room.source === 'builtin' ? '예제' : room.team || '팀'}
+                        {room.source === 'builtin' || room.isExample ? '예제' : room.team || '팀'}
                       </span>
                       <span className="truncate">{room.sensorsDesc}</span>
                     </span>
@@ -271,7 +273,7 @@ export function RoomsSidebar({
                         className="w-full px-2.5 py-1.5 text-left text-xs font-bold text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-2"
                       >
                         <Upload className="w-3.5 h-3.5 text-blue-600" />
-                        <span>코드 업로드 · 관리</span>
+                        <span>{room.isExample ? '코드 보기 · 내려받기' : '코드 업로드 · 관리'}</span>
                       </button>
                     )}
 
@@ -337,7 +339,9 @@ export function RoomsSidebar({
                     {/* 3. 이름 바꾸기 */}
                     <button
                       onClick={() => handleStartRename(room)}
-                      className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-2"
+                      disabled={room.isExample}
+                      title={room.isExample ? '기본 예제 공간은 이름을 바꿀 수 없습니다. 복제해서 쓰세요.' : undefined}
+                      className="disabled:opacity-40 disabled:hover:bg-transparent w-full px-2.5 py-1.5 text-left text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl transition-colors flex items-center gap-2"
                     >
                       <Edit2 className="w-3.5 h-3.5 text-slate-500" />
                       <span>이름 바꾸기</span>
@@ -365,8 +369,8 @@ export function RoomsSidebar({
                         onDeleteRoom(room.id);
                         setOpenMenuRoomId(null);
                       }}
-                      disabled={room.source === 'builtin'}
-                      title={room.source === 'builtin' ? '기본 예제 공간은 삭제할 수 없습니다.' : undefined}
+                      disabled={room.source === 'builtin' || room.isExample}
+                      title={room.source === 'builtin' || room.isExample ? '기본 예제 공간은 삭제할 수 없습니다.' : undefined}
                       className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:hover:bg-transparent rounded-xl transition-colors flex items-center gap-2"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

@@ -1,0 +1,34 @@
+{
+  "id": "example_study_room",
+  "name": "스마트 독서실",
+  "team": "예제",
+  "iconType": "school",
+  "sensorsDesc": "온습도 · 조도 · 소음 센서 · 환기창 서보 · 집중 상태등",
+  "baseDevices": [
+    "dht11",
+    "cds",
+    "sg90",
+    "rgb"
+  ],
+  "picoIp": "",
+  "customSensors": [
+    {
+      "key": "noise",
+      "name": "소음",
+      "unit": "dB",
+      "min": 30,
+      "max": 90,
+      "maxWarning": 60
+    },
+    {
+      "key": "break_on",
+      "name": "휴식 시간",
+      "unit": "",
+      "min": 0,
+      "max": 1
+    }
+  ],
+  "pins": [
+    "GP27"
+  ]
+}

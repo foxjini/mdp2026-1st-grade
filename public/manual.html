@@ -763,7 +763,7 @@
         </div>
         <div class="meta-box">
           <h3>🧩 팀 = 공간 하나</h3>
-          <p>왼쪽 사이드바의 <strong>'새 공간 추가'</strong>로 팀 공간을 만들고, 4개 파일(공간 꾸러미)을 업로드합니다.</p>
+          <p>왼쪽 사이드바의 <strong>'새 공간 추가'</strong>로 팀 공간을 만들고, 4개 파일(공간 꾸러미)을 업로드합니다. 목록의 <strong>스마트 독서실(예제)</strong>은 이 방식으로 만든 완성 예시라 바로 열어 볼 수 있고, ⋮ → 공간 복제하기로 출발점으로 써도 됩니다.</p>
           <ul>
             <li><code>room.json</code> 공간 정보 · 확장 센서</li>
             <li><code>Scene.tsx</code> 3D 화면</li>
@@ -1451,7 +1451,7 @@ mock 시나리오 (전시용): (예: 40초 주기 — 0~20초 정상, 20~30초 �
             <span>TOPIC EXAMPLES</span>
           </div>
           <h2>8. 주제별 아이디어 예시 6선 (복사해서 아이디어 칸에)</h2>
-          <p class="slide-desc">그대로 써도 되고, 우리 팀 상황에 맞게 고쳐 써도 됩니다. 완성본 4종이 <code>context/examples/</code> 에 있습니다: 스마트 팜(1번) · 펫 급식기(<code>smart_pet_feeder</code>, 5번) · 주차장(<code>smart_parking</code>, 3번 변형: 적외선 센서) · 화재 방재(<code>fire_safety</code>, 4번).</p>
+          <p class="slide-desc">그대로 써도 되고, 우리 팀 상황에 맞게 고쳐 써도 됩니다. 완성본 5종이 <code>context/examples/</code> 에 있습니다: 스마트 팜(1번) · 펫 급식기(<code>smart_pet_feeder</code>, 5번) · 주차장(<code>smart_parking</code>, 3번 변형: 적외선 센서) · 화재 방재(<code>fire_safety</code>, 4번) · <b>스마트 독서실</b>(<code>smart_study_room</code>, 소음 센서 · 디자인 킷 모범 사례 — 공간 목록에 기본 예제로 들어 있어 바로 열어 볼 수 있음).</p>
         </div>
       </div>
 
@@ -1752,6 +1752,10 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
         <div class="meta-box">
           <h3>Q1. 팀 공간을 다른 PC 로 옮기려면?</h3>
           <p>플랫폼 폴더의 <code>rooms-data/</code> 폴더를 통째로 복사하면 됩니다. 각 공간의 파일은 업로드 창의 <strong>현재 파일</strong> 버튼으로도 내려받을 수 있습니다.</p>
+        </div>
+        <div class="meta-box">
+          <h3>Q1-1. 목록의 '예제' 공간을 고칠 수 있나요?</h3>
+          <p>스마트 거실 허브 · 팜 온실 · 팩토리 · <strong>스마트 독서실</strong>은 기본 예제라 이름 변경 · 업로드 · 삭제가 막혀 있습니다. 스마트 독서실은 공간 꾸러미 예제(<code>context/examples/smart_study_room/</code>)라 ⋮ → <strong>공간 복제하기</strong>로 사본을 만들면 우리 팀 공간처럼 고쳐 쓸 수 있습니다. Pico 연결 설정은 예제 공간에서도 바꿀 수 있습니다.</p>
         </div>
         <div class="meta-box">
           <h3>Q2. 업로드를 아무나 못 하게 하려면?</h3>

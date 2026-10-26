@@ -24,6 +24,9 @@ const ROOMS_DIR = process.env.ROOMS_DATA_DIR || path.join(ROOT, 'rooms-data');
 const FW_DIR = path.join(ROOT, 'firmware', 'circuitpython');
 const ALL_BASE_DEVICES = ['dht11', 'cds', 'sg90', 'rgb'];
 const BUILTIN = { builtin_home: '스마트 거실 허브', builtin_farm: '스마트 팜 온실', builtin_factory: '스마트 팩토리 공정' };
+// 기본 예제 꾸러미 공간 (src/core/server/roomStore.ts 의 EXAMPLE_ROOMS 와 동일하게 유지)
+// 플랫폼을 아직 실행하지 않아 rooms-data 에 없으면 저장소의 예제 폴더에서 읽음
+const EXAMPLE_ROOMS = { example_study_room: 'context/examples/smart_study_room' };
 
 // src/core/types/iot.ts BASE_DEVICE_INFO · src/core/server/roomStore.ts reservedPins() 와 동일하게 유지
 const BASE_DEVICE_PINS = {
@@ -61,17 +64,26 @@ function loadRooms() {
   } catch {
     // 공간 폴더 없음
   }
+  for (const [id, rel] of Object.entries(EXAMPLE_ROOMS)) {
+    if (!ids.includes(id) && fs.existsSync(path.join(ROOT, rel, 'room.json'))) ids.push(id);
+  }
   for (const id of ids) {
-    const meta = readJson(path.join(ROOMS_DIR, id, 'room.json'));
+    const dir = fs.existsSync(path.join(ROOMS_DIR, id, 'room.json'))
+      ? path.join(ROOMS_DIR, id)
+      : EXAMPLE_ROOMS[id]
+        ? path.join(ROOT, EXAMPLE_ROOMS[id])
+        : path.join(ROOMS_DIR, id);
+    const meta = readJson(path.join(dir, 'room.json'));
     if (!meta) continue;
     rooms.push({
+      dir,
       id,
       name: meta.name || id,
       team: meta.team || '',
       baseDevices: Array.isArray(meta.baseDevices) ? meta.baseDevices.filter((d) => ALL_BASE_DEVICES.includes(d)) : ALL_BASE_DEVICES,
       pins: Array.isArray(meta.pins) ? meta.pins : [],
       picoIp: meta.picoIp || '',
-      hasCode: fs.existsSync(path.join(ROOMS_DIR, id, 'code.py')),
+      hasCode: fs.existsSync(path.join(dir, 'code.py')),
     });
   }
   return rooms;
@@ -144,7 +156,7 @@ for (const f of fs.readdirSync(path.join(OUT, 'teams'))) {
 }
 let teamFile = null;
 if (!room.builtin) {
-  const src = path.join(ROOMS_DIR, room.id, 'code.py');
+  const src = path.join(room.dir, 'code.py');
   if (!fs.existsSync(src)) {
     warnings.push('code.py 가 업로드되지 않아 기본 장치만 동작합니다. (확장 센서/명령 없음)');
   } else {

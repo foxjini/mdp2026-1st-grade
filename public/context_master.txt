@@ -279,6 +279,7 @@ def handle(base, action, value):
 | `smart_pet_feeder/` | 스마트 펫 급식기 | cds, sg90, rgb | 사료 무게(GP27) | time.sleep 없이 3초 뒤 뚜껑 닫기 (read 에서 처리) |
 | `smart_parking/` | 스마트 주차장 | sg90, rgb | 적외선 센서 3개(GP13 · GP14 · **GP15**) | DHT11 을 안 써서 GP15 재사용 |
 | `fire_safety/` | 화재 방재 안전실 | dht11, rgb | 불꽃(GP17), 부저 PWM(**GP16**) | SG90 을 안 써서 GP16 재사용 |
+| `smart_study_room/` | 스마트 독서실 (플랫폼 기본 예제 공간) | dht11, cds, sg90, rgb | 소음 센서(GP27), 휴식 상태 `break_on` | 디자인 킷(MAT · DataPin · HoverLift) · 벽은 뒤 · 왼쪽만 · mock 이 `state.t` 와 `temperature` 시나리오 사용 · 명령 결과를 확장 값으로 |
 
 ---
 

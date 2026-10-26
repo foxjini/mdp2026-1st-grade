@@ -137,7 +137,9 @@ export default function HomePage() {
     try {
       const [metas, builtin] = await Promise.all([roomsApi.list(), roomsApi.builtinConnections()]);
       const builtinRooms = BUILTIN_ROOMS.map((r) => ({ ...r, ...(builtin[r.id] || {}) }));
-      setRoomList([...builtinRooms, ...metas.map(metaToRoomItem)]);
+      // 기본 공간 → 기본 예제 꾸러미 공간 → 팀 공간 순서
+      const items = metas.map(metaToRoomItem);
+      setRoomList([...builtinRooms, ...items.filter((r) => r.isExample), ...items.filter((r) => !r.isExample)]);
     } catch (err) {
       addLog('warn', `팀 공간 목록을 불러오지 못했습니다: ${err instanceof Error ? err.message : err}`, 'SYSTEM');
     }
@@ -276,6 +278,10 @@ export default function HomePage() {
   const handleRenameRoom = (roomId: string, newName: string) => {
     const trimmed = newName.trim();
     if (!trimmed) return;
+    if (findRoom(roomId)?.isExample) {
+      showToast('기본 예제 공간은 이름을 바꿀 수 없습니다. ⋮ → 공간 복제하기로 우리 팀 공간을 만드세요.');
+      return;
+    }
     if (findRoom(roomId)?.source === 'uploaded') {
       roomsApi
         .patch(roomId, { name: trimmed })
@@ -308,7 +314,7 @@ export default function HomePage() {
 
   const handleDeleteRoom = async (roomId: string) => {
     const target = findRoom(roomId);
-    if (!target || target.source !== 'uploaded') {
+    if (!target || target.source !== 'uploaded' || target.isExample) {
       showToast('기본 예제 공간은 삭제할 수 없습니다.');
       return;
     }

@@ -1,4 +1,5 @@
 // 서버 전용: 전시 PC의 rooms-data/<roomId>/ 폴더에 공간 꾸러미를 저장/조회합니다.
+import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
 import {
@@ -25,6 +26,13 @@ const PIN_RE = /^GP([0-9]|1[0-9]|2[0-8])$/;
 const PICO_IP_RE = /^(((25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(25[0-5]|2[0-4]\d|1?\d?\d)|localhost)(:\d{1,5})?$/;
 const ICONS: RoomIconType[] = ['home', 'farm', 'factory', 'sparkles', 'shield', 'school', 'car', 'health', 'pet', 'energy'];
 const BUILTIN_ROOM_IDS = ['builtin_home', 'builtin_farm', 'builtin_factory'];
+
+// 기본 예제 꾸러미 공간: 저장소의 예제 폴더(4개 파일)를 rooms-data/<id>/ 로 자동 복사해 팀 공간처럼 동작
+// (scripts/bundle-firmware.mjs 의 EXAMPLE_ROOMS 와 동일하게 유지)
+export const EXAMPLE_ROOMS: Record<string, string> = {
+  example_study_room: 'context/examples/smart_study_room',
+};
+const EXAMPLE_LOCKED = '기본 예제 공간은 바꿀 수 없습니다. ⋮ → 복제해서 우리 팀 공간으로 쓰세요.';
 
 // Pico 2 W 내부(무선 모듈)가 사용하는 핀: 어떤 공간도 사용 불가
 const WIRELESS_PINS = ['GP23', 'GP24', 'GP25', 'GP29'];
@@ -152,8 +160,10 @@ export function normalizeMeta(input: unknown, id: string, prev?: RoomMeta): Room
     customSensors,
     pins,
     hasNotification: typeof src.hasNotification === 'boolean' ? src.hasNotification : prev?.hasNotification,
-    // 업로드 여부는 서버만 기록 (업로드 파일 안의 같은 이름 값은 무시)
+    // 업로드 여부 · 예제 표시는 서버만 기록 (업로드 파일 안의 같은 이름 값은 무시)
     roomJsonUploadedAt: prev?.roomJsonUploadedAt,
+    example: prev?.example,
+    exampleHash: prev?.exampleHash,
     createdAt: prev?.createdAt || now,
     updatedAt: now,
   };
@@ -181,7 +191,51 @@ async function writeMeta(meta: RoomMeta): Promise<void> {
   await fs.writeFile(path.join(roomDir(meta.id), 'room.json'), JSON.stringify(meta, null, 2), 'utf8');
 }
 
+// 예제 원본 → rooms-data 복사. 처음 한 번, 또는 원본 파일이 바뀌었을 때만 (저장된 Pico IP · 모드는 유지)
+async function seedExampleRooms(): Promise<void> {
+  for (const [id, rel] of Object.entries(EXAMPLE_ROOMS)) {
+    const dir = path.join(process.cwd(), rel);
+    const sources: Partial<Record<RoomFileName, string>> = {};
+    try {
+      for (const name of ROOM_FILE_NAMES) sources[name] = await fs.readFile(path.join(dir, name), 'utf8');
+    } catch {
+      continue; // 예제 폴더가 없으면 건너뜀
+    }
+    const hash = createHash('sha1')
+      .update(ROOM_FILE_NAMES.map((n) => sources[n]).join('\0'))
+      .digest('hex')
+      .slice(0, 12);
+    const prev = await readMeta(id);
+    if (prev?.example && prev.exampleHash === hash) continue;
+    const raw = JSON.parse(sources['room.json'] as string) as Record<string, unknown>;
+    const keep = prev ? { picoIp: prev.picoIp, mode: prev.mode, hasNotification: prev.hasNotification } : {};
+    const meta = normalizeMeta({ ...raw, ...keep }, id, prev ?? undefined);
+    await writeMeta({
+      ...meta,
+      example: true,
+      exampleHash: hash,
+      roomJsonUploadedAt: prev?.roomJsonUploadedAt ?? Date.now(),
+      createdAt: prev?.createdAt ?? 0,
+    });
+    for (const name of ['Scene.tsx', 'mock.js', 'code.py'] as const) {
+      await fs.writeFile(path.join(roomDir(id), name), sources[name] as string, 'utf8');
+    }
+  }
+}
+
+let examplesReady: Promise<void> | null = null;
+function ensureExampleRooms(): Promise<void> {
+  if (!examplesReady) {
+    examplesReady = seedExampleRooms().catch((err) => {
+      examplesReady = null; // 다음 요청에서 다시 시도
+      console.warn('[rooms] 기본 예제 공간을 준비하지 못했습니다:', err);
+    });
+  }
+  return examplesReady;
+}
+
 export async function listRooms(): Promise<RoomMeta[]> {
+  await ensureExampleRooms();
   let entries: string[] = [];
   try {
     entries = await fs.readdir(ROOMS_DIR);
@@ -243,6 +297,7 @@ export async function updateBuiltinConnection(id: string, patch: Record<string, 
 
 export async function getRoom(id: string): Promise<RoomPackage> {
   assertRoomId(id);
+  await ensureExampleRooms();
   const meta = await readMeta(id);
   if (!meta) throw new RoomError('공간을 찾을 수 없습니다.', 404);
   const files: RoomPackage['files'] = {};
@@ -265,6 +320,10 @@ export async function createRoom(input: unknown): Promise<RoomPackage> {
 export async function updateMeta(id: string, patch: Record<string, unknown>): Promise<RoomPackage> {
   const prev = await readMeta(id);
   if (!prev) throw new RoomError('공간을 찾을 수 없습니다.', 404);
+  // 예제 공간은 Pico 연결 설정 · 알림만 바꿀 수 있음
+  if (prev.example && Object.keys(patch).some((k) => !['picoIp', 'mode', 'hasNotification'].includes(k))) {
+    throw new RoomError(EXAMPLE_LOCKED, 403);
+  }
   await writeMeta(normalizeMeta({ ...prev, ...patch }, id, prev));
   return getRoom(id);
 }
@@ -273,6 +332,7 @@ export async function writeRoomFiles(id: string, files: Record<string, unknown>)
   assertRoomId(id);
   const prev = await readMeta(id);
   if (!prev) throw new RoomError('공간을 찾을 수 없습니다.', 404);
+  if (prev.example) throw new RoomError(EXAMPLE_LOCKED, 403);
 
   for (const [name, content] of Object.entries(files)) {
     assertFileName(name);
@@ -308,6 +368,7 @@ export async function deleteRoomFile(id: string, name: string): Promise<RoomPack
   assertRoomId(id);
   assertFileName(name);
   if (name === 'room.json') throw new RoomError('room.json은 삭제할 수 없습니다. 공간 자체를 삭제하세요.');
+  if ((await readMeta(id))?.example) throw new RoomError(EXAMPLE_LOCKED, 403);
   await fs.rm(path.join(roomDir(id), name), { force: true });
   return getRoom(id);
 }
@@ -318,6 +379,7 @@ export async function duplicateRoom(id: string): Promise<RoomPackage> {
   const copy = await createRoom({
     ...src.meta,
     name: `${src.meta.name} (사본)`.slice(0, 40),
+    team: src.meta.example ? '' : src.meta.team, // 예제 사본은 우리 팀 이름을 새로 정함
     picoIp: '',
     mode: 'simulation',
   });
@@ -332,6 +394,7 @@ export async function duplicateRoom(id: string): Promise<RoomPackage> {
 
 export async function deleteRoom(id: string): Promise<void> {
   assertRoomId(id);
+  if ((await readMeta(id))?.example) throw new RoomError(EXAMPLE_LOCKED, 403);
   await fs.rm(roomDir(id), { recursive: true, force: true });
 }
 

@@ -92,6 +92,8 @@ export interface RoomMeta extends RoomConnection {
   pins: string[];         // 팀이 추가로 사용하는 Pico 핀 (예: ["GP27"])
   hasNotification?: boolean;
   roomJsonUploadedAt?: number; // 팀이 room.json 파일을 직접 업로드한 시각 (없으면 '새 공간 추가' 기본값)
+  example?: boolean;      // 플랫폼 기본 예제 꾸러미 공간 (context/examples 에서 자동 생성, 수정 · 삭제 불가 · 복제 가능)
+  exampleHash?: string;   // 예제 원본 파일 내용 해시 (원본이 바뀌면 자동 갱신)
   createdAt: number;
   updatedAt: number;
 }

@@ -388,6 +388,17 @@ export function RoomCodeModal({
           </div>
         </section>
 
+        {/* 기본 예제 공간: 업로드 대신 복제 안내 (현재 파일 내려받기 · AI 프롬프트 복사는 그대로) */}
+        {meta.example ? (
+          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col gap-1">
+            <div className="text-xs font-extrabold text-slate-900">③ 기본 예제 공간은 바꿀 수 없습니다</div>
+            <p className="text-[11px] text-slate-600 leading-relaxed">
+              이 공간의 4개 파일은 위 '현재 파일'로 내려받아 참고할 수 있습니다. 직접 고쳐 보려면 공간 메뉴 ⋮ →{' '}
+              <b>공간 복제하기</b>로 우리 팀 공간을 만든 뒤 그 공간에 업로드하세요.
+            </p>
+          </section>
+        ) : (
+          <>
         {/* ③ 업로드 (파일 드래그 또는 붙여넣기) */}
         <section className="flex flex-col gap-2.5">
           <div className="text-xs font-extrabold text-slate-900">③ 업로드 → 즉시 화면 적용</div>
@@ -458,6 +469,8 @@ export function RoomCodeModal({
             </div>
           </div>
         </section>
+          </>
+        )}
 
         {/* 결과: 오류 / 핀 충돌 경고 */}
         {errors.length > 0 && (

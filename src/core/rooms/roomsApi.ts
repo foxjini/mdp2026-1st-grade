@@ -75,6 +75,7 @@ export function metaToRoomItem(meta: RoomMeta): RoomItem {
     iconColor: ICON_COLORS[meta.iconType].color,
     hasNotification: meta.hasNotification,
     source: 'uploaded',
+    isExample: !!meta.example,
     team: meta.team,
     picoIp: meta.picoIp,
     mode: meta.mode,
@@ -98,7 +99,7 @@ export const BUILTIN_ROOMS: RoomItem[] = [
   {
     id: 'builtin_farm',
     name: '스마트 팜 온실',
-    sensorsDesc: '온습도 & 토양 제어',
+    sensorsDesc: '온습도 · 토양 수분 · 환기창',
     iconType: 'farm',
     iconBg: ICON_COLORS.farm.bg,
     iconColor: ICON_COLORS.farm.color,
