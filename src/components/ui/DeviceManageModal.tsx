@@ -153,10 +153,10 @@ export function DeviceManageModal({
     },
     {
       id: 'sg90',
-      name: '스마트 도어 서보 (SG90)',
+      name: '서보모터 (SG90)',
       pin: 'GP16',
       type: '50Hz PWM (0~180°)',
-      role: '스마트 도어 개폐 각도 물리적 제어',
+      role: '공간마다 이름 · 역할을 정해 씀 (문 · 창 · 분류 게이트 · 뚜껑 등)',
       status: '',
     },
     {

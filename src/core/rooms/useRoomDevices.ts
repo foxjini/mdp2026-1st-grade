@@ -4,10 +4,11 @@ import { roomUsesDevice } from './devices';
 
 export function useRoomDevices() {
   const pkg = useIoTStore((s) => s.activeRoomPackage);
+  const servoName = useIoTStore((s) => s.servoName);
   return {
     isUploaded: !!pkg,
-    /** SG90 을 부르는 이름 (기본 거실 공간 = 스마트 도어, 학생 공간은 주제마다 다르므로 서보모터) */
-    servoName: pkg ? '서보모터' : '스마트 도어',
+    /** 이 공간에서 SG90 을 부르는 이름 (src/core/rooms/servoName.ts) */
+    servoName,
     dht11: roomUsesDevice(pkg, 'dht11'),
     cds: roomUsesDevice(pkg, 'cds'),
     sg90: roomUsesDevice(pkg, 'sg90'),

@@ -21,6 +21,7 @@ import { VoiceAnnouncer } from '@/components/VoiceAnnouncer';
 import { GraphicsToggle } from '@/components/ui/GraphicsToggle';
 import { PanelDrawer } from '@/components/ui/PanelDrawer';
 import { useLayoutStore } from '@/core/ui/useLayoutStore';
+import { josa, servoNameFor } from '@/core/rooms/servoName';
 import { useAutomationStore } from '@/core/automation/useAutomationStore';
 import { useAutomationEngine } from '@/core/automation/useAutomationEngine';
 import { announce, markAutomation } from '@/core/voice/voice';
@@ -119,10 +120,10 @@ export default function HomePage() {
     markAutomation('sg90'); // 승인 안내와 서보 완료 안내가 겹치지 않게
     setServoAngle(90);
     useAutomationStore.getState().resolveApproval();
-    const servoName = useIoTStore.getState().activeRoomPackage ? '서보모터' : '스마트 도어';
-    announce('approval', `승인되었습니다. ${servoName}를 90도로 엽니다.`);
-    addLog('success', `스마트 환기 제어 요청 승인: ${servoName}가 90°로 개방되었습니다.`, 'USER');
-    showToast(`승인 완료: ${servoName}가 90°로 개방되었습니다.`);
+    const servoName = useIoTStore.getState().servoName;
+    announce('approval', `승인되었습니다. ${josa(servoName, '을/를')} 90도로 엽니다.`);
+    addLog('success', `스마트 환기 제어 요청 승인: ${josa(servoName, '이/가')} 90°로 개방되었습니다.`, 'USER');
+    showToast(`승인 완료: ${josa(servoName, '이/가')} 90°로 개방되었습니다.`);
   };
 
   const showToast = (msg: string) => {
@@ -148,6 +149,12 @@ export default function HomePage() {
   useEffect(() => {
     refreshRooms();
   }, [refreshRooms]);
+
+  // 공간마다 SG90 이름 (인스펙터 · 음성 안내 · 자동화 · 승인 문구): 기본 공간 표 또는 room.json servoName
+  useEffect(() => {
+    const pkg = activeRoomPackage?.meta.id === activeRoomId ? activeRoomPackage : null;
+    useIoTStore.getState().setServoName(servoNameFor(activeRoomId, pkg));
+  }, [activeRoomId, activeRoomPackage]);
 
   // 업로드 공간을 선택하면 꾸러미(Scene.tsx · mock.js 등)를 불러와 스토어에 적용
   useEffect(() => {

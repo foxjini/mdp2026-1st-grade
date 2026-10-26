@@ -10,6 +10,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   mode: 'simulation',
   connectionState: 'connected',
   picoIpAddress: '',
+  servoName: '스마트 도어',
   selectedDeviceId: null,
   isExhibitionMode: false,
   isAutoRotate: false,
@@ -48,7 +49,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   actuators: {
     sg90_door: {
       deviceId: 'sg90_door',
-      name: '스마트 도어 서보 (SG90)',
+      name: '서보모터 (SG90)',
       targetAngle: 0,
       reportedAngle: 0,
       pending: false,
@@ -98,6 +99,7 @@ export const useIoTStore = create<IoTPlatformState>((set, get) => ({
   },
 
   setPicoIpAddress: (ip) => set({ picoIpAddress: ip }),
+  setServoName: (name) => set({ servoName: name }),
 
   applyRoomConnection: (roomName, conn) => {
     const ip = conn.picoIp.trim();

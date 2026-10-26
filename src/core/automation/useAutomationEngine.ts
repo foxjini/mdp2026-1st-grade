@@ -38,7 +38,7 @@ export function runRule(rule: AutomationRule, reason: 'auto' | 'test' = 'auto'):
   const text = rule.run({
     snapshot: snapshot(),
     has: (d) => roomUsesDevice(iot.activeRoomPackage, d),
-    servoName: iot.activeRoomPackage ? '서보모터' : '스마트 도어',
+    servoName: iot.servoName,
     setServo: (angle) => {
       markAutomation('sg90');
       iot.setServoAngle(angle);

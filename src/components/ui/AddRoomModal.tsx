@@ -21,6 +21,7 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
   // 이 공간 전용 Pico 2 W 에 실제로 연결하는 기본 장치 / Pico IP (비우면 시뮬레이션)
   const [baseDevices, setBaseDevices] = useState<BaseDeviceId[]>([...BASE_DEVICE_IDS]);
   const [picoIp, setPicoIp] = useState('');
+  const [servoName, setServoName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +40,7 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
         sensorsDesc: sensorsDesc.trim() || '팀 프로젝트 공간',
         iconType,
         baseDevices,
+        servoName: baseDevices.includes('sg90') ? servoName.trim() : '',
         picoIp: picoIp.trim(),
         mode: picoIp.trim() ? 'hardware' : 'simulation',
       });
@@ -46,6 +48,7 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
       setTeam('');
       setSensorsDesc('');
       setPicoIp('');
+      setServoName('');
       setBaseDevices([...BASE_DEVICE_IDS]);
       onCreated(pkg);
     } catch (err: unknown) {
@@ -172,6 +175,22 @@ export function AddRoomModal({ isOpen, onClose, onCreated }: AddRoomModalProps) 
               })}
             </div>
           </div>
+
+          {baseDevices.includes('sg90') && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">
+                서보모터(SG90) 이름 <span className="font-medium text-slate-400">(선택 · 인스펙터 · 음성 안내에 표시)</span>
+              </label>
+              <input
+                type="text"
+                value={servoName}
+                maxLength={20}
+                onChange={(e) => setServoName(e.target.value)}
+                placeholder="예: 급식기 뚜껑, 환기창, 주차 차단기 (비우면 '서보모터')"
+                className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+            </div>
+          )}
 
           <div className="flex flex-col gap-1.5">
             <label className="text-xs font-bold text-slate-700">

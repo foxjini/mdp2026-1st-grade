@@ -10,6 +10,7 @@
     "sg90",
     "rgb"
   ],
+  "servoName": "환기창",
   "picoIp": "",
   "customSensors": [
     {

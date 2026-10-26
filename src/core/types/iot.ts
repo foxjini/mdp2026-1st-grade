@@ -91,6 +91,7 @@ export interface RoomMeta extends RoomConnection {
   customSensors: CustomSensorDef[];
   pins: string[];         // 팀이 추가로 사용하는 Pico 핀 (예: ["GP27"])
   hasNotification?: boolean;
+  servoName?: string;     // 이 공간에서 SG90 을 부르는 이름 (예: "급식기 뚜껑", 없으면 '서보모터')
   roomJsonUploadedAt?: number; // 팀이 room.json 파일을 직접 업로드한 시각 (없으면 '새 공간 추가' 기본값)
   example?: boolean;      // 플랫폼 기본 예제 꾸러미 공간 (context/examples 에서 자동 생성, 수정 · 삭제 불가 · 복제 가능)
   exampleHash?: string;   // 예제 원본 파일 내용 해시 (원본이 바뀌면 자동 갱신)
@@ -122,6 +123,7 @@ export interface IoTPlatformState {
   mode: PlatformMode;
   connectionState: ConnectionState;
   picoIpAddress: string;
+  servoName: string;      // 지금 공간의 SG90 이름 (src/core/rooms/servoName.ts)
   selectedDeviceId: string | null;
   isExhibitionMode: boolean;
   isAutoRotate: boolean;
@@ -153,6 +155,7 @@ export interface IoTPlatformState {
   // Actions
   setMode: (mode: PlatformMode) => void;
   setPicoIpAddress: (ip: string) => void;
+  setServoName: (name: string) => void;
   // 공간 선택 시 그 공간의 Pico 2 W 로 연결 전환 (모드 + IP 동시 변경)
   applyRoomConnection: (roomName: string, conn: RoomConnection) => void;
   setConnectionState: (state: ConnectionState) => void;

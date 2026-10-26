@@ -5,6 +5,7 @@ import { Html } from '@react-three/drei';
 import { X } from 'lucide-react';
 import { useAutomationStore } from '@/core/automation/useAutomationStore';
 import { useRoomDevices } from '@/core/rooms/useRoomDevices';
+import { josa } from '@/core/rooms/servoName';
 
 interface NeedsYouCallout3DProps {
   onApprove: () => void;
@@ -85,7 +86,7 @@ export function NeedsYouCallout3D({
 
           {/* 본문 텍스트 */}
           <p className="text-[11px] text-slate-800 font-semibold leading-relaxed">
-            {approvalMessage || `실내 온도가 높습니다. 쾌적한 실내 환경을 위해 ${servoName}를 90°로 개방할까요?`}
+            {approvalMessage || `실내 온도가 높습니다. 쾌적한 실내 환경을 위해 ${josa(servoName, '을/를')} 90°로 개방할까요?`}
           </p>
 
           {/* 하단 액션 버튼 */}

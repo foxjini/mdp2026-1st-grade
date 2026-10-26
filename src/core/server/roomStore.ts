@@ -160,6 +160,7 @@ export function normalizeMeta(input: unknown, id: string, prev?: RoomMeta): Room
     customSensors,
     pins,
     hasNotification: typeof src.hasNotification === 'boolean' ? src.hasNotification : prev?.hasNotification,
+    servoName: str(src.servoName, prev?.servoName || '', 20) || undefined,
     // 업로드 여부 · 예제 표시는 서버만 기록 (업로드 파일 안의 같은 이름 값은 무시)
     roomJsonUploadedAt: prev?.roomJsonUploadedAt,
     example: prev?.example,

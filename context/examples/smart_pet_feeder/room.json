@@ -4,6 +4,7 @@
   "iconType": "home",
   "sensorsDesc": "사료 무게 · 급식기 뚜껑 · 상태등",
   "baseDevices": ["cds", "sg90", "rgb"],
+  "servoName": "급식기 뚜껑",
   "picoIp": "",
   "customSensors": [
     { "key": "food_weight", "name": "사료 무게", "unit": "g", "min": 0, "max": 500, "minWarning": 50 },

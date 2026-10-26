@@ -4,6 +4,7 @@
   "iconType": "factory",
   "sensorsDesc": "주차칸 3개 · 차단기 · 만차 표시등",
   "baseDevices": ["sg90", "rgb"],
+  "servoName": "주차 차단기",
   "picoIp": "",
   "customSensors": [
     { "key": "slot_1", "name": "1번 칸 주차", "unit": "", "min": 0, "max": 1 },

@@ -871,6 +871,7 @@
             <li>왼쪽 사이드바 <strong>+ 새 공간 추가</strong> 클릭</li>
             <li>공간 이름 (예: 스마트 펫룸), 팀 이름 (예: 1학년 3반 2팀), 설명 입력, 대표 아이콘 10종 중 선택 (거실/홈 · 팜/온실 · 공장 · 조명 · 보안 · 교실 · 교통 · 헬스케어 · 반려동물 · 에너지)</li>
             <li><strong>우리 팀 Pico 에 연결할 기본 장치</strong> 체크 (연결 안 하는 장치는 체크 해제)</li>
+            <li>SG90 을 쓰면 <strong>서보모터 이름</strong> (예: 급식기 뚜껑 · 환기창 · 주차 차단기) → 인스펙터 · 음성 안내 · 자동화 문구에 그 이름으로 나옴. 기본 공간은 거실 = 스마트 도어 · 팜 = 환기창 · 팩토리 = 분류 게이트</li>
             <li><strong>우리 팀 Pico 2 W IP</strong> (아직 Pico 가 없으면 비워 두기 → 시뮬레이션)</li>
             <li><strong>[공간 생성 후 코드 업로드 →]</strong> 클릭 → 공간 ID (예: <code>room_mx1abc</code>) 발급</li>
           </ol>
@@ -952,6 +953,7 @@
   "iconType": "home",
   "sensorsDesc": "사료 무게 · 급식기 뚜껑",
   "baseDevices": ["cds", "sg90", "rgb"],
+  "servoName": "급식기 뚜껑",
   "picoIp": "192.168.0.52",
   "customSensors": [
     { "key": "food_weight", "name": "사료 무게",
@@ -959,7 +961,7 @@
   ],
   "pins": ["GP27"]
 }</pre>
-          <p style="font-size:12px; color:var(--meta-slate); margin-top:6px;"><code>baseDevices</code> = 우리 Pico 에 연결하는 기본 장치 · <code>picoIp</code> = 우리 Pico IP (비우면 기존 값 유지). 시뮬레이션/하드웨어 모드는 화면의 <strong>Pico 연결 설정</strong>에서만 바꿉니다.</p>
+          <p style="font-size:12px; color:var(--meta-slate); margin-top:6px;"><code>baseDevices</code> = 우리 Pico 에 연결하는 기본 장치 · <code>servoName</code> = SG90 을 부르는 이름 (선택, 없으면 '서보모터') · <code>picoIp</code> = 우리 Pico IP (비우면 기존 값 유지). 시뮬레이션/하드웨어 모드는 화면의 <strong>Pico 연결 설정</strong>에서만 바꿉니다.</p>
         </div>
         <div class="prompt-box">
           <div class="prompt-header">

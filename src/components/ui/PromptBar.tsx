@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Paperclip, Send, Sparkles } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { useRoomDevices } from '@/core/rooms/useRoomDevices';
+import { josa } from '@/core/rooms/servoName';
 import { describeCustom } from '@/core/rooms/devices';
 
 interface PromptBarProps {
@@ -77,11 +78,11 @@ export function PromptBar({ onFeedbackMessage }: PromptBarProps) {
       } else if (lower.includes('열') || lower.includes('open') || lower.includes('90')) {
         if (missing('sg90')) return;
         setServoAngle(90);
-        reply(devices.isUploaded ? '서보모터를 90°로 돌렸습니다.' : '스마트 도어를 90도로 개방했습니다.');
+        reply(`${josa(devices.servoName, '을/를')} 90°로 돌렸습니다.`);
       } else if (lower.includes('닫') || lower.includes('close') || lower.includes('0도')) {
         if (missing('sg90')) return;
         setServoAngle(0);
-        reply(devices.isUploaded ? '서보모터를 0°로 돌렸습니다.' : '스마트 도어를 닫았습니다.');
+        reply(`${josa(devices.servoName, '을/를')} 0°로 닫았습니다.`);
       } else if (lower.includes('불 꺼') || lower.includes('조명 꺼') || lower.includes('off')) {
         if (missing('rgb')) return;
         setRgbState('OFF');

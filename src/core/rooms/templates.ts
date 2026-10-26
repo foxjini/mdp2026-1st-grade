@@ -3,14 +3,14 @@ import { BASE_DEVICE_INFO, RoomMeta } from '../types/iot';
 
 export function roomJsonTemplate(meta: RoomMeta): string {
   // mode 는 화면의 'Pico 연결 설정'에서만 바꾸므로 템플릿에서 제외
-  const { createdAt, updatedAt, hasNotification, mode, ...rest } = meta;
-  void createdAt;
-  void updatedAt;
-  void hasNotification;
-  void mode;
+  // (서버가 기록하는 업로드 시각 · 예제 표시도 제외)
+  const { createdAt, updatedAt, hasNotification, mode, roomJsonUploadedAt, example, exampleHash, ...rest } = meta;
+  void [createdAt, updatedAt, hasNotification, mode, roomJsonUploadedAt, example, exampleHash];
   return JSON.stringify(
     {
       ...rest,
+      // SG90 을 쓰면 이 공간에서 부르는 이름 (인스펙터 · 음성 안내에 표시)
+      ...(meta.baseDevices.includes('sg90') ? { servoName: meta.servoName || '서보모터' } : {}),
       customSensors: meta.customSensors.length
         ? meta.customSensors
         : [{ key: 'my_sensor', name: '우리 팀 센서', unit: '%', min: 0, max: 100 }],
@@ -177,7 +177,9 @@ export function buildVibePrompt(meta: RoomMeta, platformContext: string, idea: s
       ? meta.baseDevices.map((d) => `${d}(${BASE_DEVICE_INFO[d].name} ${BASE_DEVICE_INFO[d].pins.join('/')})`).join(', ')
       : '없음'
   }
-  → 목록에 없는 기본 장치는 Scene.tsx / code.py 에서 사용하지 말고, 그 핀은 확장 부품에 써도 됩니다.
+  → 목록에 없는 기본 장치는 Scene.tsx / code.py 에서 사용하지 말고, 그 핀은 확장 부품에 써도 됩니다.${
+    meta.baseDevices.includes('sg90') ? `\n- SG90 서보모터 이름(servoName): ${meta.servoName || '(아이디어에 맞게 정해 room.json servoName 에 적기)'}` : ''
+  }
 - 확장 센서(customSensors):
 ${sensors}
 - 확장 핀(pins): ${meta.pins.length ? meta.pins.join(', ') : '없음'}

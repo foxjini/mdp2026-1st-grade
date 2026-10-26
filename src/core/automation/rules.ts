@@ -1,6 +1,7 @@
 // 자동화 스케줄 규칙 (순수 함수: 엔진 · 설정 창 · 테스트 공용)
 import { BaseDeviceId, BASE_DEVICE_INFO, RoomPackage } from '../types/iot';
 import { roomUsesDevice } from '../rooms/devices';
+import { josa } from '../rooms/servoName';
 
 /** 규칙이 보는 현재 값 (수신 대기인 센서는 undefined) */
 export interface AutomationSnapshot {
@@ -16,7 +17,7 @@ export interface AutomationContext {
   setServo: (angle: number) => void;
   setRgb: (color: string | null, state: 'ON' | 'OFF') => void;
   requestApproval: (message: string) => void;
-  /** 이 공간에서 SG90 을 부르는 이름 (기본 거실 = '스마트 도어', 학생 공간 = '서보모터') */
+  /** 이 공간에서 SG90 을 부르는 이름 (src/core/rooms/servoName.ts) */
   servoName: string;
 }
 
@@ -39,13 +40,13 @@ export const AUTOMATION_RULES: AutomationRule[] = [
     id: 'rule-1',
     title: '고온 감지 자동 환기',
     trigger: '실내 온도 28.0℃ 이상 감지 시',
-    action: '사용자 확인 요청 → 승인하면 스마트 도어 90° 개방',
+    action: '사용자 확인 요청 → 승인하면 서보(SG90) 90° 개방',
     devices: ['dht11', 'sg90'],
     kind: 'sensor',
     when: (s) => (s.temperature === undefined ? undefined : s.temperature >= 28),
     run: (ctx) => {
       const t = ctx.snapshot.temperature ?? 0;
-      const msg = `실내 온도 ${t.toFixed(1)}도. 환기를 위해 ${ctx.servoName}를 90도로 열까요? 오른쪽 패널에서 동작 승인을 눌러 주세요.`;
+      const msg = `실내 온도 ${t.toFixed(1)}도. 환기를 위해 ${josa(ctx.servoName, '을/를')} 90도로 열까요? 오른쪽 패널에서 동작 승인을 눌러 주세요.`;
       ctx.requestApproval(msg);
       return msg;
     },
@@ -67,13 +68,13 @@ export const AUTOMATION_RULES: AutomationRule[] = [
     id: 'rule-3',
     title: '고습도 환경 환기 규칙',
     trigger: '실내 습도 70% 초과 시',
-    action: '스마트 도어 45° 미세 환풍 개방',
+    action: '서보(SG90) 45° 미세 환풍 개방',
     devices: ['dht11', 'sg90'],
     kind: 'sensor',
     when: (s) => (s.humidity === undefined ? undefined : s.humidity > 70),
     run: (ctx) => {
       ctx.setServo(45);
-      return `습도가 ${Math.round(ctx.snapshot.humidity ?? 0)}퍼센트로 높아 ${ctx.servoName}를 45도 열어 환기합니다.`;
+      return `습도가 ${Math.round(ctx.snapshot.humidity ?? 0)}퍼센트로 높아 ${josa(ctx.servoName, '을/를')} 45도 열어 환기합니다.`;
     },
   },
   {
@@ -93,7 +94,7 @@ export const AUTOMATION_RULES: AutomationRule[] = [
     id: 'rule-5',
     title: '보안 잠금 스케줄',
     trigger: '매일 자정 24:00 정각',
-    action: '전체 조명 OFF 및 스마트 도어 0° 완전 잠금',
+    action: '전체 조명 OFF 및 서보(SG90) 0° 닫기',
     devices: [],
     anyDevices: ['rgb', 'sg90'],
     kind: 'time',
@@ -103,7 +104,7 @@ export const AUTOMATION_RULES: AutomationRule[] = [
       const servo = ctx.has('sg90');
       if (rgb) ctx.setRgb(null, 'OFF');
       if (servo) ctx.setServo(0);
-      const what = rgb && servo ? `조명을 끄고 ${ctx.servoName}를 0도로 닫습니다.` : rgb ? '조명을 끕니다.' : `${ctx.servoName}를 0도로 닫습니다.`;
+      const what = rgb && servo ? `조명을 끄고 ${josa(ctx.servoName, '을/를')} 0도로 닫습니다.` : rgb ? '조명을 끕니다.' : `${josa(ctx.servoName, '을/를')} 0도로 닫습니다.`;
       return `자정 보안 잠금입니다. ${what}`;
     },
   },

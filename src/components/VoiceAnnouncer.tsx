@@ -5,13 +5,13 @@
 import { useEffect } from 'react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { announce, colorName, isAutomationAck, prepareVoices } from '@/core/voice/voice';
+import { josa } from '@/core/rooms/servoName';
 
 export function VoiceAnnouncer() {
   useEffect(() => {
     prepareVoices();
     return useIoTStore.subscribe((s, prev) => {
-      const uploaded = !!s.activeRoomPackage;
-      const servoName = uploaded ? '서보모터' : '스마트 도어';
+      const servoName = s.servoName;
       const door = s.actuators.sg90_door;
       const prevDoor = prev.actuators.sg90_door;
       const rgb = s.actuators.rgb_light;
@@ -20,7 +20,7 @@ export function VoiceAnnouncer() {
       // 1. 서보 명령 완료 / 실패
       if (prevDoor.pending && !door.pending) {
         if (door.errorMessage) announce('control', `${servoName} 명령이 실패했습니다.`);
-        else if (!isAutomationAck('sg90')) announce('control', `${servoName}를 ${door.reportedAngle}도로 움직였습니다.`);
+        else if (!isAutomationAck('sg90')) announce('control', `${josa(servoName, '을/를')} ${door.reportedAngle}도로 움직였습니다.`);
       }
 
       // 2. RGB 명령 완료 / 실패
