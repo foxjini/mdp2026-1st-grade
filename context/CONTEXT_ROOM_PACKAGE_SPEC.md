@@ -82,9 +82,12 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 ### 3.1 규칙
 1. **`export default` 컴포넌트 1개**를 내보냅니다. `isModalOpen` prop 을 받습니다.
 2. `<Canvas>`, 조명(ambient/hemisphere/directional), **환경광(Environment)**, 카메라, OrbitControls, **후처리(SSAO · 블룸 · 톤매핑)** 는 **플랫폼이 이미 제공**합니다. 만들지 마세요. (필요하면 `pointLight`/`spotLight` 정도만 추가)
-3. 공간 크기: 바닥은 원점 기준 약 **7 × 7** 안쪽, 높이 0 ~ 3.
+3. 공간 크기: 바닥은 원점 기준 약 **7 × 7** 안쪽, 높이 0 ~ 3. 1 단위 = 1 m.
+   - **카메라:** 기본 시점은 앞-오른쪽 위 `(6.8, 5.2, 7.2)` 에서 `(0, 1.2, 0)` 을 봅니다 (조감도는 바로 위).
+   - 그래서 **벽은 뒤쪽(-z)과 왼쪽(-x)에만** 세우고, 앞쪽(+z) · 오른쪽(+x)은 열어 둡니다. 오른쪽에 벽을 세우면 장면을 가립니다. 오른쪽 벽에 둘 물건(패널 · 창문 등)은 왼쪽 벽이나 뒤쪽 벽으로 옮깁니다.
+   - **천장은 만들지 않습니다** (카메라를 가림). 천장 조명은 짧은 줄에 매단 펜던트 대신 벽 브래킷 조명 · 스탠드 조명 · 바닥에 선 기둥형 조명으로 만들어 '허공에 매달린 물체'가 생기지 않게 합니다.
 4. `<Html>` 배지는 **반드시** `zIndexRange={[10, 0]}` 를 주고 `{!isModalOpen && ...}` 로 감쌉니다. (모달 가림 방지)
-5. 클릭 이벤트는 `onClick={(e) => { e.stopPropagation(); ... }}` (빈 곳 클릭 시 선택 해제와 충돌 방지)
+5. 클릭 이벤트는 `onClick={(e) => { e.stopPropagation(); ... }}` (빈 곳 클릭 시 선택 해제와 충돌 방지). `HoverLift` 의 `onClick` 은 이미 `stopPropagation` 을 하므로 `onClick={() => sendCommand(...)}` 만 쓰면 됩니다.
 6. 애니메이션은 `useFrame` + `THREE.MathUtils.damp` 로 부드럽게 보간합니다.
 7. `fetch`, `window.localStorage`, `setInterval` 로 직접 하드웨어/서버와 통신하지 마세요. **SDK만** 사용합니다.
 8. Tailwind 클래스는 `<Html>` 안의 일반 HTML에서만 동작합니다.
@@ -98,17 +101,18 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 | `@react-three/drei` | `Html`, `Text`, `RoundedBox`, `Float` 등 (외부 파일을 불러오는 `useGLTF`, `useTexture`는 사용 금지) |
 | `@/core/sdk` | 학생용 SDK (아래) |
 | `@/core/store/useIoTStore` | 고급: 스토어 직접 구독 |
-| `@/components/3d/LightObject` | `<LightObject isModalOpen={isModalOpen} />` RGB LED 천장 조명 |
-| `@/components/3d/CdsSensorNode` | `<CdsSensorNode isModalOpen={isModalOpen} />` 조도 센서 노드 |
-| `@/components/3d/DoorObject` | `<DoorObject />` SG90 연동 문 |
-| `@/components/3d/DhtSensorBadge` | `<DhtSensorBadge />` 온습도 배지 |
+| `@/components/3d/LightObject` | `<LightObject isModalOpen={isModalOpen} />` RGB LED 천장 조명 (고정 위치 `[0, 2.65, 0]`) |
+| `@/components/3d/CdsSensorNode` | `<CdsSensorNode isModalOpen={isModalOpen} />` 조도 센서 노드 (고정 위치 `[-0.8, 1.05, -2.1]`) |
+| `@/components/3d/DoorObject` | `<DoorObject />` SG90 연동 문 (고정 위치: 왼쪽 벽 `[-2.75, 0, 1.2]`) |
+| `@/components/3d/DhtSensorBadge` | `<DhtSensorBadge />` 온습도 배지 (고정 위치 `[1.8, 1.05, -1.2]`) |
+| (플랫폼 부품 공통) | 위치가 고정이라 쓰면 그 자리를 비워 둡니다. 우리 장면에 맞지 않으면 쓰지 말고 직접 만드세요 (예: RGB 상태등을 우리 모양으로). |
 | `@/components/3d/DocentBot` | `<DocentBot position={[x,0,z]} name="안내 로봇" isModalOpen={isModalOpen} />` 가상 도슨트 (음성 안내에 맞춰 입모양 · 자막) |
 
 ### 3.3 SDK (`@/core/sdk`)
 | 함수 | 반환 / 동작 |
 | :--- | :--- |
-| `useSensor(id)` | `id`: `'dht11_temp'` \| `'dht11_humi'` \| `'cds_light'` → `{ value, unit, isStale, ... }` |
-| `useCustomSensor(key)` | 확장 센서 전체 정보 또는 `undefined` (아직 값이 없을 때) |
+| `useSensor(id)` | `id`: `'dht11_temp'` \| `'dht11_humi'` \| `'cds_light'` → `{ value(숫자, 항상 있음), unit, isStale(값이 끊김), minWarning?, maxWarning? }` |
+| `useCustomSensor(key)` | 확장 센서 전체 정보 `{ value, unit, isStale, minWarning?, maxWarning? }` 또는 `undefined` (아직 값이 없을 때) |
 | `useCustomValue(key, fallback = 0)` | 확장 센서 숫자 값 (없으면 fallback) |
 | `useServo()` | `{ angle, targetAngle, pending, setAngle(angle) }` |
 | `useRgb()` | `{ color, on, pending, setColor('#RRGGBB'), setOn(true/false) }` |
@@ -120,21 +124,22 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 | 이름 | 사용법 |
 | :--- | :--- |
 | `PALETTE` | 차분한 색: `wall` `floor` `oak` `walnut` `linen` `sage` `clay` `sand` `charcoal` `ink` · 상태색 `ok` `warn` `alert` `info` `off` |
-| `MAT` | PBR 재질 프리셋: `<meshStandardMaterial {...MAT.oak} />` — `oak` `walnut` `linen` `sage` `leather` `ceramic` `matteWhite` `plaster` `brushedMetal` `chrome` `brass` `concrete` `plant` `rubber` / 함수 `MAT.glow(color, on)`(발광 표시등) · `MAT.screen(color)`(화면) / 유리는 `<meshPhysicalMaterial {...MAT.glass} />` |
-| `<DataPin position label sensor isModalOpen />` | 데이터 핀 배지. `sensor` 에 `useSensor()` · `useCustomSensor()` 결과를 주면 값 · 경고 · 수신 대기를 자동 표시 (또는 `value` `unit` `status` 직접) |
-| `<HoverLift position onClick>…</HoverLift>` | 클릭할 수 있는 물체를 감싸면 마우스를 올릴 때 살짝 떠오르고 커서가 바뀜 (튕김 없는 감쇠) |
-| `useSmoothValue(value, { lambda })` | 센서 값을 부드럽게 따라가는 ref. `useFrame` 안에서 `.current` 사용. 값이 끊기면 마지막 값 유지 |
+| `MAT` | PBR 재질 프리셋 (`{ color, roughness, metalness, ... }` 객체): `<meshStandardMaterial {...MAT.oak} />`, 색만 바꾸려면 `<meshStandardMaterial {...MAT.linen} color={PALETTE.sage} />` (뒤에 쓴 값이 이김) · — `oak` `walnut` `linen` `sage` `leather` `ceramic` `matteWhite` `plaster` `brushedMetal` `chrome` `brass` `concrete` `plant` `rubber` / 함수 `MAT.glow(color, on)`(발광 표시등) · `MAT.screen(color)`(화면) / 유리는 `<meshPhysicalMaterial {...MAT.glass} />` |
+| `<DataPin position label sensor isModalOpen />` | 데이터 핀 배지 (점 + 줄기 + 카드. `position` 은 바닥/물체 윗면, 카드는 그 위 `height`(기본 0.45 m)에 뜸 · 카드 폭 약 0.6 m. 카메라에 가까울수록 크게 보이므로 앞쪽 물체 위에는 두지 않기). `sensor` 에 `useSensor()` · `useCustomSensor()` 결과를 주면 값 · 경고 · 수신 대기를 자동 표시. 직접 줄 때는 `value` `unit` `status`(`'ok'` \| `'warn'` \| `'alert'` \| `'info'` \| `'off'`). 우리 팀 기준값으로 경고를 보이려면 `status={light < 20000 ? 'warn' : 'ok'}` 처럼 `sensor` 와 함께 `status` 를 줍니다. `label` 은 바뀌어도 됩니다. `isModalOpen` 만 넘기면 모달 숨김 · `zIndexRange` 는 DataPin 이 알아서 합니다. 소수 자리는 자동(정수 · 1000 이상은 0자리), `decimals` 로 바꿈 |
+| `<HoverLift position rotation onClick>…</HoverLift>` | 클릭할 수 있는 물체를 감싸면 마우스를 올릴 때 살짝 떠오르고 커서가 바뀜 (튕김 없는 감쇠). children 좌표는 HoverLift `position` 기준. `onClick={() => sendCommand('feed', true)}` (stopPropagation 내장) |
+| `useSmoothValue(value, { lambda, initial })` | 센서 값을 부드럽게 따라가는 ref (`.current` 는 숫자). `useFrame` 안에서 `smooth.current` 사용. `value` 가 `undefined` · `NaN` 이면 마지막 값 유지 (처음엔 `initial`, 기본 0) |
 | `usePrefersReducedMotion()` | 시스템 '동작 줄이기' 설정이면 `true` (장식 움직임 끄기) |
 
 ### 3.4 디자인 규칙 (전문 디자인 수준)
-1. **색:** 넓은 면(벽 · 바닥 · 가구)은 `PALETTE` 의 차분한 색. `#FF0000` 같은 원색 · 순흑(`#000`) · 순회색 금지. **강조색(`ok` `warn` `alert` `info`)은 상태 · 데이터에만** 씁니다.
+1. **색:** 넓은 면(벽 · 바닥 · 가구)은 `PALETTE` 의 차분한 색. `#FF0000` 같은 원색 · 순흑(`#000`) · 순회색 금지. **강조색(`ok` `warn` `alert` `info`)은 상태 · 데이터에만** 씁니다. 상태가 여러 단계(초록 · 주황 · 빨강 …)여도 화면에는 **지금 상태의 색 하나**만 보이게 합니다. 팀이 정한 RGB LED 색(hex)은 `useRgb().color` 로 그대로 보여 줍니다.
 2. **재질:** 모든 물체에 `MAT` 프리셋 (나무 · 패브릭 · 세라믹 · 금속을 구분). 모든 것을 반짝이게(metalness 1) 하지 않습니다.
-3. **형태 · 비례:** 1 단위 = 1 m 실제 크기 비율 (책상 높이 0.75, 의자 0.45, 문 2.0). 가구는 `RoundedBox` 로 모서리를 둥글게. 물체는 바닥에 붙여 공중에 뜨지 않게.
+3. **형태 · 비례:** 1 단위 = 1 m 실제 크기 비율 (책상 높이 0.75, 의자 0.45, 문 2.0). 가구는 `RoundedBox` 로 모서리를 둥글게 (`radius` 는 0.03~0.08, 단 가장 얇은 변 두께의 절반보다 작게 — 상판 · 칸막이 · 책 같은 얇은 판은 0.005~0.02). 물체는 바닥에 붙여 공중에 뜨지 않게.
 4. **조명:** 플랫폼 조명을 그대로 쓰고, 발광(`MAT.glow`)은 표시등 · 화면 · 조명 기구에만. `pointLight` 는 2개 이하.
 5. **모션:** `useFrame` + `THREE.MathUtils.damp` 로 감속하며 멈추게. **통통 튀는 bounce · elastic 금지.** 계속 움직이는 장식은 1~2개, 경고 같은 의미가 있을 때만 깜빡임.
 6. **데이터:** 수치는 `DataPin` 으로 통일 (상태를 색 + 글자로 함께). 배지는 5개 이하, 서로 겹치지 않게 배치. 글자는 `<Html>` 로 (drei `Text` 는 글꼴 파일을 내려받으므로 피함).
 7. **클릭:** 클릭할 물체는 `HoverLift` 로 감싸 '누를 수 있음'을 보여 줍니다.
-8. **성능:** `useFrame` 안에서 `new THREE.Vector3()` 등 객체 생성 금지 (`useMemo`), 같은 물체를 10개 이상 반복하면 drei `<Instances>`, 오브젝트 80개 이하, 외부 모델 · 텍스처 금지.
+8. **성능:** `useFrame` 안에서 `new THREE.Vector3()` 등 객체 생성 금지 (`useMemo`), 같은 물체를 10개 이상 반복하면 drei `<Instances>`, 오브젝트(`mesh` 개수 기준, `<Instances>` 묶음은 1개) 80개 이하, 외부 모델 · 텍스처 금지.
+9. **명령 결과를 화면에 보이기:** '휴식 중' · '급식 중' 처럼 명령이 만든 상태는 `room.json` `customSensors` 에 0/1 값(예: `break_on`)을 추가하고 `mock.js` · `code.py` 가 돌려주게 한 뒤 `useCustomValue('break_on')` 로 읽습니다.
 
 ---
 
@@ -160,14 +165,18 @@ module.exports = {
 ```
 
 - `state = { t, base: { temperature, humidity, light, servoAngle, rgbColor, rgbState }, custom: { 현재 확장 센서 값 } }`
+  - `t` 는 시뮬레이션 시작 후 지난 **초**(소수). tick 주기가 환경마다 다르므로(브라우저 2초 · mock 서버 1.5초) **시간 이야기(40초 주기, 10초 휴식 등)는 tick 횟수 대신 `state.t` 로** 계산합니다. (예: `const p = state.t % 40;`, 휴식 끝 시각 `breakUntil = state.t + 10`)
 - 반환값: `{ 확장센서key: 숫자 }` (`true`/`false` 는 1/0 으로 변환). 반환하지 않아도 됩니다.
 - **순수 JavaScript** (TypeScript 문법, `import`, `require`, `fetch`, `setTimeout` 금지). 파일 맨 위의 `let` 변수로 상태를 유지합니다.
-- 기본 센서(DHT11 · Cds) 값은 플랫폼이 만듭니다. mock.js 는 **확장 센서**를 만듭니다.
+- 기본 센서(DHT11 · Cds) 값은 플랫폼이 자연스럽게 흔들리게 만듭니다. mock.js 는 **확장 센서**를 만듭니다.
+- 시나리오에 기본 센서 변화가 필요하면(예: "온도가 25~28℃ 를 천천히 오르내린다") `tick` 이 `temperature`(℃) · `humidity`(%) · `light`(0~65535) 를 돌려주면 시뮬레이션의 기본 센서가 그 값이 됩니다. (실제 Pico 에서는 센서가 직접 잽니다)
+- `tick` 에서도 `servo_angle` · `rgb_color` · `rgb_state` 를 돌려줄 수 있습니다. code.py 의 `read()` 에서 자동 규칙(예: 소음에 따라 RGB 색)을 처리한다면 mock.js 는 `tick` 에서 같은 규칙을 처리합니다.
 - code.py 가 `base.set_servo()` / `base.set_rgb()` 로 기본 액추에이터를 움직인다면, mock.js 도 **같은 동작**을 아래 key 로 돌려주세요. 그래야 시뮬레이션에서도 서보 · LED 가 움직입니다.
 
 | 반환 key | 뜻 | code.py 에서 같은 동작 |
 | :--- | :--- | :--- |
 | `servo_angle` | SG90 각도 (0~180) | `base.set_servo(angle)` |
+| `temperature` · `humidity` · `light` | 시뮬레이션의 기본 센서 값 (시나리오용) | — (실제 센서) |
 | `rgb_color` | RGB LED 색 (`"#RRGGBB"`) | `base.set_rgb(color, ...)` |
 | `rgb_state` | `"ON"` / `"OFF"` | `base.set_rgb(..., state)` |
 
@@ -197,7 +206,7 @@ def setup(base):
 
 
 def read(base):
-    """/api/status 요청마다: { 확장센서key: 숫자 } 반환"""
+    """/api/status 요청마다 (대시보드가 약 2초마다 요청): { 확장센서key: 숫자 } 반환. 자동 규칙(base.set_rgb 등)도 여기서 처리 가능"""
     return {"food_weight": round(weight_sensor.value / 65535 * 500)}
 
 
@@ -214,7 +223,8 @@ def handle(base, action, value):
 - PWM 짝 핀(`GP16`·`GP17`, `GP18`·`GP19`)은 주파수가 같아야 합니다. `sg90` 을 쓰는 공간에서 `GP17` 을 PWM 으로 쓰면 `frequency=50`
 - Wi-Fi, HTTP 서버, `baseDevices` 기본 장치 초기화는 플랫폼 펌웨어(`code.py` + `config.py`)가 합니다. 팀 모듈에서 **`wifi`, `socketpool`, `adafruit_httpserver` 사용과 `baseDevices` 장치 핀 재초기화 금지** (`baseDevices` 에 없는 기본 핀은 사용 가능)
 - 기본 장치를 쓸 때는 연결 여부를 확인합니다: `if base.has("sg90"): base.set_servo(90)`
-- `while True` 무한 루프, `time.sleep()` 긴 대기 금지 (웹 서버가 멈춤)
+- `while True` 무한 루프, `time.sleep()` 긴 대기 금지 (웹 서버가 멈춤). 시간 재기는 `time.monotonic()` (초)
+- `base.set_rgb()` · `base.set_servo()` 는 `read()` 에서 매번 불러도 됩니다. 대시보드에서 사람이 직접 바꾼 값을 덮어쓰지 않으려면 **값이 바뀔 때만** 부르세요 (예: 소음 단계가 바뀔 때)
 - 사용 가능한 라이브러리: `board`, `analogio`, `digitalio`, `pwmio`, `time`, `math`, `adafruit_motor` (그 외 라이브러리는 선생님과 상의)
 - 팀 모듈에서 오류가 나도 기본 장치와 웹 서버는 계속 동작합니다. 오류 내용은 `http://<우리 Pico IP>/api/teams` 에서 확인합니다.
 

@@ -100,7 +100,7 @@ export function SensorOutputPanel() {
           </span>
           <span className="text-xs font-bold text-slate-400">℃</span>
           <span className="text-[11px] text-slate-400 ml-auto font-medium">
-            권장: 18.0 ~ 26.0℃
+            정상: {temp.minWarning ?? '-'} ~ {temp.maxWarning ?? '-'}℃
           </span>
         </div>
 
@@ -129,7 +129,7 @@ export function SensorOutputPanel() {
           </span>
           <span className="text-xs font-bold text-slate-400">%</span>
           <span className="text-[11px] text-slate-400 ml-auto font-medium">
-            권장: 40 ~ 60%
+            정상: {humi.minWarning ?? '-'} ~ {humi.maxWarning ?? '-'}%
           </span>
         </div>
 

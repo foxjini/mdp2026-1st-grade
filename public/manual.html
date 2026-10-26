@@ -917,7 +917,7 @@
           <tr><td><strong>오른쪽 · 제어 로그</strong></td><td>보낸 명령 · mock.js 로드 · 경고 · 오류 기록</td><td>"연결되어 있지 않아 명령을 보내지 않았습니다" = baseDevices 에 없는 장치를 제어함</td></tr>
           <tr><td><strong>값 대신 '수신 대기'</strong></td><td>그 값이 아직 들어오지 않음</td><td>시뮬레이션: mock.js 가 그 key 를 돌려주는지 / 하드웨어: code.py read() · 배선 · Pico 연결 확인</td></tr>
           <tr><td><strong>왼쪽 위 학교 마크</strong></td><td>플랫폼 소개 · 전시 현황 창</td><td>모든 공간의 모드 · Pico IP 를 한눈에 확인 (IP 미지정 · 중복 경고)</td></tr>
-          <tr><td><strong>패널 가장자리 ‹ › 손잡이</strong></td><td>왼쪽 공간 목록 · 오른쪽 패널을 서랍처럼 접고 펼침 → 3D 화면이 그만큼 넓어짐</td><td>단축키 <code>[</code> 왼쪽 · <code>]</code> 오른쪽. 접힌 상태는 저장되고, 오른쪽이 접혀 있을 때 승인 요청이 오면 손잡이에 빨간 점. 위쪽 탭을 누르면 오른쪽 패널이 다시 펼쳐짐</td></tr>
+          <tr><td><strong>패널 가장자리 ‹ › 손잡이</strong></td><td>왼쪽 공간 목록 · 오른쪽 패널을 서랍처럼 접고 펼침 → 3D 화면이 그만큼 넓어짐</td><td>단축키 <code>[</code> 왼쪽 · <code>]</code> 오른쪽. 접힌 상태는 저장되고, 오른쪽이 접혀 있을 때 승인 요청이 오면 손잡이에 빨간 점. 위쪽 탭을 누르면 오른쪽 패널이 다시 펼쳐짐 (탭 끝 › 버튼으로도 접기 · 펼치기). 화면이 좁으면 위쪽 탭 이름이 '인스펙터 · 출력 · 로그'로 짧아짐</td></tr>
           <tr><td><strong>캔버스 왼쪽 아래 ✨ 고급 그래픽 / 🍃 절전</strong></td><td>환경광 · 앰비언트 오클루전 · 은은한 빛 번짐(고급) ↔ 기본 조명만(절전)</td><td>느린 PC 는 절전. 화면이 느려지면 자동으로 절전 '(자동)' 으로 바뀜. 디자인 방법은 <a class="appendix-link" onclick="goToSlide(13)">부록 B</a></td></tr>
           <tr><td><strong>왼쪽 메뉴 🔊 스피커</strong></td><td>음성 안내 켜기/끄기 · 안내할 항목(승인 요청 · 제어 동작 · 자동화 · 연결 상태) · 말하기 속도 · [들어 보기]</td><td>전시장에서 화면을 보지 않아도 상황을 말로 들을 수 있음. 설정은 이 PC 에 저장</td></tr>
           <tr><td><strong>캔버스 오른쪽 아래 📅 자동화 스케줄</strong></td><td>규칙 5개 켜기/끄기 · 필요 장치 · 마지막 실행 · <strong>[테스트 실행]</strong></td><td>켜 둔 규칙은 실제로 실행됩니다. 고온 규칙은 오른쪽 패널에 <strong>사용자 확인(승인)</strong>을 요청. 이 공간에 없는 장치가 필요한 규칙은 '건너뜀'</td></tr>
@@ -1052,6 +1052,12 @@ def handle(base, action, value):
         <p>code.py 에서 <code>base.set_servo(90)</code> · <code>base.set_rgb("#EF4444", "ON")</code> 를 쓴다면, mock.js 의 <code>tick</code>/<code>onCommand</code> 도 <code>{ servo_angle: 90 }</code> · <code>{ rgb_color: '#EF4444', rgb_state: 'ON' }</code> 를 돌려주세요. 그래야 시뮬레이션에서도 3D 화면의 서보 · LED 가 실물과 똑같이 움직입니다.</p>
         <pre class="code-block">onCommand(action, value, state) {
   if (action === 'gate') return { servo_angle: value ? 90 : 0 };  // code.py: base.set_servo(90 if value else 0)
+}</pre>
+        <h3>⏱️ 시간 이야기 · 기본 센서 시나리오 (시뮬레이션)</h3>
+        <p>mock 시나리오의 시간은 <code>state.t</code>(시작 후 지난 초)로 계산합니다 (tick 주기가 브라우저 2초 · mock 서버 1.5초로 달라서 횟수로 세면 틀어짐). "온도가 25~28℃ 를 오르내린다"처럼 <b>기본 센서</b>가 바뀌는 이야기는 <code>tick</code> 이 <code>temperature</code> · <code>humidity</code> · <code>light</code> 를 돌려주면 시뮬레이션의 기본 센서가 그 값이 됩니다. (실제 Pico 에서는 센서가 직접 잽니다)</p>
+        <pre class="code-block">tick(state) {
+  const p = state.t % 40;                                  // 40초 주기
+  return { temperature: 26.5 + 1.5 * Math.sin(state.t / 10), noise: p &lt; 20 ? 42 : 65 };
 }</pre>
       </div>
     </article>

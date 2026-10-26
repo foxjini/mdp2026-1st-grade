@@ -1,149 +1,212 @@
 'use client';
 
-import React, { useRef } from 'react';
+// 기본 예제: 스마트 팜 온실 — 디자인 킷(PALETTE · MAT)으로 정리한 모범 사례
+// - 흰색 분체도장 프레임 + 유리벽은 뒤 · 왼쪽에만 (기본 시점 앞-오른쪽은 열어 두어 가리지 않음)
+// - 반복 물체(상추 잎 · 자갈 디딤돌)는 <Instances> 로 한 번에 그림
+// - SG90 각도 → 지붕 환기창이 뒤쪽 경첩을 축으로 감쇠하며 열림 / 습도 → 흙 색이 젖은 색으로 부드럽게
+import React, { useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { LightObject } from '@/components/3d/LightObject';
 import { CdsSensorNode } from '@/components/3d/CdsSensorNode';
-import { Html } from '@react-three/drei';
+import { Html, Instance, Instances, RoundedBox } from '@react-three/drei';
+import { MAT, PALETTE, badgeStyle, useSmoothValue } from '@/core/sdk/design';
 
 interface SmartFarmRoomProps {
   isModalOpen?: boolean;
 }
 
+const SOIL_DRY = new THREE.Color('#8A6A4F');
+const SOIL_WET = new THREE.Color('#4A3627');
+
+// 상추 한 포기 = 잎 5장 (모든 포기를 Instances 한 번으로)
+const LETTUCE_ROWS = [-0.95, -0.32, 0.32, 0.95];
+const LEAVES: { p: [number, number, number]; r: [number, number, number]; s: number }[] = [];
+LETTUCE_ROWS.forEach((x, i) => {
+  [-0.32, 0.32].forEach((z, j) => {
+    const size = 0.85 + ((i + j) % 3) * 0.12;
+    for (let k = 0; k < 5; k++) {
+      const a = (k / 5) * Math.PI * 2 + i;
+      LEAVES.push({
+        p: [x + Math.cos(a) * 0.07, 0.1, z + Math.sin(a) * 0.07],
+        r: [0.9, a, 0],
+        s: size,
+      });
+    }
+  });
+});
+
 export function SmartFarmRoom({ isModalOpen = false }: SmartFarmRoomProps) {
   const domeRef = useRef<THREE.Group>(null);
+  const soilMat = useRef<THREE.MeshStandardMaterial>(null);
   const reportedAngle = useIoTStore((s) => s.actuators.sg90_door.reportedAngle);
-  
+
   // 온습도 센서 및 가상 토양 수분 수치
   const temp = useIoTStore((s) => s.sensors.dht11_temp.value);
   const humi = useIoTStore((s) => s.sensors.dht11_humi.value);
   const soilMoisture = Math.round((humi * 0.9 + 18) * 10) / 10; // 온실 습도 연동 토양 수분
+  const moisture = useSmoothValue(soilMoisture, { initial: 60 });
 
-  // SG90 서보모터 각도(0~180도)에 따라 온실 환기 돔 개폐 각도(0 ~ 55도) 부드럽게 보간
+  // SG90 서보모터 각도(0~180도)에 따라 온실 환기창 개폐 각도(0 ~ 55도) 부드럽게 보간
   const domeOpenRad = (Math.min(180, Math.max(0, reportedAngle)) / 180) * 0.95;
+  const soilColor = useMemo(() => new THREE.Color(), []);
 
   useFrame((_, delta) => {
+    const dt = Math.min(delta, 0.1);
     if (domeRef.current) {
-      domeRef.current.rotation.x = THREE.MathUtils.damp(
-        domeRef.current.rotation.x,
-        -domeOpenRad,
-        5,
-        delta
-      );
+      domeRef.current.rotation.x = THREE.MathUtils.damp(domeRef.current.rotation.x, -domeOpenRad, 5, dt);
+    }
+    // 토양 수분 40~90% → 마른 흙 ~ 젖은 흙 색
+    if (soilMat.current) {
+      const k = THREE.MathUtils.clamp((moisture.current - 40) / 50, 0, 1);
+      soilColor.copy(SOIL_DRY).lerp(SOIL_WET, k);
+      soilMat.current.color.copy(soilColor);
     }
   });
 
   return (
     <group position={[0, 0, 0]}>
-      {/* 1. 온실 흙 바닥 (Soil Ground) */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[6.5, 6.5]} />
-        <meshStandardMaterial color="#2E1B0E" roughness={0.9} />
-      </mesh>
+      {/* 1. 바닥: 둥근 받침 + 자갈색 바닥 */}
+      <RoundedBox args={[6.6, 0.16, 6.6]} radius={0.06} smoothness={4} position={[0, -0.08, 0]} receiveShadow>
+        <meshStandardMaterial {...MAT.concrete} color={PALETTE.sand} />
+      </RoundedBox>
 
-      {/* 2. 온실 바닥 잔디 가장자리 */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[9, 9]} />
-        <meshStandardMaterial color="#166534" roughness={0.95} />
-      </mesh>
+      {/* 디딤돌 (앞쪽 통로) */}
+      <Instances limit={6} receiveShadow>
+        <cylinderGeometry args={[0.22, 0.22, 0.03, 24]} />
+        <meshStandardMaterial {...MAT.concrete} />
+        {[[1.2, 2.3], [0.55, 2.05], [-0.1, 1.85], [-0.75, 1.7]].map(([x, z], i) => (
+          <Instance key={i} position={[x, 0.015, z]} />
+        ))}
+      </Instances>
 
-      {/* 3. 온실 투명 유리 프레임 기둥 (Greenhouse Frame) */}
-      <mesh position={[0, 1.4, 0]}>
-        <boxGeometry args={[4.8, 2.8, 4.8]} />
-        <meshStandardMaterial
-          color="#38BDF8"
-          transparent
-          opacity={0.15}
-          roughness={0.1}
-        />
+      {/* 2. 온실 유리벽 (뒤 · 왼쪽) + 알루미늄 프레임 */}
+      <mesh position={[0, 1.4, -2.4]}>
+        <boxGeometry args={[4.8, 2.8, 0.03]} />
+        <meshPhysicalMaterial {...MAT.glass} />
       </mesh>
-
-      {/* 온실 철골 알루미늄 프레임 모서리 */}
+      <mesh position={[-2.4, 1.4, 0]}>
+        <boxGeometry args={[0.03, 2.8, 4.8]} />
+        <meshPhysicalMaterial {...MAT.glass} />
+      </mesh>
       {[
         [-2.4, 1.4, -2.4],
         [2.4, 1.4, -2.4],
         [-2.4, 1.4, 2.4],
-        [2.4, 1.4, 2.4],
       ].map((pos, idx) => (
-        <mesh key={idx} position={pos as [number, number, number]}>
-          <boxGeometry args={[0.08, 2.8, 0.08]} />
-          <meshStandardMaterial color="#94A3B8" metalness={0.8} roughness={0.2} />
+        <mesh key={idx} position={pos as [number, number, number]} castShadow>
+          <boxGeometry args={[0.07, 2.8, 0.07]} />
+          <meshStandardMaterial {...MAT.matteWhite} />
         </mesh>
       ))}
+      {/* 위쪽 가로 프레임 (뒤 · 왼쪽) */}
+      <mesh position={[0, 2.8, -2.4]}>
+        <boxGeometry args={[4.86, 0.07, 0.07]} />
+        <meshStandardMaterial {...MAT.matteWhite} />
+      </mesh>
+      <mesh position={[-2.4, 2.8, 0]}>
+        <boxGeometry args={[0.07, 0.07, 4.86]} />
+        <meshStandardMaterial {...MAT.matteWhite} />
+      </mesh>
 
-      {/* 4. 환기 돔 지붕 (Ventilation Dome Roof - SG90 연동 개폐) */}
-      <group ref={domeRef} position={[0, 2.8, -2.2]}>
-        <mesh position={[0, 0.4, 2.2]}>
-          <boxGeometry args={[4.6, 0.1, 4.2]} />
-          <meshStandardMaterial
-            color="#67E8F9"
-            transparent
-            opacity={0.35}
-            roughness={0.2}
-          />
+      {/* 3. 지붕 환기창 (SG90 연동 · 뒤쪽 모서리 경첩) */}
+      <group ref={domeRef} position={[0, 2.84, -2.4]}>
+        <mesh position={[0, 0, 1.2]}>
+          <boxGeometry args={[4.7, 0.03, 2.4]} />
+          <meshPhysicalMaterial {...MAT.glass} />
         </mesh>
-        {/* 지붕 알루미늄 리브 */}
-        <mesh position={[0, 0.46, 2.2]}>
-          <boxGeometry args={[4.62, 0.04, 0.1]} />
-          <meshStandardMaterial color="#64748B" metalness={0.7} />
+        <mesh position={[0, 0.02, 2.4]}>
+          <boxGeometry args={[4.74, 0.05, 0.06]} />
+          <meshStandardMaterial {...MAT.matteWhite} />
         </mesh>
       </group>
 
-      {/* 5. 스마트팜 중앙 스마트 화분 배드 (Smart Plant Bed) */}
-      <group position={[0, 0.35, 0]}>
-        {/* 나무 화분 상자 */}
-        <mesh position={[0, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[2.8, 0.7, 1.6]} />
-          <meshStandardMaterial color="#78350F" roughness={0.7} />
+      {/* 4. 스마트 재배 베드 (주인공) */}
+      <group position={[0, 0, -0.2]}>
+        <RoundedBox args={[2.8, 0.6, 1.5]} radius={0.05} smoothness={4} position={[0, 0.3, 0]} castShadow receiveShadow>
+          <meshStandardMaterial {...MAT.oak} />
+        </RoundedBox>
+        {/* 배양토: 토양 수분에 따라 젖은 색 */}
+        <mesh position={[0, 0.61, 0]} receiveShadow>
+          <boxGeometry args={[2.62, 0.03, 1.32]} />
+          <meshStandardMaterial ref={soilMat} color="#6A4F3A" roughness={1} />
         </mesh>
-
-        {/* 배양토 */}
-        <mesh position={[0, 0.36, 0]}>
-          <boxGeometry args={[2.6, 0.05, 1.4]} />
-          <meshStandardMaterial color="#1C1917" roughness={1.0} />
+        {/* 상추 8포기 (잎 40장 = Instances 1번) */}
+        <group position={[0, 0.62, 0]}>
+          <Instances limit={LEAVES.length} castShadow>
+            <sphereGeometry args={[0.13, 12, 8]} />
+            <meshStandardMaterial {...MAT.plant} color="#6E9F6B" />
+            {LEAVES.map((l, i) => (
+              <Instance key={i} position={l.p} rotation={l.r} scale={[l.s, l.s * 0.35, l.s * 0.8]} />
+            ))}
+          </Instances>
+        </group>
+        {/* 토양 수분 센서 막대 (확장 센서 위치 표시) */}
+        <mesh position={[1.15, 0.78, 0.5]} castShadow>
+          <boxGeometry args={[0.04, 0.34, 0.02]} />
+          <meshStandardMaterial {...MAT.rubber} />
         </mesh>
-
-        {/* 식물들 (작은 실린더 줄기 + 구형/원뿔형 잎) */}
-        {[-0.9, -0.45, 0, 0.45, 0.9].map((x, idx) => (
-          <group key={idx} position={[x, 0.4, (idx % 2 === 0 ? 0.25 : -0.25)]}>
-            <mesh position={[0, 0.25, 0]}>
-              <cylinderGeometry args={[0.03, 0.04, 0.5]} />
-              <meshStandardMaterial color="#15803D" />
-            </mesh>
-            <mesh position={[0, 0.55, 0]}>
-              <sphereGeometry args={[0.2, 12, 12]} />
-              <meshStandardMaterial color="#22C55E" roughness={0.4} />
-            </mesh>
-          </group>
-        ))}
 
         {/* 토양 수분 & 온실 센서 3D 배지 */}
         {!isModalOpen && (
-          <Html position={[0, 1.4, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
-            <div className="flex flex-col gap-1.5 p-2.5 rounded-2xl bg-slate-900/90 border border-emerald-500/60 text-white shadow-2xl backdrop-blur-md pointer-events-none select-none">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[11px] font-bold text-emerald-300">스마트팜 온실 센서</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs">
-                <div>
-                  <span className="text-slate-400 text-[10px]">토양 수분: </span>
-                  <span className="font-extrabold text-emerald-400">{soilMoisture}%</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px]">내부 온도: </span>
-                  <span className="font-extrabold text-blue-400">{temp}℃</span>
-                </div>
-                <div>
-                  <span className="text-slate-400 text-[10px]">환기 돔: </span>
-                  <span className="font-extrabold text-amber-400">{reportedAngle}°</span>
-                </div>
+          <Html position={[0, 1.55, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
+            {/* 공통 배지 카드 (badgeStyle): 밝은 카드 · 자리 맞춘 숫자 · 줄바꿈 없음 */}
+            <div style={{ ...badgeStyle(), pointerEvents: 'none', gap: 4 }} className="select-none">
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: PALETTE.inkSoft, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 3, background: PALETTE.ok, display: 'inline-block' }} />
+                스마트팜 온실 센서
+              </span>
+              <div style={{ display: 'flex', gap: 12, fontVariantNumeric: 'tabular-nums' }}>
+                {[
+                  ['토양 수분', `${soilMoisture}%`],
+                  ['내부 온도', `${temp}℃`],
+                  ['환기창', `${reportedAngle}°`],
+                ].map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', flexDirection: 'column' }}>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: PALETTE.inkSoft }}>{k}</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: PALETTE.ink }}>{v}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </Html>
         )}
+      </group>
+
+      {/* 5. 소품: 왼쪽 벽 선반 + 테라코타 화분 3개 · 물뿌리개 */}
+      <group position={[-1.95, 0, -1.3]}>
+        <RoundedBox args={[0.5, 0.05, 1.4]} radius={0.015} smoothness={3} position={[0, 0.7, 0]} castShadow receiveShadow>
+          <meshStandardMaterial {...MAT.walnut} />
+        </RoundedBox>
+        {[-0.45, 0, 0.45].map((z, i) => (
+          <group key={i} position={[0, 0.725, z]}>
+            <mesh position={[0, 0.09, 0]} castShadow>
+              <cylinderGeometry args={[0.1, 0.075, 0.18, 20]} />
+              <meshStandardMaterial {...MAT.ceramic} color={PALETTE.clay} roughness={0.8} />
+            </mesh>
+            <mesh position={[0, 0.22, 0]} castShadow>
+              <sphereGeometry args={[0.1 + i * 0.015, 14, 10]} />
+              <meshStandardMaterial {...MAT.plant} />
+            </mesh>
+          </group>
+        ))}
+        {[-0.55, 0.55].map((z, i) => (
+          <mesh key={i} position={[0, 0.35, z]} castShadow>
+            <boxGeometry args={[0.04, 0.7, 0.04]} />
+            <meshStandardMaterial {...MAT.walnut} />
+          </mesh>
+        ))}
+      </group>
+      <group position={[1.65, 0, 1.0]} rotation={[0, -0.6, 0]}>
+        <mesh position={[0, 0.14, 0]} castShadow>
+          <cylinderGeometry args={[0.13, 0.15, 0.28, 24]} />
+          <meshStandardMaterial {...MAT.sage} roughness={0.5} />
+        </mesh>
+        <mesh position={[0.2, 0.22, 0]} rotation={[0, 0, -0.9]} castShadow>
+          <cylinderGeometry args={[0.018, 0.025, 0.32, 10]} />
+          <meshStandardMaterial {...MAT.sage} roughness={0.5} />
+        </mesh>
       </group>
 
       {/* 6. 스마트팜 조명(식물 생장등) 및 Cds 조도센서 노드 */}

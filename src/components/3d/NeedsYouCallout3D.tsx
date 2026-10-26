@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Html } from '@react-three/drei';
 import { X } from 'lucide-react';
+import { useAutomationStore } from '@/core/automation/useAutomationStore';
+import { useRoomDevices } from '@/core/rooms/useRoomDevices';
 
 interface NeedsYouCallout3DProps {
   onApprove: () => void;
@@ -18,6 +20,8 @@ export function NeedsYouCallout3D({
   isModalOpen = false,
 }: NeedsYouCallout3DProps) {
   const [isDismissed, setIsDismissed] = useState(false);
+  const approvalMessage = useAutomationStore((s) => s.approval.message);
+  const { servoName } = useRoomDevices();
 
   // 승인 완료 상태 시 4.5초 후 자동 숨김
   useEffect(() => {
@@ -42,7 +46,7 @@ export function NeedsYouCallout3D({
         <div className="bg-white rounded-2xl px-3.5 py-2 border-2 border-emerald-500 shadow-xl pointer-events-auto flex items-center gap-2.5 select-none whitespace-nowrap shrink-0 animate-in fade-in zoom-in-95 duration-200">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
           <span className="text-xs font-bold text-slate-900 whitespace-nowrap">
-            ✅ 승인 완료! 스마트 도어 90° 개방 실행됨
+            ✅ 승인 완료! {servoName} 90° 개방 실행됨
           </span>
           <button
             onClick={() => setIsDismissed(true)}
@@ -81,7 +85,7 @@ export function NeedsYouCallout3D({
 
           {/* 본문 텍스트 */}
           <p className="text-[11px] text-slate-800 font-semibold leading-relaxed">
-            실내 온도 28.4℃ 감지. 쾌적한 실내 환경을 위해 스마트 도어를 90°로 개방할까요?
+            {approvalMessage || `실내 온도가 높습니다. 쾌적한 실내 환경을 위해 ${servoName}를 90°로 개방할까요?`}
           </p>
 
           {/* 하단 액션 버튼 */}

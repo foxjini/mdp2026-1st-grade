@@ -43,9 +43,15 @@ export interface MockBaseValues {
   servo_angle?: number;
   rgb_color?: string;
   rgb_state?: 'ON' | 'OFF';
+  // 시뮬레이션 전용: 기본 센서 값을 mock 시나리오대로 (하드웨어 모드에서는 실제 센서 값)
+  temperature?: number;
+  humidity?: number;
+  light?: number;
 }
 
-export const MOCK_BASE_KEYS = ['servo_angle', 'rgb_color', 'rgb_state'] as const;
+export const MOCK_BASE_KEYS = ['servo_angle', 'rgb_color', 'rgb_state', 'temperature', 'humidity', 'light'] as const;
+
+const clampNum = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
 // tick/onCommand 반환값 → 확장 센서 값(유한한 숫자) + 기본 장치 값
 export function splitMockValues(values: unknown): { custom: MockValues; base: MockBaseValues } {
@@ -59,6 +65,11 @@ export function splitMockValues(values: unknown): { custom: MockValues; base: Mo
       if (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) base.rgb_color = v.toUpperCase();
     } else if (key === 'rgb_state') {
       if (v === 'ON' || v === 'OFF') base.rgb_state = v;
+    } else if (key === 'temperature' || key === 'humidity' || key === 'light') {
+      if (typeof v !== 'number' || !Number.isFinite(v)) return;
+      if (key === 'temperature') base.temperature = Math.round(clampNum(v, -10, 60) * 10) / 10;
+      else if (key === 'humidity') base.humidity = Math.round(clampNum(v, 0, 100) * 10) / 10;
+      else base.light = Math.round(clampNum(v, 0, 65535));
     } else if (typeof v === 'number' && Number.isFinite(v)) custom[key] = v;
     else if (typeof v === 'boolean') custom[key] = v ? 1 : 0;
   });

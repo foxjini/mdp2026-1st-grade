@@ -119,9 +119,10 @@ export default function HomePage() {
     markAutomation('sg90'); // 승인 안내와 서보 완료 안내가 겹치지 않게
     setServoAngle(90);
     useAutomationStore.getState().resolveApproval();
-    announce('approval', '승인되었습니다. 스마트 도어를 90도로 엽니다.');
-    addLog('success', '스마트 환기 제어 요청 승인: 스마트 도어가 90°로 개방되었습니다.', 'USER');
-    showToast('승인 완료: 스마트 도어가 90°로 개방되었습니다.');
+    const servoName = useIoTStore.getState().activeRoomPackage ? '서보모터' : '스마트 도어';
+    announce('approval', `승인되었습니다. ${servoName}를 90도로 엽니다.`);
+    addLog('success', `스마트 환기 제어 요청 승인: ${servoName}가 90°로 개방되었습니다.`, 'USER');
+    showToast(`승인 완료: ${servoName}가 90°로 개방되었습니다.`);
   };
 
   const showToast = (msg: string) => {
@@ -392,6 +393,8 @@ export default function HomePage() {
             setActiveCenterTab(tab);
             setRightOpen(true); // 접혀 있던 오른쪽 패널을 펼쳐서 보여 줌
           }}
+          rightPanelOpen={rightOpen}
+          onToggleRightPanel={toggleRight}
           onOpenIpModal={() => setShowIpModal(true)}
           onChangeMode={(mode) => {
             // 하드웨어로 바꾸려는데 이 공간의 Pico IP 가 없으면 연결 설정부터

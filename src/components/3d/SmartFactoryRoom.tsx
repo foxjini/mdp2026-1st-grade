@@ -7,6 +7,7 @@ import { useIoTStore } from '@/core/store/useIoTStore';
 import { LightObject } from '@/components/3d/LightObject';
 import { CdsSensorNode } from '@/components/3d/CdsSensorNode';
 import { Html } from '@react-three/drei';
+import { PALETTE, badgeStyle } from '@/core/sdk/design';
 
 interface SmartFactoryRoomProps {
   isModalOpen?: boolean;
@@ -70,12 +71,10 @@ export function SmartFactoryRoom({ isModalOpen = false }: SmartFactoryRoomProps)
         <meshBasicMaterial color="#EAB308" />
       </mesh>
 
-      {/* 2. 공장 철골 H-Beam 기둥 */}
+      {/* 2. 공장 철골 H-Beam 기둥 (기본 시점의 시선 위에 놓이는 뒤-왼쪽 · 앞-오른쪽 기둥은 화면 한가운데를 가려서 뺌) */}
       {[
-        [-3.2, 1.8, -3.2],
         [3.2, 1.8, -3.2],
         [-3.2, 1.8, 3.2],
-        [3.2, 1.8, 3.2],
       ].map((pos, idx) => (
         <group key={idx} position={pos as [number, number, number]}>
           <mesh castShadow>
@@ -267,32 +266,28 @@ export function SmartFactoryRoom({ isModalOpen = false }: SmartFactoryRoomProps)
 
       {/* 8. 3D 플로팅 스마트 팩토리 실시간 관제 배지 */}
       {!isModalOpen && (
-        <Html position={[0, 1.8, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
-          <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-slate-900/90 border border-blue-500/60 text-white shadow-2xl backdrop-blur-md pointer-events-none select-none min-w-[210px]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-400 animate-ping" />
-                <span className="text-xs font-bold text-blue-300">스마트 팩토리 공정 #1</span>
-              </div>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/60 text-blue-300 border border-blue-700/50">가동 중</span>
+        <Html position={[1.3, 1.7, 0.5]} center distanceFactor={8} zIndexRange={[10, 0]}>
+          {/* 공통 배지 카드 (badgeStyle): 밝은 카드 · 자리 맞춘 숫자 · 줄바꿈 없음 */}
+          <div style={{ ...badgeStyle(), pointerEvents: 'none', gap: 4 }} className="select-none">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: PALETTE.inkSoft }}>스마트 팩토리 공정 #1</span>
+              <span style={{ fontSize: 9, fontWeight: 700, color: isLightOn ? PALETTE.ok : PALETTE.off, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 3, background: isLightOn ? PALETTE.ok : PALETTE.off, display: 'inline-block' }} />
+                {isLightOn ? '가동 중' : '대기'}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-700/60">
-              <div>
-                <span className="text-slate-400 text-[10px] block">모터 온도:</span>
-                <span className="font-extrabold text-blue-400">{temp}℃</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[10px] block">분류 푸셔:</span>
-                <span className="font-extrabold text-amber-400">{reportedAngle}°</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[10px] block">광전 센서:</span>
-                <span className="font-extrabold text-emerald-400">{lightVal} ADC</span>
-              </div>
-              <div>
-                <span className="text-slate-400 text-[10px] block">시그널 타워:</span>
-                <span className="font-extrabold" style={{ color: rgbColor }}>{isLightOn ? 'ACTIVE' : 'IDLE'}</span>
-              </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', columnGap: 14, rowGap: 2, fontVariantNumeric: 'tabular-nums' }}>
+              {[
+                ['모터 온도', `${temp}℃`],
+                ['분류 푸셔', `${reportedAngle}°`],
+                ['광전 센서', `${Number(lightVal).toLocaleString('ko-KR')} ADC`],
+                ['시그널 타워', isLightOn ? '켜짐' : '꺼짐'],
+              ].map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: PALETTE.inkSoft }}>{k}</span>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: PALETTE.ink }}>{v}</span>
+                </div>
+              ))}
             </div>
           </div>
         </Html>

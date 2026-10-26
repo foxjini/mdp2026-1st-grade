@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { X, ShieldAlert, CheckCircle2, Thermometer, Wind } from 'lucide-react';
+import { useRoomDevices } from '@/core/rooms/useRoomDevices';
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface ReviewModalProps {
 }
 
 export function ReviewModal({ isOpen, onClose, onApprove }: ReviewModalProps) {
+  const { servoName } = useRoomDevices();
   if (!isOpen) return null;
 
   return (
@@ -44,7 +46,7 @@ export function ReviewModal({ isOpen, onClose, onApprove }: ReviewModalProps) {
             <span className="font-semibold text-slate-500">요청 동작:</span>
             <span className="font-bold text-slate-900 flex items-center gap-1">
               <Wind className="w-3.5 h-3.5 text-blue-500" />
-              스마트 도어 90° 환기 개방
+              {servoName} 90° 환기 개방
             </span>
           </div>
 

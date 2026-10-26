@@ -16,6 +16,8 @@ export interface AutomationContext {
   setServo: (angle: number) => void;
   setRgb: (color: string | null, state: 'ON' | 'OFF') => void;
   requestApproval: (message: string) => void;
+  /** 이 공간에서 SG90 을 부르는 이름 (기본 거실 = '스마트 도어', 학생 공간 = '서보모터') */
+  servoName: string;
 }
 
 export interface AutomationRule {
@@ -43,7 +45,7 @@ export const AUTOMATION_RULES: AutomationRule[] = [
     when: (s) => (s.temperature === undefined ? undefined : s.temperature >= 28),
     run: (ctx) => {
       const t = ctx.snapshot.temperature ?? 0;
-      const msg = `실내 온도 ${t.toFixed(1)}도. 환기를 위해 스마트 도어를 90도로 열까요? 오른쪽 패널에서 동작 승인을 눌러 주세요.`;
+      const msg = `실내 온도 ${t.toFixed(1)}도. 환기를 위해 ${ctx.servoName}를 90도로 열까요? 오른쪽 패널에서 동작 승인을 눌러 주세요.`;
       ctx.requestApproval(msg);
       return msg;
     },
@@ -71,7 +73,7 @@ export const AUTOMATION_RULES: AutomationRule[] = [
     when: (s) => (s.humidity === undefined ? undefined : s.humidity > 70),
     run: (ctx) => {
       ctx.setServo(45);
-      return `습도가 ${Math.round(ctx.snapshot.humidity ?? 0)}퍼센트로 높아 도어를 45도 열어 환기합니다.`;
+      return `습도가 ${Math.round(ctx.snapshot.humidity ?? 0)}퍼센트로 높아 ${ctx.servoName}를 45도 열어 환기합니다.`;
     },
   },
   {
@@ -101,7 +103,7 @@ export const AUTOMATION_RULES: AutomationRule[] = [
       const servo = ctx.has('sg90');
       if (rgb) ctx.setRgb(null, 'OFF');
       if (servo) ctx.setServo(0);
-      const what = rgb && servo ? '조명을 끄고 도어를 닫아 잠급니다.' : rgb ? '조명을 끕니다.' : '도어를 닫아 잠급니다.';
+      const what = rgb && servo ? `조명을 끄고 ${ctx.servoName}를 0도로 닫습니다.` : rgb ? '조명을 끕니다.' : `${ctx.servoName}를 0도로 닫습니다.`;
       return `자정 보안 잠금입니다. ${what}`;
     },
   },

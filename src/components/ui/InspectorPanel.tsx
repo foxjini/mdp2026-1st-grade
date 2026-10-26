@@ -413,8 +413,8 @@ export function InspectorPanel({
 
             <p className="text-xs text-slate-600 font-normal leading-relaxed">
               {approvalStatus === 'pending'
-                ? approval.message || `실내 온도 ${sensors.dht11_temp.value.toFixed(1)}℃. 쾌적한 실내 환경 유지를 위해 스마트 도어를 90°로 개방할까요?`
-                : '✅ 승인이 완료되어 스마트 도어 90° 개방 및 자동 환기 시퀀스가 적용되었습니다.'}
+                ? approval.message || `실내 온도 ${sensors.dht11_temp.value.toFixed(1)}℃. 쾌적한 실내 환경 유지를 위해 ${devices.servoName}를 90°로 개방할까요?`
+                : `✅ 승인이 완료되어 ${devices.servoName} 90° 개방 및 자동 환기 시퀀스가 적용되었습니다.`}
             </p>
 
             <div className="flex items-center justify-end gap-2 pt-1">

@@ -104,8 +104,9 @@ export function PromptBar({ onFeedbackMessage }: PromptBarProps) {
     }, 350);
   };
 
+  // 폭: 왼쪽(그래픽 · 조감도) · 오른쪽(장치 관리 · 스케줄) 버튼 사이에 들어가게 → 좁은 화면에서도 버튼을 가리지 않음
   return (
-    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-full max-w-xl px-4 pointer-events-auto">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 w-[max(16rem,calc(100%-25rem))] max-w-xl pointer-events-auto">
       <div className="bg-white/95 backdrop-blur-md rounded-full border border-slate-200/90 shadow-[0_8px_30px_rgb(0,0,0,0.06)] px-3 py-2 flex items-center gap-2.5 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400">
         {/* @Pico 태그 뱃지 */}
         <div className="flex items-center gap-1.5 bg-slate-950 text-white text-[11px] font-extrabold px-3 py-1 rounded-full shrink-0 cursor-pointer hover:bg-slate-800 transition-colors">
@@ -124,7 +125,7 @@ export function PromptBar({ onFeedbackMessage }: PromptBarProps) {
               : '무엇이든 명령하세요 — 예: "문 90도 열어줘", "조명 파란색 켜줘", "현재 온도 어때?"'
           }
           disabled={isReplying}
-          className="flex-1 bg-transparent text-xs text-slate-800 placeholder-slate-400 font-medium outline-none"
+          className="flex-1 min-w-0 bg-transparent text-xs text-slate-800 placeholder-slate-400 font-medium outline-none"
         />
 
         {/* 첨부파일 클립 아이콘 */}

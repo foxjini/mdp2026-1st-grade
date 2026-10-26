@@ -117,7 +117,8 @@ function syncTeams() {
 }
 
 // 팀 mock.js 반환값 → 확장 센서 값. servo_angle / rgb_color / rgb_state 는 code.py 의
-// base.set_servo() / set_rgb() 처럼 이 mock Pico 의 기본 장치 상태로 반영 (src/core/runtime/mockRuntime.ts 와 동일 규칙)
+// base.set_servo() / set_rgb() 처럼 이 mock Pico 의 기본 장치 상태로 반영, temperature / humidity / light 는
+// 기본 센서 시나리오 값 (src/core/runtime/mockRuntime.ts 와 동일 규칙)
 function sanitize(values) {
   const out = {};
   if (!values || typeof values !== 'object') return out;
@@ -128,6 +129,12 @@ function sanitize(values) {
       if (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v)) hardwareState.rgbColor = v.toUpperCase();
     } else if (k === 'rgb_state') {
       if (v === 'ON' || v === 'OFF') hardwareState.rgbState = v;
+    } else if (k === 'temperature' || k === 'humidity' || k === 'light') {
+      // 기본 센서 시나리오 (실제 Pico 에서는 센서가 직접 잼)
+      if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+      if (k === 'temperature') hardwareState.temperature = Math.round(Math.max(-10, Math.min(60, v)) * 10) / 10;
+      else if (k === 'humidity') hardwareState.humidity = Math.round(Math.max(0, Math.min(100, v)) * 10) / 10;
+      else hardwareState.lightRaw = Math.round(Math.max(0, Math.min(65535, v)));
     } else if (typeof v === 'number' && Number.isFinite(v)) out[k] = v;
     else if (typeof v === 'boolean') out[k] = v ? 1 : 0;
   }

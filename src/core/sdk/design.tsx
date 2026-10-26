@@ -193,6 +193,12 @@ export function badgeStyle(selected = false): React.CSSProperties {
 // ------------------------------------------------------------------------------
 // 5. DataPin: 3D 데이터 노드 핀 (점 + 줄기 + 배지). 상태는 색 + 글자로 함께 표시
 // ------------------------------------------------------------------------------
+// 1000 이상 · 정수는 쉼표만 (38,460), 그 외는 소수 1자리 (24.6)
+function formatNumber(v: number, decimals?: number): string {
+  const d = decimals ?? (Number.isInteger(v) || Math.abs(v) >= 1000 ? 0 : 1);
+  return v.toLocaleString('ko-KR', { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
 const STATUS_TEXT: Record<PinStatus, string> = { ok: '정상', warn: '주의', alert: '경고', info: '정보', off: '꺼짐' };
 
 interface DataPinProps {
@@ -202,7 +208,9 @@ interface DataPinProps {
   sensor?: SensorData;
   value?: number | string | null;
   unit?: string;
+  /** 소수 자리 (생략하면 자동: 정수 · 1000 이상은 0자리 + 천 단위 쉼표, 그 외 1자리) */
   decimals?: number;
+  /** 상태를 직접 지정 ('ok' | 'warn' | 'alert' | 'info' | 'off'). 생략하면 sensor 의 경고 범위로 자동 */
   status?: PinStatus;
   stale?: boolean;
   height?: number;
@@ -215,7 +223,7 @@ export function DataPin({
   sensor,
   value,
   unit,
-  decimals = 1,
+  decimals,
   status,
   stale,
   height = 0.45,
@@ -232,7 +240,11 @@ export function DataPin({
   const st: PinStatus = isStale ? 'off' : status ?? (warn ? 'warn' : 'ok');
   const color = PALETTE[st];
   const text =
-    isStale || raw === undefined || raw === null ? '--' : typeof raw === 'number' ? raw.toFixed(decimals) : String(raw);
+    isStale || raw === undefined || raw === null || (typeof raw === 'number' && !Number.isFinite(raw))
+      ? '--'
+      : typeof raw === 'number'
+        ? formatNumber(raw, decimals)
+        : String(raw);
   const shownUnit = unit ?? sensor?.unit ?? '';
 
   // 경고 · 주의일 때만 점이 천천히 숨쉬듯 (계속 깜빡이는 장식은 피함)

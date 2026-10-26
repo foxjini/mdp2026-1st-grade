@@ -101,6 +101,10 @@ export class MockIoTAdapter implements IIoTAdapter {
     Object.entries(custom).forEach(([key, value]) => {
       store.updateCustomSensor(key, value);
     });
+    // mock.js 가 temperature / humidity / light 를 돌려주면 기본 센서도 시나리오대로 (시뮬레이션 전용)
+    if (base.temperature !== undefined) store.updateSensor('dht11_temp', base.temperature);
+    if (base.humidity !== undefined) store.updateSensor('dht11_humi', base.humidity);
+    if (base.light !== undefined) store.updateSensor('cds_light', base.light);
     // mock.js 가 servo_angle / rgb_color / rgb_state 를 돌려주면 code.py 처럼 기본 장치도 움직임
     if (base.servo_angle !== undefined || base.rgb_color !== undefined || base.rgb_state !== undefined) {
       store.syncReportedActuators(
