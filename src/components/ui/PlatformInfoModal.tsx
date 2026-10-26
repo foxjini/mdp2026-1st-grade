@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Home, BookOpen, Maximize, Cpu, AlertTriangle } from 'lucide-react';
+import { X, Home, BookOpen, Maximize, Cpu, AlertTriangle, Presentation } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { BASE_DEVICE_INFO } from '@/core/types/iot';
 import { RoomItem } from './RoomsSidebar';
@@ -174,6 +174,15 @@ export function PlatformInfoModal({ isOpen, onClose, roomList, activeRoomId, onS
               className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
             >
               <BookOpen className="w-3.5 h-3.5" /> 매뉴얼 열기
+            </a>
+            <a
+              href="/intro.html"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
+              title="1학년용 오리엔테이션 발표 자료 (디지털 트윈 · 시스템 구성 · 사용법)"
+            >
+              <Presentation className="w-3.5 h-3.5" /> 오리엔테이션
             </a>
             <button
               onClick={() => {

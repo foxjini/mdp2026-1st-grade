@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D IoT 전시 플랫폼 오리엔테이션 - 인천전자마이스터고</title>
+  <style>
+    /* -------------------------------------------------------------
+       Meta Brand Presentation Theme (매뉴얼 manual.html 과 같은 토큰)
+       흰 바탕 + Meta Blue (#0064E0 · #0866FF) + Deep Navy
+       ------------------------------------------------------------- */
+    :root {
+      --meta-blue: #0064E0;
+      --meta-vivid-blue: #0866FF;
+      --meta-sky-blue: #E7F3FF;
+      --meta-navy: #0C1E3C;
+      --meta-dark: #1C2B33;
+      --meta-slate: #4E5D78;
+      --meta-gray-light: #F0F2F5;
+      --meta-gray-subtle: #F7F8FA;
+      --meta-border: #E4E6EB;
+      --meta-border-subtle: #D8DADF;
+      --meta-green: #00A36C;
+      --meta-green-light: #E8F8F0;
+      --meta-amber: #D97706;
+      --meta-amber-light: #FEF3C7;
+      --meta-rose: #E11D48;
+      --meta-rose-light: #FFE4E9;
+      --card-shadow: 0 10px 30px rgba(0, 100, 224, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background-color: var(--meta-gray-light);
+      color: var(--meta-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Roboto, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      word-break: keep-all;
+    }
+
+    /* ---------- 상단 바 ---------- */
+    header.meta-header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--meta-border);
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
+    .meta-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+    .meta-logo-badge {
+      display: flex; align-items: center; justify-content: center;
+      width: 38px; height: 38px; border-radius: 12px; background: #FFFFFF;
+      border: 1px solid var(--meta-border); overflow: hidden; flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0, 100, 224, 0.15);
+    }
+    .meta-logo-badge img { width: 32px; height: 32px; object-fit: contain; }
+    .meta-title-wrap { min-width: 0; }
+    .meta-title-wrap h1 { font-size: 15px; font-weight: 800; color: var(--meta-navy); letter-spacing: -0.3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta-title-wrap p { font-size: 11.5px; color: var(--meta-slate); font-weight: 500; }
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .slide-step-badge {
+      font-size: 12px; font-weight: 800; background: var(--meta-sky-blue); color: var(--meta-blue);
+      border: 1px solid rgba(0, 100, 224, 0.2); padding: 5px 14px; border-radius: 20px; white-space: nowrap;
+    }
+    .mode-toggle-btn {
+      background: #FFFFFF; border: 1px solid var(--meta-border-subtle); color: var(--meta-slate);
+      padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px; text-decoration: none; white-space: nowrap;
+    }
+    .mode-toggle-btn:hover { border-color: var(--meta-blue); color: var(--meta-navy); }
+    .mode-toggle-btn.primary { background: var(--meta-blue); color: #FFFFFF; border-color: var(--meta-blue); }
+    .progress-bar-container { width: 100%; height: 3px; background: #E4E6EB; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--meta-blue), #00B2FF); width: 6.25%; transition: width 0.3s ease; }
+
+    /* ---------- 슬라이드 ---------- */
+    main.presentation-stage {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      padding: 24px 20px 104px; width: 100%; max-width: 1320px; margin: 0 auto;
+    }
+    .slide-card {
+      width: 100%; background: #FFFFFF; border-radius: 24px; border: 1px solid var(--meta-border);
+      box-shadow: var(--card-shadow); padding: 40px 48px; margin-bottom: 24px;
+      display: none; opacity: 0; transform: translateY(12px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      min-height: calc(100vh - 190px);
+    }
+    .slide-card.active { display: block; opacity: 1; transform: translateY(0); }
+    body.scroll-mode .slide-card { display: block !important; opacity: 1 !important; transform: none !important; margin-bottom: 40px; min-height: 0; }
+
+    .slide-header { border-bottom: 1.5px solid var(--meta-border); padding-bottom: 18px; margin-bottom: 26px; }
+    .slide-num-pill { font-size: 12px; font-weight: 800; color: var(--meta-blue); letter-spacing: 0.5px; text-transform: uppercase; }
+    .slide-header h2 { font-size: 30px; font-weight: 800; color: var(--meta-navy); letter-spacing: -0.6px; line-height: 1.3; margin-top: 4px; }
+    .slide-header p { font-size: 16px; color: var(--meta-slate); margin-top: 6px; font-weight: 500; }
+
+    /* 본문은 교실 프로젝터에서도 읽히게 크게 */
+    .lead { font-size: 21px; line-height: 1.7; color: var(--meta-dark); font-weight: 500; }
+    .lead b, .lead strong { color: var(--meta-blue); }
+    p, li { font-size: 17px; }
+    .muted { color: var(--meta-slate); }
+    .small { font-size: 14px; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .stack { display: flex; flex-direction: column; gap: 18px; }
+
+    .meta-box { background: var(--meta-gray-subtle); border: 1px solid var(--meta-border); border-radius: 18px; padding: 22px; }
+    .meta-box.highlight { background: var(--meta-sky-blue); border-color: rgba(0, 100, 224, 0.22); }
+    .meta-box.success { background: var(--meta-green-light); border-color: rgba(0, 163, 108, 0.25); }
+    .meta-box.warning { background: var(--meta-amber-light); border-color: rgba(217, 119, 6, 0.25); }
+    .meta-box h3 { font-size: 19px; font-weight: 800; color: var(--meta-navy); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .meta-box p { color: var(--meta-dark); }
+    .meta-box ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+
+    /* '쉽게 말하면' 한 줄 요약 */
+    .eli5 {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: #FFFFFF; border: 2px dashed rgba(0, 100, 224, 0.35); border-radius: 18px;
+      padding: 16px 20px; margin-top: 22px;
+    }
+    .eli5 .tag { flex-shrink: 0; background: var(--meta-blue); color: #FFFFFF; font-weight: 800; font-size: 13px; padding: 4px 10px; border-radius: 999px; margin-top: 3px; }
+    .eli5 p { font-size: 19px; font-weight: 700; color: var(--meta-navy); line-height: 1.6; }
+
+    .big-emoji { font-size: 44px; line-height: 1; margin-bottom: 10px; }
+    .card-title { font-size: 20px; font-weight: 800; color: var(--meta-navy); }
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 800;
+      padding: 3px 10px; border-radius: 999px; background: var(--meta-sky-blue); color: var(--meta-blue);
+      border: 1px solid rgba(0, 100, 224, 0.2);
+    }
+    .chip.green { background: var(--meta-green-light); color: var(--meta-green); border-color: rgba(0, 163, 108, 0.25); }
+    .chip.amber { background: var(--meta-amber-light); color: var(--meta-amber); border-color: rgba(217, 119, 6, 0.25); }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.9em; background: var(--meta-gray-light); padding: 1px 6px; border-radius: 6px; color: var(--meta-navy); }
+
+    table.meta-table { width: 100%; border-collapse: collapse; border-radius: 14px; overflow: hidden; border: 1px solid var(--meta-border); }
+    table.meta-table th { background: var(--meta-navy); color: #FFFFFF; text-align: left; font-size: 15px; padding: 12px 14px; }
+    table.meta-table td { border-top: 1px solid var(--meta-border); padding: 12px 14px; font-size: 16px; vertical-align: top; background: #FFFFFF; }
+
+    /* 표지 */
+    .cover { display: flex; flex-direction: column; justify-content: center; min-height: calc(100vh - 290px); gap: 22px; }
+    .cover .kicker { font-size: 15px; font-weight: 800; color: var(--meta-blue); letter-spacing: 1px; }
+    .cover h2 { font-size: 52px; line-height: 1.2; font-weight: 900; color: var(--meta-navy); letter-spacing: -1.4px; }
+    .cover h2 span { color: var(--meta-blue); }
+    .cover .sub { font-size: 22px; color: var(--meta-slate); font-weight: 600; }
+    .cover-meta { display: flex; flex-wrap: wrap; gap: 10px; }
+
+    /* 다이어그램 (SVG) */
+    .diagram { width: 100%; height: auto; max-height: 40vh; display: block; margin: 0 auto; }
+    .diagram text { font-family: inherit; }
+    .figure-box { background: var(--meta-gray-subtle); border: 1px solid var(--meta-border); border-radius: 20px; padding: 18px; }
+
+    /* 단계 흐름 */
+    .flow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; counter-reset: step; }
+    .flow-step { position: relative; background: #FFFFFF; border: 1.5px solid var(--meta-border); border-radius: 18px; padding: 16px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .flow-step .n { width: 34px; height: 34px; border-radius: 50%; background: var(--meta-blue); color: #FFFFFF; font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .flow-step b { font-size: 17px; color: var(--meta-navy); line-height: 1.35; }
+    .flow-step span { font-size: 14px; color: var(--meta-slate); line-height: 1.5; }
+    .flow-step.accent { border-color: var(--meta-green); background: var(--meta-green-light); }
+    .flow-step.accent .n { background: var(--meta-green); }
+
+    /* 화면 둘러보기: 스크린샷 위 번호 */
+    .shot-wrap { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--meta-border); box-shadow: var(--card-shadow); }
+    .shot-wrap img { display: block; width: 100%; height: auto; }
+    .shot-layout .shot-wrap { max-width: calc((100vh - 290px) * 16 / 9); }
+    .pin {
+      position: absolute; transform: translate(-50%, -50%);
+      width: 34px; height: 34px; border-radius: 50%; background: var(--meta-blue); color: #FFFFFF;
+      font-weight: 900; font-size: 16px; display: flex; align-items: center; justify-content: center;
+      border: 3px solid #FFFFFF; box-shadow: 0 4px 14px rgba(0, 100, 224, 0.45);
+    }
+    .shot-layout { display: grid; grid-template-columns: 1.75fr 1fr; gap: 22px; align-items: start; }
+    .legend { display: flex; flex-direction: column; gap: 10px; }
+    .legend div { display: flex; gap: 10px; align-items: flex-start; font-size: 16px; }
+    .legend .n { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--meta-blue); color: #FFFFFF; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; margin-top: 2px; }
+
+    figure.photo { margin: 0; background: var(--meta-gray-subtle); border: 1px solid var(--meta-border); border-radius: 18px; overflow: hidden; }
+    figure.photo img { display: block; width: 100%; height: auto; max-height: 38vh; object-fit: cover; }
+    figure.photo figcaption { padding: 12px 16px; font-size: 15px; color: var(--meta-slate); }
+
+    /* 퀴즈 */
+    details.quiz { background: var(--meta-gray-subtle); border: 1.5px solid var(--meta-border); border-radius: 18px; padding: 18px 20px; }
+    details.quiz summary { cursor: pointer; font-size: 19px; font-weight: 800; color: var(--meta-navy); list-style: none; display: flex; gap: 10px; align-items: flex-start; }
+    details.quiz summary::-webkit-details-marker { display: none; }
+    details.quiz summary::before { content: 'Q'; flex-shrink: 0; width: 30px; height: 30px; border-radius: 10px; background: var(--meta-blue); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    details.quiz[open] { border-color: var(--meta-green); background: var(--meta-green-light); }
+    details.quiz .answer { margin-top: 12px; font-size: 17px; padding-left: 40px; }
+    details.quiz .hint { font-size: 13px; font-weight: 600; color: var(--meta-slate); margin-left: auto; padding-left: 10px; white-space: nowrap; }
+
+    /* 비교 (나쁜 예 / 좋은 예) */
+    .bad, .good { border-radius: 16px; padding: 16px 18px; font-size: 17px; line-height: 1.65; }
+    .bad { background: var(--meta-rose-light); border: 1px solid rgba(225, 29, 72, 0.25); }
+    .good { background: var(--meta-green-light); border: 1px solid rgba(0, 163, 108, 0.25); }
+    .bad b { color: var(--meta-rose); } .good b { color: var(--meta-green); }
+
+    /* ---------- 하단 슬라이드 도크 ---------- */
+    .slide-dock {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 100;
+      background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(16px);
+      border: 1px solid var(--meta-border); box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 20px; padding: 8px 16px; display: flex; align-items: center; gap: 14px;
+    }
+    body.scroll-mode .slide-dock { display: none; }
+    .dock-btn {
+      background: var(--meta-gray-subtle); border: 1px solid var(--meta-border); color: var(--meta-navy);
+      padding: 8px 16px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+    }
+    .dock-btn:hover:not(:disabled) { background: var(--meta-blue); color: #FFFFFF; border-color: var(--meta-blue); }
+    .dock-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .dock-dots { display: flex; gap: 5px; }
+    .dock-dot {
+      width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--meta-border); background: #FFFFFF;
+      color: var(--meta-slate); font-size: 11.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer;
+    }
+    .dock-dot:hover { border-color: var(--meta-blue); color: var(--meta-blue); }
+    .dock-dot.active { background: var(--meta-blue); color: #FFFFFF; border-color: var(--meta-blue); }
+    .dock-info { font-size: 12.5px; font-weight: 700; color: var(--meta-slate); white-space: nowrap; }
+    .fullscreen-btn { background: transparent; border: none; color: var(--meta-slate); cursor: pointer; padding: 6px; border-radius: 8px; font-size: 16px; }
+    .fullscreen-btn:hover { background: var(--meta-gray-subtle); }
+
+    /* 낮은 화면(1366×768 프로젝터 등): 한 화면에 들어가게 간격 · 글자 줄이기 */
+    @media (max-height: 1000px) and (min-width: 901px) {
+      main.presentation-stage { padding-top: 16px; }
+      .slide-card { padding: 26px 40px; min-height: calc(100vh - 170px); }
+      .slide-header { padding-bottom: 12px; margin-bottom: 16px; }
+      .slide-header h2 { font-size: 26px; }
+      .slide-header p { font-size: 15px; margin-top: 2px; }
+      .lead { font-size: 18.5px; }
+      p, li { font-size: 15.5px; }
+      .meta-box { padding: 16px 18px; }
+      .meta-box h3 { font-size: 17px; margin-bottom: 4px; }
+      .big-emoji { font-size: 34px; margin-bottom: 6px; }
+      .card-title { font-size: 17.5px; }
+      .eli5 { margin-top: 14px; padding: 12px 16px; }
+      .eli5 p { font-size: 17px; }
+      .stack { gap: 12px; }
+      .grid-2, .grid-3, .grid-4 { gap: 14px; }
+      table.meta-table td { padding: 8px 12px; font-size: 15px; }
+      table.meta-table th { padding: 9px 12px; }
+      .flow-step { padding: 12px; }
+      .flow-step span { font-size: 13px; }
+      figure.photo img { max-height: 30vh; }
+      figure.photo figcaption { padding: 8px 12px; font-size: 13.5px; }
+      .diagram { max-height: 34vh; }
+      details.quiz { padding: 12px 16px; }
+      details.quiz summary { font-size: 17px; }
+      .legend div { font-size: 14.5px; }
+    }
+    @media (max-height: 800px) and (min-width: 901px) {
+      .slide-header h2 { font-size: 23px; }
+      .lead { font-size: 17px; }
+      p, li { font-size: 14.5px; }
+      .big-emoji { font-size: 28px; }
+      .meta-box { padding: 13px 15px; }
+      .eli5 p { font-size: 15.5px; }
+      figure.photo img { max-height: 26vh; }
+      .diagram { max-height: 30vh; }
+      table.meta-table td { padding: 6px 10px; font-size: 14px; }
+      .legend div { font-size: 13.5px; }
+    }
+
+    @media (max-width: 1100px) {
+      .flow { grid-template-columns: repeat(3, 1fr); }
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 900px) {
+      .slide-card { padding: 24px 18px; min-height: 0; }
+      .slide-header h2 { font-size: 23px; }
+      .lead { font-size: 18px; }
+      p, li { font-size: 16px; }
+      .eli5 p { font-size: 17px; }
+      .cover h2 { font-size: 34px; }
+      .cover .sub { font-size: 18px; }
+      .grid-2, .grid-3, .grid-4, .flow, .shot-layout { grid-template-columns: 1fr; }
+      .meta-title-wrap p, .slide-step-badge, #scroll-toggle-btn { display: none; }
+      .slide-dock { width: calc(100% - 32px); justify-content: space-between; bottom: 12px; }
+      .dock-dots { display: none; }
+      .pin { width: 24px; height: 24px; font-size: 12px; border-width: 2px; }
+      table.meta-table td, table.meta-table th { padding: 9px 10px; font-size: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="meta-header">
+    <div class="meta-brand">
+      <div class="meta-logo-badge"><img src="/school-logo.png" alt="인천전자마이스터고등학교"></div>
+      <div class="meta-title-wrap">
+        <h1>
+          <span>인천전자마이스터고 3D IoT 전시 플랫폼</span>
+          <span style="font-weight:400; color:var(--meta-slate);">|</span>
+          <span style="color:var(--meta-blue);">오리엔테이션</span>
+        </h1>
+        <p>디지털 트윈이 뭘까? · 우리 시스템 구성 · 사용법 (1학년용 쉬운 설명)</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="slide-step-badge" id="header-step-indicator">01 / 16</div>
+      <button class="mode-toggle-btn" onclick="toggleScrollMode()" id="scroll-toggle-btn" title="슬라이드 발표 ↔ 전체 스크롤">📄 전체 스크롤</button>
+      <a href="/manual.html" target="_blank" class="mode-toggle-btn" title="자세한 단계별 매뉴얼">📘 매뉴얼</a>
+      <a href="/" target="_blank" class="mode-toggle-btn primary" title="3D 대시보드로 이동">🚀 대시보드</a>
+    </div>
+  </header>
+
+  <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-fill"></div></div>
+
+  <main class="presentation-stage">
+
+    <!-- =========================================================
+         1. 표지
+         ========================================================= -->
+    <article class="slide-card active" id="slide-1">
+      <div class="cover">
+        <div class="kicker">1학년 팀 프로젝트 오리엔테이션</div>
+        <h2>우리 교실에<br><span>'쌍둥이 세상'</span>을 만들어요</h2>
+        <p class="sub">센서가 느낀 것을 3D 화면이 똑같이 보여 주고,<br>화면을 누르면 진짜 모터가 움직이는 — 3D IoT 전시 플랫폼</p>
+        <div class="cover-meta">
+          <span class="chip">🧠 디지털 트윈</span>
+          <span class="chip">🧩 시스템 구성</span>
+          <span class="chip">🛠️ 사용법</span>
+          <span class="chip green">🤖 AI 와 함께 만들기</span>
+        </div>
+        <p class="muted small">← → 화살표 키로 넘기고, F 키로 전체 화면</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         2. 오늘의 지도
+         ========================================================= -->
+    <article class="slide-card" id="slide-2">
+      <div class="slide-header">
+        <div class="slide-num-pill">오늘의 지도</div>
+        <h2>오늘은 딱 4가지만 알면 돼요</h2>
+        <p>어려운 말이 나오면 '쉽게 말하면' 상자를 보세요.</p>
+      </div>
+      <div class="grid-4">
+        <div class="meta-box highlight"><div class="big-emoji">👯</div><div class="card-title">1. 디지털 트윈</div><p class="muted">진짜 물건의 '화면 속 쌍둥이'</p></div>
+        <div class="meta-box"><div class="big-emoji">🧩</div><div class="card-title">2. 우리 시스템</div><p class="muted">PC 1대 + 팀마다 작은 컴퓨터(Pico) 1대</p></div>
+        <div class="meta-box"><div class="big-emoji">🤖</div><div class="card-title">3. AI 로 만들기</div><p class="muted">설명을 잘 쓰면 AI 가 코드를 만들어 줘요</p></div>
+        <div class="meta-box success"><div class="big-emoji">🚀</div><div class="card-title">4. 사용법 6단계</div><p class="muted">주제 → 공간 → AI → 업로드 → Pico 연결</p></div>
+      </div>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>우리 팀이 '똑똑한 방' 하나를 정하고, 그 방의 쌍둥이를 3D 화면에 만들어 전시회에서 보여 주는 프로젝트예요.</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         3. 디지털 트윈이란?
+         ========================================================= -->
+    <article class="slide-card" id="slide-3">
+      <div class="slide-header">
+        <div class="slide-num-pill">1. 디지털 트윈</div>
+        <h2>디지털 트윈 = 진짜 물건의 '화면 속 쌍둥이'</h2>
+        <p>트윈(twin)은 영어로 '쌍둥이'라는 뜻이에요.</p>
+      </div>
+      <div class="grid-2" style="align-items:center;">
+        <div class="figure-box">
+          <svg class="diagram" viewBox="0 0 560 300" role="img" aria-label="진짜 방과 화면 속 쌍둥이 방이 화살표로 이어진 그림">
+            <!-- 진짜 방 -->
+            <rect x="20" y="60" width="190" height="170" rx="18" fill="#FFFFFF" stroke="#D8DADF" stroke-width="2"/>
+            <text x="115" y="40" text-anchor="middle" font-size="18" font-weight="800" fill="#0C1E3C">진짜 방</text>
+            <rect x="45" y="150" width="70" height="55" rx="8" fill="#E7F3FF" stroke="#0064E0" stroke-width="2"/>
+            <text x="80" y="183" text-anchor="middle" font-size="13" font-weight="700" fill="#0064E0">센서</text>
+            <rect x="130" y="110" width="55" height="95" rx="6" fill="#F7F8FA" stroke="#4E5D78" stroke-width="2"/>
+            <text x="157" y="163" text-anchor="middle" font-size="13" font-weight="700" fill="#4E5D78">문</text>
+            <text x="115" y="255" text-anchor="middle" font-size="13" fill="#4E5D78">온도 27℃ · 문 닫힘</text>
+            <!-- 화살표 -->
+            <path d="M228 120 L322 120" stroke="#0064E0" stroke-width="4" marker-end="url(#ah)"/>
+            <text x="278" y="98" text-anchor="middle" font-size="13" font-weight="800" fill="#0064E0">보내기 (센서 값)</text>
+            <path d="M330 175 L236 175" stroke="#00A36C" stroke-width="4" marker-end="url(#ahg)"/>
+            <text x="278" y="214" text-anchor="middle" font-size="13" font-weight="800" fill="#00A36C">명령 (문 열어!)</text>
+            <!-- 화면 속 쌍둥이 -->
+            <rect x="345" y="55" width="200" height="140" rx="14" fill="#0C1E3C"/>
+            <rect x="355" y="65" width="180" height="120" rx="8" fill="#E7F3FF"/>
+            <polygon points="380,165 445,135 510,165 445,180" fill="#C8A27A"/>
+            <rect x="395" y="120" width="35" height="30" rx="4" fill="#FFFFFF" stroke="#0064E0" stroke-width="2"/>
+            <rect x="465" y="100" width="26" height="55" rx="3" fill="#7A5536"/>
+            <rect x="420" y="78" width="72" height="20" rx="10" fill="#FFFFFF" stroke="#0064E0"/>
+            <text x="456" y="92" text-anchor="middle" font-size="11" font-weight="800" fill="#0064E0">27℃</text>
+            <rect x="425" y="195" width="40" height="14" fill="#0C1E3C"/>
+            <rect x="400" y="209" width="90" height="8" rx="4" fill="#0C1E3C"/>
+            <text x="445" y="40" text-anchor="middle" font-size="18" font-weight="800" fill="#0C1E3C">화면 속 쌍둥이</text>
+            <text x="445" y="245" text-anchor="middle" font-size="13" fill="#4E5D78">똑같이 27℃ · 문 닫힘</text>
+            <defs>
+              <marker id="ah" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0064E0"/></marker>
+              <marker id="ahg" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#00A36C"/></marker>
+            </defs>
+          </svg>
+        </div>
+        <div class="stack">
+          <p class="lead">거울 앞에 서면 거울 속 내가 <b>똑같이</b> 움직이죠?</p>
+          <p class="lead">디지털 트윈도 그래요. 진짜 방이 더워지면 화면 속 방도 <b>더워졌다고</b> 보여 주고, 화면 속 문을 누르면 진짜 문이 <b>열려요</b>.</p>
+          <div class="meta-box warning">
+            <h3>🎮 게임 캐릭터와 다른 점</h3>
+            <p>게임 속 세상은 상상으로 만든 것이지만, 디지털 트윈은 <b>지금 진짜로 일어나는 일</b>을 따라 해요.</p>
+          </div>
+        </div>
+      </div>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>디지털 트윈은 진짜 물건과 '실시간으로 연결된' 화면 속 쌍둥이예요.</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         4. 쌍둥이가 하는 3가지 일
+         ========================================================= -->
+    <article class="slide-card" id="slide-4">
+      <div class="slide-header">
+        <div class="slide-num-pill">1. 디지털 트윈</div>
+        <h2>쌍둥이가 하는 일은 딱 3가지</h2>
+        <p>이 3가지가 모두 되면 "디지털 트윈을 만들었다"고 말할 수 있어요.</p>
+      </div>
+      <div class="grid-3">
+        <div class="meta-box highlight">
+          <div class="big-emoji">👀</div>
+          <div class="card-title">① 보여 주기</div>
+          <p>센서가 느낀 온도 · 밝기를 화면에 <b>숫자와 색</b>으로 보여 줘요.</p>
+          <p class="muted small" style="margin-top:8px;">예) 교실이 28℃ → 화면 배지가 주황색 '주의'</p>
+        </div>
+        <div class="meta-box success">
+          <div class="big-emoji">🕹️</div>
+          <div class="card-title">② 조종하기</div>
+          <p>화면을 누르면 진짜 모터 · LED 가 <b>움직여요</b>.</p>
+          <p class="muted small" style="margin-top:8px;">예) 3D 창문 클릭 → 진짜 서보모터가 90° 돌아 창문이 열림</p>
+        </div>
+        <div class="meta-box warning">
+          <div class="big-emoji">🧪</div>
+          <div class="card-title">③ 미리 해 보기</div>
+          <p>진짜 부품이 없어도 <b>가짜 값(시뮬레이션)</b>으로 먼저 연습해요.</p>
+          <p class="muted small" style="margin-top:8px;">예) "40초마다 시끄러워진다"는 이야기를 만들어 미리 확인</p>
+        </div>
+      </div>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>보고(👀) · 시키고(🕹️) · 연습한다(🧪). 이 세 단어만 기억하세요!</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         5. 세상 속 디지털 트윈
+         ========================================================= -->
+    <article class="slide-card" id="slide-5">
+      <div class="slide-header">
+        <div class="slide-num-pill">1. 디지털 트윈</div>
+        <h2>디지털 트윈은 이미 세상 곳곳에 있어요</h2>
+        <p>큰 회사와 도시가 쓰는 기술을, 우리는 '작은 방' 크기로 만들어 봐요.</p>
+      </div>
+      <div class="grid-4">
+        <div class="meta-box"><div class="big-emoji">🏭</div><div class="card-title">스마트 공장</div><p class="muted">기계가 뜨거워지기 전에 화면이 먼저 알려 줘요.</p></div>
+        <div class="meta-box"><div class="big-emoji">🌱</div><div class="card-title">스마트 팜</div><p class="muted">흙이 마르면 화면에서 확인하고 물을 줘요.</p></div>
+        <div class="meta-box"><div class="big-emoji">🏙️</div><div class="card-title">스마트 시티</div><p class="muted">도시 쌍둥이로 교통 · 에너지를 미리 계산해요.</p></div>
+        <div class="meta-box"><div class="big-emoji">✈️</div><div class="card-title">비행기 엔진</div><p class="muted">하늘을 나는 엔진 상태를 땅에서 지켜봐요.</p></div>
+      </div>
+      <div class="grid-2" style="margin-top:22px;">
+        <figure class="photo"><img src="/intro-assets/farm.jpg" alt="플랫폼의 스마트 팜 온실 3D 화면"><figcaption>우리 플랫폼의 '스마트 팜 온실' — 토양 수분 · 온도 · 환기창</figcaption></figure>
+        <figure class="photo"><img src="/intro-assets/factory-sort.jpg" alt="플랫폼의 스마트 팩토리 공정 3D 화면"><figcaption>'스마트 팩토리' — 분류 게이트(서보모터)를 열면 물건이 수거함으로 분류돼요</figcaption></figure>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         6. 우리 시스템 한눈에
+         ========================================================= -->
+    <article class="slide-card" id="slide-6">
+      <div class="slide-header">
+        <div class="slide-num-pill">2. 우리 시스템</div>
+        <h2>우리 시스템 한눈에 보기</h2>
+        <p>전시장에는 큰 컴퓨터 1대와, 팀마다 작은 컴퓨터 1대가 있어요.</p>
+      </div>
+      <div class="figure-box">
+        <svg class="diagram" viewBox="0 0 1000 330" role="img" aria-label="전시 PC 한 대와 팀별 Pico 2 W 세 대가 와이파이로 연결된 그림">
+          <defs>
+            <marker id="ah2" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0064E0"/></marker>
+          </defs>
+          <!-- PC -->
+          <rect x="40" y="70" width="250" height="160" rx="16" fill="#0C1E3C"/>
+          <rect x="54" y="84" width="222" height="132" rx="8" fill="#E7F3FF"/>
+          <rect x="70" y="100" width="40" height="100" rx="5" fill="#FFFFFF" stroke="#D8DADF"/>
+          <rect x="118" y="100" width="100" height="100" rx="5" fill="#FFFFFF" stroke="#0064E0" stroke-width="2"/>
+          <polygon points="135,180 168,160 201,180 168,192" fill="#C8A27A"/>
+          <rect x="226" y="100" width="36" height="100" rx="5" fill="#FFFFFF" stroke="#D8DADF"/>
+          <rect x="145" y="230" width="40" height="18" fill="#0C1E3C"/>
+          <rect x="115" y="248" width="100" height="10" rx="5" fill="#0C1E3C"/>
+          <text x="165" y="50" text-anchor="middle" font-size="20" font-weight="800" fill="#0C1E3C">🖥️ 전시 PC 1대 (두뇌 · 화면)</text>
+          <text x="165" y="290" text-anchor="middle" font-size="15" fill="#4E5D78">모든 팀의 3D 공간을 보여 줘요</text>
+          <!-- Wi-Fi -->
+          <text x="455" y="150" text-anchor="middle" font-size="44">📶</text>
+          <text x="455" y="196" text-anchor="middle" font-size="16" font-weight="800" fill="#0064E0">Wi-Fi</text>
+          <text x="455" y="218" text-anchor="middle" font-size="13" font-weight="600" fill="#4E5D78">(보이지 않는 전화선)</text>
+          <path d="M300 140 L405 140" stroke="#0064E0" stroke-width="4" stroke-dasharray="8 6" marker-end="url(#ah2)"/>
+          <path d="M500 125 L600 75" stroke="#0064E0" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#ah2)"/>
+          <path d="M505 140 L600 165" stroke="#0064E0" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#ah2)"/>
+          <path d="M500 155 L600 255" stroke="#0064E0" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#ah2)"/>
+          <!-- Pico 3 -->
+          <g font-size="15" font-weight="700">
+            <rect x="610" y="40" width="350" height="70" rx="14" fill="#FFFFFF" stroke="#0064E0" stroke-width="2"/>
+            <rect x="625" y="58" width="58" height="34" rx="5" fill="#00A36C"/>
+            <text x="654" y="80" text-anchor="middle" font-size="12" fill="#FFFFFF">Pico</text>
+            <text x="700" y="72" fill="#0C1E3C">1팀 · 스마트 팜</text>
+            <text x="700" y="94" font-size="13" font-weight="500" fill="#4E5D78">IP 192.168.0.51 · 온습도 · 흙 센서</text>
+            <rect x="610" y="130" width="350" height="70" rx="14" fill="#FFFFFF" stroke="#0064E0" stroke-width="2"/>
+            <rect x="625" y="148" width="58" height="34" rx="5" fill="#00A36C"/>
+            <text x="654" y="170" text-anchor="middle" font-size="12" fill="#FFFFFF">Pico</text>
+            <text x="700" y="162" fill="#0C1E3C">2팀 · 스마트 독서실</text>
+            <text x="700" y="184" font-size="13" font-weight="500" fill="#4E5D78">IP 192.168.0.52 · 소음 센서 · 환기창</text>
+            <rect x="610" y="220" width="350" height="70" rx="14" fill="#FFFFFF" stroke="#0064E0" stroke-width="2"/>
+            <rect x="625" y="238" width="58" height="34" rx="5" fill="#00A36C"/>
+            <text x="654" y="260" text-anchor="middle" font-size="12" fill="#FFFFFF">Pico</text>
+            <text x="700" y="252" fill="#0C1E3C">3팀 · 우리 팀!</text>
+            <text x="700" y="274" font-size="13" font-weight="500" fill="#4E5D78">IP 192.168.0.53 · 우리가 고른 부품</text>
+          </g>
+        </svg>
+      </div>
+      <div class="grid-3" style="margin-top:20px;">
+        <div class="meta-box"><h3>🖥️ 전시 PC</h3><p>3D 화면을 보여 주는 <b>두뇌</b>예요. 모니터에 모든 팀 공간이 모여 있어요.</p></div>
+        <div class="meta-box"><h3>🟩 Pico 2 W</h3><p>손바닥보다 작은 컴퓨터예요. 센서와 모터를 직접 만지는 <b>손발</b>이에요. 팀마다 1대!</p></div>
+        <div class="meta-box"><h3>🏷️ IP 주소</h3><p>Pico 마다 다른 <b>집 주소</b>예요. 화면에서 우리 공간을 고르면 그 주소의 Pico 와 연결돼요.</p></div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         7. 기본 부품 4종
+         ========================================================= -->
+    <article class="slide-card" id="slide-7">
+      <div class="slide-header">
+        <div class="slide-num-pill">2. 우리 시스템</div>
+        <h2>기본 부품 4종 = 방의 '감각'과 '손발'</h2>
+        <p>우리 팀 주제에 맞게 필요한 것만 골라 쓰고, 이름도 주제에 맞게 바꿔 불러요.</p>
+      </div>
+      <div class="grid-4">
+        <div class="meta-box highlight">
+          <div class="big-emoji">🌡️</div>
+          <div class="card-title">DHT11 온습도 센서</div>
+          <p><b>피부</b>처럼 덥다 · 습하다를 느껴요.</p>
+          <p class="muted small" style="margin-top:6px;">연결 핀 GP15</p>
+        </div>
+        <div class="meta-box highlight">
+          <div class="big-emoji">☀️</div>
+          <div class="card-title">Cds 조도 센서</div>
+          <p><b>눈</b>처럼 밝다 · 어둡다를 느껴요.</p>
+          <p class="muted small" style="margin-top:6px;">연결 핀 GP26</p>
+        </div>
+        <div class="meta-box success">
+          <div class="big-emoji">🦾</div>
+          <div class="card-title">SG90 서보모터</div>
+          <p><b>팔</b>처럼 0° ~ 180° 로 돌아가요. 문 · 창문 · 뚜껑 · 게이트가 돼요.</p>
+          <p class="muted small" style="margin-top:6px;">연결 핀 GP16</p>
+        </div>
+        <div class="meta-box success">
+          <div class="big-emoji">🚦</div>
+          <div class="card-title">RGB LED</div>
+          <p><b>표정 · 신호등</b>처럼 색으로 상태를 알려요.</p>
+          <p class="muted small" style="margin-top:6px;">연결 핀 GP18 · 19 · 20</p>
+        </div>
+      </div>
+      <div class="meta-box warning" style="margin-top:20px;">
+        <h3>➕ 확장 부품도 쓸 수 있어요</h3>
+        <p>소음 센서 · 흙 수분 센서 · 버튼 · 부저처럼 <b>우리 주제에만 필요한 부품</b>은 비어 있는 핀(예: GP27)에 연결해요. 이걸 '확장 센서'라고 불러요.</p>
+      </div>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>센서 = 느끼는 것(👀🌡️), 모터 · LED = 움직이고 보여 주는 것(🦾🚦). 우리 방에 필요한 것만 골라요.</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         8. 데이터의 여행
+         ========================================================= -->
+    <article class="slide-card" id="slide-8">
+      <div class="slide-header">
+        <div class="slide-num-pill">2. 우리 시스템</div>
+        <h2>정보는 이렇게 여행해요</h2>
+        <p>편지 배달처럼, 정보도 정해진 길을 따라 오고 가요.</p>
+      </div>
+      <div class="stack">
+        <div class="meta-box highlight">
+          <h3>📨 가는 길: 센서 → 화면 (보여 주기)</h3>
+          <div class="grid-4" style="text-align:center;">
+            <div><div class="big-emoji">🌡️</div><b>센서</b><p class="muted small">"지금 27℃ 야"</p></div>
+            <div><div class="big-emoji">🟩</div><b>Pico</b><p class="muted small">숫자로 정리</p></div>
+            <div><div class="big-emoji">📶</div><b>Wi-Fi</b><p class="muted small">2초마다 배달</p></div>
+            <div><div class="big-emoji">🖥️</div><b>3D 화면</b><p class="muted small">배지에 27℃ 표시</p></div>
+          </div>
+        </div>
+        <div class="meta-box success">
+          <h3>📮 오는 길: 화면 → 모터 (조종하기)</h3>
+          <div class="grid-4" style="text-align:center;">
+            <div><div class="big-emoji">👆</div><b>클릭</b><p class="muted small">3D 창문을 누름</p></div>
+            <div><div class="big-emoji">🖥️</div><b>PC</b><p class="muted small">"창문 열어" 명령</p></div>
+            <div><div class="big-emoji">🟩</div><b>Pico</b><p class="muted small">명령을 받음</p></div>
+            <div><div class="big-emoji">🦾</div><b>서보모터</b><p class="muted small">90° 회전!</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>센서 소식은 화면으로 '배달'되고, 화면의 부탁은 모터로 '배달'돼요. 그 배달부가 Pico 와 Wi-Fi 예요.</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         9. 공간 꾸러미 4개 파일 = 연극
+         ========================================================= -->
+    <article class="slide-card" id="slide-9">
+      <div class="slide-header">
+        <div class="slide-num-pill">2. 우리 시스템</div>
+        <h2>우리 팀이 만드는 것: 파일 4개 '공간 꾸러미'</h2>
+        <p>연극 한 편을 준비한다고 생각해 보세요. 🎭</p>
+      </div>
+      <table class="meta-table">
+        <thead><tr><th style="width:20%;">파일</th><th style="width:26%;">연극으로 치면</th><th>하는 일</th></tr></thead>
+        <tbody>
+          <tr><td><code>room.json</code></td><td>📋 공연 소개서 · 배역표</td><td>공간 이름, 쓰는 부품, 확장 센서 이름 · 단위를 적어요.</td></tr>
+          <tr><td><code>Scene.tsx</code></td><td>🎨 무대 세트</td><td>3D 화면에 보일 방 · 가구 · 배지 · 움직임을 그려요.</td></tr>
+          <tr><td><code>mock.js</code></td><td>🧑‍🤝‍🧑 연습용 대역 배우</td><td>진짜 부품이 없을 때 <b>가짜 값</b>을 만들어 연습하게 해 줘요.</td></tr>
+          <tr><td><code>code.py</code></td><td>🎬 진짜 배우의 대본</td><td>진짜 Pico 가 센서를 읽고 모터를 움직이는 방법이에요.</td></tr>
+        </tbody>
+      </table>
+      <div class="grid-2" style="margin-top:20px;">
+        <div class="meta-box success"><h3>😌 걱정하지 마세요</h3><p>이 4개 파일은 <b>AI 가 만들어 줘요</b>. 우리는 '어떤 방을 만들지'를 잘 설명하면 돼요.</p></div>
+        <div class="meta-box highlight"><h3>⚡ 올리면 바로 보여요</h3><p>파일을 올리면 기다리지 않고 <b>바로</b> 3D 화면에 나타나요. 틀려도 우리 공간에만 빨간 표시가 떠요.</p></div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         10. 시뮬레이션 vs 진짜 Pico
+         ========================================================= -->
+    <article class="slide-card" id="slide-10">
+      <div class="slide-header">
+        <div class="slide-num-pill">2. 우리 시스템</div>
+        <h2>연습 경기와 실전 경기, 두 가지 모드</h2>
+        <p>화면 위쪽의 <b>시뮬레이션 / Pico 2 W</b> 버튼으로 바꿔요.</p>
+      </div>
+      <div class="grid-2">
+        <div class="meta-box warning">
+          <div class="big-emoji">🧪</div>
+          <div class="card-title">시뮬레이션 = 연습 경기</div>
+          <ul style="margin-top:10px;">
+            <li>진짜 부품 없이도 바로 해 볼 수 있어요.</li>
+            <li><code>mock.js</code>(대역 배우)가 가짜 센서 값을 만들어요.</li>
+            <li>처음엔 <b>무조건 여기서</b> 시작해요.</li>
+          </ul>
+        </div>
+        <div class="meta-box success">
+          <div class="big-emoji">🏟️</div>
+          <div class="card-title">Pico 2 W = 실전 경기</div>
+          <ul style="margin-top:10px;">
+            <li>진짜 센서 값이 들어오고, 진짜 모터가 움직여요.</li>
+            <li><code>code.py</code>(진짜 대본)가 Pico 안에서 일해요.</li>
+            <li>연결되면 위쪽에 <b>'연결됨'</b> 이 떠요.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>연습 경기(시뮬레이션)에서 잘 되면, 실전 경기(진짜 Pico)에서도 똑같이 되도록 만드는 거예요.</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         11. 바이브 코딩
+         ========================================================= -->
+    <article class="slide-card" id="slide-11">
+      <div class="slide-header">
+        <div class="slide-num-pill">3. AI 로 만들기</div>
+        <h2>바이브 코딩 = AI 에게 '주문서'를 주고 코드를 받기</h2>
+        <p>코딩을 몰라도 괜찮아요. 대신 <b>설명을 자세히</b> 써야 해요.</p>
+      </div>
+      <div class="grid-2">
+        <div class="stack">
+          <p class="lead">식당에서 "맛있는 거 주세요" 하면 무엇이 나올지 모르죠? <b>"계란 2개, 덜 익힌 오므라이스"</b> 처럼 말해야 원하는 음식이 나와요.</p>
+          <p class="lead">AI 도 똑같아요. 플랫폼 설명서는 버튼 하나로 자동으로 붙여 주니까, 우리는 <b>아이디어만</b> 자세히 쓰면 돼요.</p>
+        </div>
+        <div class="stack">
+          <div class="bad"><b>❌ 대충 쓴 주문</b><br>"독서실 만들어 줘. 멋있게."</div>
+          <div class="good"><b>✅ 자세한 주문</b><br>"소음이 <b>60dB 이상</b>이면 LED 를 <b>빨강</b>으로, 온도가 <b>27℃ 이상</b>이면 서보모터로 창문을 <b>90°</b> 열어 줘. 가운데에 책상 <b>4개</b>를 놓아 줘."</div>
+          <div class="meta-box highlight"><h3>🔑 좋은 주문의 비밀</h3><p>무엇이 · 어디에 · 몇 개 · 몇 도 · 무슨 색 — <b>숫자</b>로 쓰기!</p></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         12. 사용법 6단계
+         ========================================================= -->
+    <article class="slide-card" id="slide-12">
+      <div class="slide-header">
+        <div class="slide-num-pill">4. 사용법</div>
+        <h2>우리 팀 공간 만들기 6단계</h2>
+        <p>자세한 버튼 위치는 <a href="/manual.html" target="_blank" style="color:var(--meta-blue); font-weight:800;">📘 매뉴얼</a>에 단계별로 있어요.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><div class="n">1</div><b>주제 정하기</b><span>누구의 어떤 문제를 해결할까? 부품은 뭘 쓸까?</span></div>
+        <div class="flow-step"><div class="n">2</div><b>새 공간 추가</b><span>왼쪽 '+ 새 공간 추가' → 이름 · 아이콘 · 부품 고르기</span></div>
+        <div class="flow-step"><div class="n">3</div><b>AI 프롬프트 복사</b><span>아이디어를 쓰고 [AI 프롬프트 복사] 버튼</span></div>
+        <div class="flow-step"><div class="n">4</div><b>AI 에게 받기</b><span>ChatGPT · Claude · Gemini 에 붙여넣기 → 파일 4개</span></div>
+        <div class="flow-step"><div class="n">5</div><b>올리고 확인</b><span>파일 끌어다 놓기 → 3D 화면 확인 → 고칠 점은 다시 AI 에게</span></div>
+        <div class="flow-step accent"><div class="n">6</div><b>우리 Pico 연결</b><span>선생님과 펌웨어 설치 → 'Pico 연결 설정'에 IP 저장</span></div>
+      </div>
+      <div class="grid-2" style="margin-top:22px;">
+        <div class="meta-box"><h3>🔁 한 번에 완벽하지 않아도 돼요</h3><p>1차(뼈대) → 2차(모양 다듬기) → 3차(멋진 연출)처럼 <b>3번에 나눠</b> AI 에게 부탁하면 더 잘 돼요.</p></div>
+        <div class="meta-box success"><h3>📚 따라 해 볼 예제가 있어요</h3><p>목록의 <b>스마트 독서실 (예제)</b>를 열어 보세요. ⋮ → '공간 복제하기'로 복사해서 연습해도 돼요.</p></div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         13. 대시보드 둘러보기
+         ========================================================= -->
+    <article class="slide-card" id="slide-13">
+      <div class="slide-header">
+        <div class="slide-num-pill">4. 사용법</div>
+        <h2>화면 둘러보기 — 어디에 무엇이 있을까?</h2>
+        <p>번호를 따라 화면을 읽어 보세요.</p>
+      </div>
+      <div class="shot-layout">
+      <div class="shot-wrap">
+        <img src="/intro-assets/dashboard.jpg" alt="3D IoT 대시보드 전체 화면">
+        <span class="pin" style="left:1.8%; top:4%;">1</span>
+        <span class="pin" style="left:10%; top:27%;">2</span>
+        <span class="pin" style="left:52%; top:45%;">3</span>
+        <span class="pin" style="left:62%; top:3.5%;">4</span>
+        <span class="pin" style="left:91%; top:20%;">5</span>
+        <span class="pin" style="left:46%; top:96%;">6</span>
+        <span class="pin" style="left:22.5%; top:92%;">7</span>
+        <span class="pin" style="left:1.8%; top:35%;">8</span>
+      </div>
+      <div class="legend">
+        <div><span class="n">1</span><span><b>학교 마크</b> — 플랫폼 소개 · 모든 공간의 연결 상태</span></div>
+        <div><span class="n">2</span><span><b>공간 목록</b> — 우리 팀 공간 고르기 · ⋮ 메뉴 (코드 업로드 · Pico 연결)</span></div>
+        <div><span class="n">3</span><span><b>3D 화면</b> — 드래그로 돌리고, 휠로 확대 · 물건 클릭</span></div>
+        <div><span class="n">4</span><span><b>모드 버튼</b> — 시뮬레이션 ↔ Pico 2 W · 오른쪽 패널 탭</span></div>
+        <div><span class="n">5</span><span><b>장치 인스펙터</b> — 센서 값 보기 · 서보 · LED 직접 조종</span></div>
+        <div><span class="n">6</span><span><b>@Pico 명령창</b> — "문 90도 열어줘" 처럼 말로 시키기</span></div>
+        <div><span class="n">7</span><span><b>그래픽 · 조감도</b> — 화면이 느리면 '절전 그래픽'</span></div>
+        <div><span class="n">8</span><span><b>🔊 스피커</b> — 상황을 목소리로 안내 (전시회용)</span></div>
+      </div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         14. 완성 예시
+         ========================================================= -->
+    <article class="slide-card" id="slide-14">
+      <div class="slide-header">
+        <div class="slide-num-pill">4. 사용법</div>
+        <h2>완성 예시: 스마트 독서실 📚</h2>
+        <p>AI 에게 주문서만 주고 만든 공간이에요. 목록에서 바로 열어 볼 수 있어요.</p>
+      </div>
+      <div class="grid-2" style="align-items:start;">
+        <figure class="photo"><img src="/intro-assets/study-room.jpg" alt="스마트 독서실 3D 화면"><figcaption>칸막이 책상 4개 · 환기창 · 소음 미터 · 휴식 버튼</figcaption></figure>
+        <div class="stack">
+          <div class="meta-box highlight">
+            <h3>📝 학생이 쓴 주문서 (일부)</h3>
+            <p>"시험 기간에 오래 집중할 수 있게 공부 환경을 지켜 주는 독서실. 소음이 <b>60dB 이상</b>이면 빨강 + '조용히 해 주세요', 온도가 <b>27℃ 이상</b>이면 창문을 <b>90°</b> 열기."</p>
+          </div>
+          <table class="meta-table">
+            <thead><tr><th>부품</th><th>독서실에서의 역할</th></tr></thead>
+            <tbody>
+              <tr><td>🌡️ DHT11</td><td>덥다 → 환기창 열기</td></tr>
+              <tr><td>☀️ Cds</td><td>책상이 어둡다 → "스탠드를 켜세요"</td></tr>
+              <tr><td>🦾 SG90</td><td>환기창</td></tr>
+              <tr><td>🚦 RGB LED</td><td>집중 상태등 (초록 · 주황 · 빨강 · 휴식 파랑)</td></tr>
+              <tr><td>➕ 소음 센서</td><td>확장 센서 (GP27)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         15. 막혔을 때
+         ========================================================= -->
+    <article class="slide-card" id="slide-15">
+      <div class="slide-header">
+        <div class="slide-num-pill">4. 사용법</div>
+        <h2>막혔을 때 이렇게 해요</h2>
+        <p>오류는 실패가 아니라 '힌트'예요. 🙂</p>
+      </div>
+      <table class="meta-table">
+        <thead><tr><th style="width:34%;">이런 게 보이면</th><th style="width:30%;">뜻</th><th>이렇게 해요</th></tr></thead>
+        <tbody>
+          <tr><td>🔴 빨간 오류 메시지 · 배지</td><td>코드에 틀린 곳이 있어요</td><td>메시지를 <b>그대로 복사</b>해서 AI 에게 "이 오류 고쳐 줘"</td></tr>
+          <tr><td>⏳ 값 대신 '수신 대기'</td><td>아직 값이 안 들어왔어요</td><td>시뮬레이션: mock.js 확인 · 실전: Pico 전원 · 선 연결 확인</td></tr>
+          <tr><td>📡 '응답 없음'</td><td>Pico 와 연결이 끊겼어요</td><td>잠깐 기다리면 자동으로 다시 연결돼요. 계속되면 선생님께</td></tr>
+          <tr><td>🐢 화면이 버벅여요</td><td>그래픽이 무거워요</td><td>왼쪽 아래 <b>'절전 그래픽'</b> 버튼</td></tr>
+          <tr><td>🙈 3D 화면이 가려져요</td><td>양옆 패널이 넓어요</td><td>패널 가장자리 ‹ › 손잡이, 또는 <code>[</code> <code>]</code> 키로 접기</td></tr>
+        </tbody>
+      </table>
+      <div class="eli5">
+        <span class="tag">쉽게 말하면</span>
+        <p>빨간 글자 → 복사해서 AI 에게! 그래도 안 되면 → 손 들고 선생님께!</p>
+      </div>
+    </article>
+
+    <!-- =========================================================
+         16. 정리 퀴즈 · 다음 할 일
+         ========================================================= -->
+    <article class="slide-card" id="slide-16">
+      <div class="slide-header">
+        <div class="slide-num-pill">정리</div>
+        <h2>잘 이해했는지 확인해 볼까요?</h2>
+        <p>질문을 누르면 정답이 열려요.</p>
+      </div>
+      <div class="stack">
+        <details class="quiz"><summary>디지털 트윈을 한 문장으로 말하면? <span class="hint">눌러서 정답</span></summary><p class="answer">진짜 물건과 <b>실시간으로 연결된</b> 화면 속 쌍둥이예요. 보여 주고 · 조종하고 · 미리 연습해요.</p></details>
+        <details class="quiz"><summary>팀마다 따로 갖는 작은 컴퓨터의 이름은? <span class="hint">눌러서 정답</span></summary><p class="answer"><b>Pico 2 W</b> 예요. Pico 마다 다른 IP 주소(집 주소)를 가져요.</p></details>
+        <details class="quiz"><summary>진짜 부품이 없을 때 가짜 값을 만드는 파일은? <span class="hint">눌러서 정답</span></summary><p class="answer"><code>mock.js</code> — 연습용 대역 배우예요. 진짜 Pico 에서는 <code>code.py</code> 가 일해요.</p></details>
+        <details class="quiz"><summary>AI 에게 좋은 주문서를 쓰는 비밀은? <span class="hint">눌러서 정답</span></summary><p class="answer">무엇이 · 어디에 · 몇 개 · 몇 도 · 무슨 색 — <b>숫자로 자세히</b> 쓰기!</p></details>
+      </div>
+      <div class="grid-3" style="margin-top:24px;">
+        <div class="meta-box success"><h3>✅ 오늘 할 일</h3><p>팀원과 <b>주제</b>를 정하고, 쓸 부품에 동그라미 치기</p></div>
+        <div class="meta-box highlight"><h3>📘 다음 시간</h3><p><a href="/manual.html" target="_blank" style="color:var(--meta-blue); font-weight:800;">매뉴얼</a> STEP 05~07 로 주문서(아이디어) 쓰기</p></div>
+        <div class="meta-box"><h3>🚀 지금 해 보기</h3><p><a href="/" target="_blank" style="color:var(--meta-blue); font-weight:800;">대시보드</a>에서 스마트 독서실 (예제) 열어 보기</p></div>
+      </div>
+    </article>
+
+  </main>
+
+  <footer class="slide-dock">
+    <button class="dock-btn" id="prev-btn" onclick="changeSlide(-1)">◀ 이전</button>
+    <div class="dock-dots" id="dock-dots"></div>
+    <div class="dock-info" id="dock-page-counter">1 / 16</div>
+    <button class="dock-btn" id="next-btn" onclick="changeSlide(1)">다음 ▶</button>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="전체 화면 (F)">⛶</button>
+  </footer>
+
+  <script>
+    const totalSlides = document.querySelectorAll('.slide-card').length;
+    let currentSlide = 1;
+    let isScrollMode = false;
+
+    // 아래 도크의 번호 버튼 (슬라이드 수만큼 자동 생성)
+    const dots = document.getElementById('dock-dots');
+    for (let i = 1; i <= totalSlides; i++) {
+      const d = document.createElement('div');
+      d.className = 'dock-dot' + (i === 1 ? ' active' : '');
+      d.textContent = i;
+      d.onclick = () => goToSlide(i);
+      dots.appendChild(d);
+    }
+
+    function updateSlideView() {
+      document.querySelectorAll('.slide-card').forEach((s, i) => s.classList.toggle('active', i + 1 === currentSlide));
+      const pad = (n) => String(n).padStart(2, '0');
+      document.getElementById('header-step-indicator').textContent = `${pad(currentSlide)} / ${pad(totalSlides)}`;
+      document.getElementById('progress-fill').style.width = (currentSlide / totalSlides) * 100 + '%';
+      document.getElementById('dock-page-counter').textContent = `${currentSlide} / ${totalSlides}`;
+      document.getElementById('prev-btn').disabled = currentSlide === 1;
+      document.getElementById('next-btn').disabled = currentSlide === totalSlides;
+      document.querySelectorAll('.dock-dot').forEach((d, i) => d.classList.toggle('active', i + 1 === currentSlide));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function changeSlide(dir) {
+      if (isScrollMode) return;
+      const next = currentSlide + dir;
+      if (next >= 1 && next <= totalSlides) {
+        currentSlide = next;
+        updateSlideView();
+      }
+    }
+
+    function goToSlide(n) {
+      if (isScrollMode) {
+        document.getElementById(`slide-${n}`)?.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      currentSlide = n;
+      updateSlideView();
+    }
+
+    function toggleScrollMode() {
+      isScrollMode = !isScrollMode;
+      document.body.classList.toggle('scroll-mode', isScrollMode);
+      document.getElementById('scroll-toggle-btn').textContent = isScrollMode ? '🖥️ 슬라이드 모드' : '📄 전체 스크롤';
+      if (!isScrollMode) updateSlideView();
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else document.exitFullscreen?.();
+    }
+
+    // 키보드: ← → · 스페이스 · Page Up/Down · F (전체 화면)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SUMMARY') return;
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        e.preventDefault();
+        changeSlide(1);
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        e.preventDefault();
+        changeSlide(-1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    updateSlideView();
+  </script>
+</body>
+</html>

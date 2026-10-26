@@ -669,6 +669,7 @@
 
     /* Responsive Adjustments */
     @media (max-width: 900px) {
+      .hide-narrow { display: none !important; }
       .slide-card {
         padding: 24px 20px;
       }
@@ -720,6 +721,10 @@
       <button class="mode-toggle-btn" onclick="toggleScrollMode()" id="scroll-toggle-btn" title="슬라이드 발표 ↔ 전체 문서 연속 스크롤 전환">
         <span>📄 전체 스크롤 모드</span>
       </button>
+
+      <a href="/intro.html" target="_blank" class="mode-toggle-btn hide-narrow" title="1학년용 오리엔테이션 발표 자료 (디지털 트윈 · 시스템 구성 · 사용법)">
+        <span>🎓 오리엔테이션</span>
+      </a>
 
       <a href="http://localhost:3001/" target="_blank" class="mode-toggle-btn" style="background:var(--meta-blue); color:#fff; border-color:var(--meta-blue);" title="3D 대시보드로 이동">
         <span>🚀 3D 대시보드 열기</span>
