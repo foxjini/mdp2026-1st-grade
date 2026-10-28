@@ -2212,7 +2212,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           <tr><td>마루 이음매 · 책 16권 · 잎 9장</td><td>반복 물체를 한 번에 그림 (드로우 콜 1번)</td><td>drei <code>&lt;Instances&gt;</code></td></tr>
           <tr><td>벽면 디스플레이</td><td>온도 · 습도 · 조도를 막대로, 값이 끊겨도 부드럽게 유지</td><td><code>useSmoothValue</code> · <code>MAT.screen</code></td></tr>
           <tr><td>센서 · 문 · 조명 배지</td><td>통통 튀는 배지 → 같은 모양의 조용한 카드, 수신 대기 표시, 상태는 색 + 글자</td><td><code>badgeStyle()</code> · <code>DataPin</code></td></tr>
-          <tr><td>Pico 허브 · 도슨트</td><td>마우스를 올리면 살짝 떠오름 (튕김 없음), 도슨트를 누르면 현재 상태 안내</td><td><code>HoverLift</code> · <code>DocentBot</code></td></tr>
+          <tr><td>Pico 허브 · 마스코트</td><td>마우스를 올리면 살짝 떠오름 (튕김 없음), 고양이 집사가 거실을 천천히 산책하고 누르면 손 인사 + 현재 상태 안내</td><td><code>HoverLift</code> · <code>CatButler</code></td></tr>
           <tr><td>장면 전체</td><td>환경광 반사 · 앰비언트 오클루전 · 은은한 빛 번짐 · 바닥 접촉 그림자 · 부드러운 카메라 감속</td><td>플랫폼 자동 (고급 그래픽) · <code>ContactShadows</code></td></tr>
         </tbody>
       </table>
@@ -2351,7 +2351,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
 조건:
 - 반드시 데이터 · 명령과 연결 (예: 명령이 성공하면 표시등이 한 번 은은하게 퍼짐, 경고가 풀리면 색이 부드럽게 돌아옴)
 - 0.4~1.2초 안에 끝나는 짧은 연출, 반복 오브젝트 30개 이하
-- 원한다면 플랫폼 부품 DocentBot 을 소품처럼 배치 (&lt;DocentBot position={[x, 0, z]} name="안내 로봇" isModalOpen={isModalOpen} /&gt;)
+- 원한다면 플랫폼 마스코트를 배치 (&lt;CatButler · CowFarmer · FactoryBot · StudentChibi waypoints={[[x1, z1], [x2, z2]]} name="..." isModalOpen={isModalOpen} /&gt;, import from '@/components/3d/characters') — 가구를 피한 통로를 천천히 걸어 다님
 - 과한 효과(화면 전체 번쩍임 · 빙글빙글 · 무지개색)는 금지
 넣은 연출과 그 연출을 일으키는 조건을 먼저 설명해 주세요.
 
@@ -2395,6 +2395,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           <tr><td><code>HoverLift</code></td><td>누를 수 있는 물체 표시 (살짝 떠오름 · 커서)</td><td><code>&lt;HoverLift onClick={() =&gt; sendCommand('feed', true)}&gt;…&lt;/HoverLift&gt;</code></td></tr>
           <tr><td><code>useSmoothValue</code></td><td>센서 값 스무딩 (끊김 · 튐 대비)</td><td><code>const lv = useSmoothValue(level); … lv.current</code> (useFrame 안)</td></tr>
           <tr><td><code>DocentBot</code></td><td>음성 안내에 입모양 · 자막이 맞춰지는 안내 로봇</td><td><code>import { DocentBot } from '@/components/3d/DocentBot'</code></td></tr>
+          <tr><td>마스코트 캐릭터</td><td>고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 학생. <code>waypoints</code> 경로를 천천히 걸어 다니고, 누르면 손 인사 (경로는 가구에서 0.4 m 이상 떨어지게)</td><td><code>import { StudentChibi } from '@/components/3d/characters'</code><br><code>&lt;StudentChibi waypoints={[[-1.5, 1.7], [1.5, 1.7]]} name="학생" isModalOpen={isModalOpen} /&gt;</code></td></tr>
         </tbody>
       </table>
       <div class="grid-2">

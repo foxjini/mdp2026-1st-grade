@@ -5,10 +5,12 @@
 //            + 창 위 벽 브래킷 집중 상태등 (RGB LED 색을 그대로 표시)
 // · 왼쪽 벽: 소음 미터 패널 (소음 dB 막대) + 휴식 버튼 (클릭 → sendCommand('break', true))
 //   (아이디어에는 '오른쪽 벽'이었지만, 카메라 시점 때문에 오른쪽 벽은 만들지 않으므로 왼쪽 벽으로 옮겼습니다)
+// · 마스코트: 교복 입은 학생이 책상 묶음 둘레를 천천히 걸어 다님 (누르면 멈춰서 손 인사)
 import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
 import { RoundedBox, Instances, Instance } from '@react-three/drei';
+import { StudentChibi } from '@/components/3d/characters';
 import {
   useSensor,
   useCustomSensor,
@@ -41,6 +43,14 @@ const BOOK_COLORS = [PALETTE.clay, PALETTE.sage, PALETTE.sand, PALETTE.walnut, P
 const METER_H = 1.1;
 const METER_BOTTOM = -0.55;
 const dbToY = (db: number) => METER_BOTTOM + ((db - 30) / 60) * METER_H;
+
+// 학생 마스코트 산책 길 (책상 묶음 x ±0.95 · z -1.4 ~ 1.2, 수납장 · 화분을 피함)
+const STUDENT_PATH: [number, number][] = [
+  [-1.5, 1.7],
+  [1.5, 1.7],
+  [1.6, -1.65],
+  [-1.5, -1.7],
+];
 
 // 한 사람용 독서실 책상 + 의자 (mesh 6개)
 function StudyDesk({ x, z, side }: { x: number; z: number; side: number }) {
@@ -363,6 +373,9 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
         status={windowOpen ? 'ok' : 'off'}
         isModalOpen={isModalOpen}
       />
+
+      {/* ── 마스코트: 교복 입은 학생 (플랫폼 캐릭터 부품) ── */}
+      <StudentChibi waypoints={STUDENT_PATH} name="독서실 학생" isModalOpen={isModalOpen} />
     </group>
   );
 }

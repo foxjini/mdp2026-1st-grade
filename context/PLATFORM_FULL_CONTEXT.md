@@ -123,6 +123,7 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
 | `@/components/3d/DhtSensorBadge` | `<DhtSensorBadge />` 온습도 배지 (고정 위치 `[1.8, 1.05, -1.2]`) |
 | (플랫폼 부품 공통) | 위치가 고정이라 쓰면 그 자리를 비워 둡니다. 우리 장면에 맞지 않으면 쓰지 말고 직접 만드세요 (예: RGB 상태등을 우리 모양으로). |
 | `@/components/3d/DocentBot` | `<DocentBot position={[x,0,z]} name="안내 로봇" isModalOpen={isModalOpen} />` 가상 도슨트 (음성 안내에 맞춰 입모양 · 자막) |
+| `@/components/3d/characters` | 마스코트 캐릭터 `CatButler`(고양이 집사) · `CowFarmer`(젖소 농부) · `FactoryBot`(작업 로봇) · `StudentChibi`(교복 학생). `<StudentChibi waypoints={[[-1.5, 1.7], [1.5, 1.7], [1.5, -1.6]]} name="독서실 학생" isModalOpen={isModalOpen} />` — `waypoints`([x, z] 바닥 좌표)를 순서대로 천천히 걸어 다니고, 멈추면 카메라를 봄. 클릭하면 멈춰서 손 인사, 음성 안내에 입모양 · 자막. **waypoints 는 가구에서 0.4 m 이상 떨어진 통로로** (캐릭터는 물체를 피하지 않음). 걷지 않게 하려면 `position={[x, 0, z]}` 만. 옵션 `speed`(m/s, 기본 0.35) · `pause`([최소, 최대] 초) · `scale`(기본 1.25) · `onClick` |
 
 ### 3.3 SDK (`@/core/sdk`)
 | 함수 | 반환 / 동작 |

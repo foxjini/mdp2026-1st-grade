@@ -12,6 +12,8 @@ import { LightObject } from '@/components/3d/LightObject';
 import { CdsSensorNode } from '@/components/3d/CdsSensorNode';
 import { Html, Instance, Instances, RoundedBox } from '@react-three/drei';
 import { MAT, PALETTE, badgeStyle, useSmoothValue } from '@/core/sdk/design';
+import { announce } from '@/core/voice/voice';
+import { CowFarmer } from './characters';
 
 interface SmartFarmRoomProps {
   isModalOpen?: boolean;
@@ -36,6 +38,18 @@ LETTUCE_ROWS.forEach((x, i) => {
     }
   });
 });
+
+// 젖소 농부 산책 길: 디딤돌 → 베드 오른쪽 → 베드 뒤 → 되돌아옴 (베드 왼쪽은 선반과 좁아서 지나가지 않음)
+const FARM_PATH: [number, number][] = [
+  [-0.7, 1.3],
+  [0.6, 1.5],
+  [1.95, 0.4],
+  [1.95, -1.4],
+  [0.3, -1.6],
+  [1.95, -1.4],
+  [1.95, 0.4],
+  [0.6, 1.5],
+];
 
 export function SmartFarmRoom({ isModalOpen = false }: SmartFarmRoomProps) {
   const domeRef = useRef<THREE.Group>(null);
@@ -209,7 +223,17 @@ export function SmartFarmRoom({ isModalOpen = false }: SmartFarmRoomProps) {
         </mesh>
       </group>
 
-      {/* 6. 스마트팜 조명(식물 생장등) 및 Cds 조도센서 노드 */}
+      {/* 6. 마스코트 젖소 농부: 재배 베드 둘레를 천천히 돌며 돌봄, 누르면 손 인사 + 온실 상태 안내 */}
+      <CowFarmer
+        waypoints={FARM_PATH}
+        name="젖소 농부"
+        isModalOpen={isModalOpen}
+        onClick={() =>
+          announce(null, `음메! 스마트 팜 온실이에요. 흙의 수분은 ${Math.round(soilMoisture)}퍼센트, 온도는 ${temp.toFixed(1)}도예요.`, true)
+        }
+      />
+
+      {/* 7. 스마트팜 조명(식물 생장등) 및 Cds 조도센서 노드 */}
       <LightObject isModalOpen={isModalOpen} />
       <CdsSensorNode isModalOpen={isModalOpen} />
     </group>

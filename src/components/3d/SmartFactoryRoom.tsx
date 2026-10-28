@@ -8,6 +8,8 @@ import { LightObject } from '@/components/3d/LightObject';
 import { CdsSensorNode } from '@/components/3d/CdsSensorNode';
 import { Html } from '@react-three/drei';
 import { PALETTE, badgeStyle } from '@/core/sdk/design';
+import { announce } from '@/core/voice/voice';
+import { FactoryBot } from './characters';
 
 interface SmartFactoryRoomProps {
   isModalOpen?: boolean;
@@ -24,6 +26,18 @@ const BELT_END = 2.6;
 const BELT_Y = 0.28;
 const SPEED = 1.2;
 const BIN = { x: 1.05, z: 1.15, y: -0.02 }; // 수거함 바닥 (컨베이어 기준 좌표)
+
+// 작업 로봇 순찰 길 (컨베이어 앞 · 수거함 둘레, 왔던 길로 되돌아감)
+const FACTORY_PATH: [number, number][] = [
+  [-2.0, 1.05],
+  [-0.25, 1.2],
+  [0.0, 2.0],
+  [2.0, 2.0],
+  [2.2, 1.0],
+  [2.0, 2.0],
+  [0.0, 2.0],
+  [-0.25, 1.2],
+];
 
 type BoxPhase = 'belt' | 'divert' | 'fall' | 'binned';
 interface BoxState {
@@ -367,6 +381,20 @@ export function SmartFactoryRoom({ isModalOpen = false }: SmartFactoryRoomProps)
           </div>
         </Html>
       )}
+
+      {/* 9. 마스코트 작업 로봇: 컨베이어 앞을 순찰, 누르면 손 인사 + 공정 상태 안내 */}
+      <FactoryBot
+        waypoints={FACTORY_PATH}
+        name="작업 로봇"
+        isModalOpen={isModalOpen}
+        onClick={() =>
+          announce(
+            null,
+            `안녕하세요, 작업 로봇이에요. 분류 게이트는 ${gateOpen ? '열려' : '닫혀'} 있고, 지금까지 ${sortedCount}개를 분류했어요.`,
+            true
+          )
+        }
+      />
 
       {/* 기존 조명 및 Cds 센서 노드 결합 */}
       <LightObject isModalOpen={isModalOpen} />

@@ -269,7 +269,7 @@
 조건:
 - 반드시 데이터 · 명령과 연결 (예: 명령이 성공하면 표시등이 한 번 은은하게 퍼짐, 경고가 풀리면 색이 부드럽게 돌아옴)
 - 0.4~1.2초 안에 끝나는 짧은 연출, 반복 오브젝트 30개 이하
-- 원한다면 플랫폼 부품 DocentBot 을 소품처럼 배치 (<DocentBot position={[x, 0, z]} name="안내 로봇" isModalOpen={isModalOpen} />)
+- 원한다면 플랫폼 마스코트를 배치 (<CatButler · CowFarmer · FactoryBot · StudentChibi waypoints={[[x1, z1], [x2, z2]]} name="..." isModalOpen={isModalOpen} />, import from '@/components/3d/characters') — 가구를 피한 통로를 천천히 걸어 다님
 - 과한 효과(화면 전체 번쩍임 · 빙글빙글 · 무지개색)는 금지
 넣은 연출과 그 연출을 일으키는 조건을 먼저 설명해 주세요.
 

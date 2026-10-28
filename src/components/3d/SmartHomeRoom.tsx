@@ -3,7 +3,7 @@
 // 스마트 거실 허브 — 디자인 모범 사례 (부록 B)
 // 색: 웜 오프화이트 · 오크 · 세이지 리넨 · 브러시드 메탈, 강조색은 장치 상태 · 데이터에만 (PALETTE)
 // 형태: RoundedBox 가구, 반복 물체(마루 · 책 · 잎)는 <Instances> 로 드로우 콜 최소화
-// 모션: 감쇠(damp) · HoverLift, 데이터: useSmoothValue 로 끊김 · 튐 완화, 도슨트: 음성 안내 입모양 · 자막
+// 모션: 감쇠(damp) · HoverLift, 데이터: useSmoothValue 로 끊김 · 튐 완화, 마스코트: 고양이 집사가 거실을 산책 (음성 안내 입모양 · 자막)
 import React, { useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -13,7 +13,7 @@ import { LightObject } from './LightObject';
 import { DhtSensorBadge } from './DhtSensorBadge';
 import { CdsSensorNode } from './CdsSensorNode';
 import { NeedsYouCallout3D } from './NeedsYouCallout3D';
-import { DocentBot } from './DocentBot';
+import { CatButler } from './characters';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { HoverLift, MAT, PALETTE, badgeStyle, useSmoothValue } from '@/core/sdk/design';
 import { announce } from '@/core/voice/voice';
@@ -143,6 +143,21 @@ function PicoHub({ isModalOpen }: { isModalOpen: boolean }) {
     </HoverLift>
   );
 }
+
+// 고양이 집사 산책 길 (테이블 r 0.65 · 소파 · 데스크 · 화분을 피한 통로, 순서대로 돌며 왔던 길로 되돌아감)
+// (첫 점에서 시작: 처음 화면의 승인 말풍선에 가리지 않는 소파 앞쪽)
+const HOME_PATH: [number, number][] = [
+  [-1.4, 2.2],
+  [1.3, 2.25],
+  [1.5, 0.4],
+  [1.3, 2.25],
+  [-1.4, 2.2],
+  [-1.65, 0.4],
+  [-1.7, -1.3],
+  [-0.6, -1.35],
+  [-1.7, -1.3],
+  [-1.65, 0.4],
+];
 
 export function SmartHomeRoom({
   approvalStatus = 'pending',
@@ -385,10 +400,8 @@ export function SmartHomeRoom({
       <DhtSensorBadge isModalOpen={isModalOpen} />
       <CdsSensorNode isModalOpen={isModalOpen} />
 
-      {/* 12. 가상 도슨트: 음성 안내에 맞춰 입모양 · 자막, 누르면 지금 상태 안내 */}
-      <HoverLift position={[-1.7, 0, 0.15]} onClick={greet}>
-        <DocentBot rotationY={0.7} name="거실 도슨트" isModalOpen={isModalOpen} />
-      </HoverLift>
+      {/* 12. 마스코트 고양이 집사: 거실을 천천히 산책, 누르면 멈춰서 손 인사 + 지금 상태 안내 */}
+      <CatButler waypoints={HOME_PATH} name="고양이 집사" onClick={greet} isModalOpen={isModalOpen} />
 
       {/* 13. 3D 승인 말풍선 */}
       <NeedsYouCallout3D approvalStatus={approvalStatus} onApprove={onApprove} onReview={onReview} isModalOpen={isModalOpen} />

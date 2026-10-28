@@ -265,7 +265,7 @@ export function DataPin({
         <meshStandardMaterial color={PALETTE.inkSoft} roughness={0.6} transparent opacity={0.5} />
       </mesh>
       {!isModalOpen && (
-        <Html position={[0, height + 0.05, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
+        <Html position={[0, height + 0.05, 0]} center distanceFactor={8} zIndexRange={[10, 0]} pointerEvents="none" style={{ pointerEvents: 'none' }}>
           <div style={{ ...badgeStyle(), pointerEvents: 'none' }}>
             <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', color: PALETTE.inkSoft }}>{label}</span>
             <span style={{ fontSize: 15, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>

@@ -87,6 +87,21 @@ useFrame(() => { water.current.scale.y = 0.2 + smooth.current / 100; });
 <DocentBot position={[-2, 0, 1.5]} rotationY={0.6} name="안내 로봇" isModalOpen={isModalOpen} />
 ```
 
+### 3.7 마스코트 캐릭터 (걸어 다니는 생동감)
+`import { CatButler, CowFarmer, FactoryBot, StudentChibi } from '@/components/3d/characters';`
+- 치비 비례(큰 머리 · 큰 눈) 캐릭터 4종. 플랫폼 기본 공간에서 쓰는 것과 같은 부품입니다.
+- `waypoints` 에 바닥 좌표 `[x, z]` 를 3~6개 주면 순서대로 천천히 걷고(0.35 m/s), 도착하면 2~5초 쉬며 카메라 쪽을 봅니다.
+- 캐릭터는 가구를 피하지 않으므로, **점과 점 사이의 직선이 가구에서 0.4 m 이상 떨어지게** 경로를 잡으세요. 좁은 곳은 갔다가 같은 길로 돌아오게 점을 되풀이해 적습니다.
+- 클릭하면 멈춰서 손 인사를 합니다. 음성 안내가 나오면 입모양 · 자막이 맞춰집니다.
+
+```tsx
+<StudentChibi
+  waypoints={[[-1.5, 1.7], [1.5, 1.7], [1.6, -1.65], [-1.5, -1.7]]}
+  name="독서실 학생"
+  isModalOpen={isModalOpen}
+/>
+```
+
 ## 4. 성능 주의
 - `useFrame` 안에서 `new THREE.Color()` · `new THREE.Vector3()` 를 매 프레임 만들지 마세요. (`useMemo` 또는 컴포넌트 밖 상수)
 - 반복 오브젝트는 50개 이하로. 많이 필요하면 `[...Array(n)].map()` 으로 간단한 도형만 사용.
