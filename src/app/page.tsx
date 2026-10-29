@@ -156,6 +156,11 @@ export default function HomePage() {
     useIoTStore.getState().setServoName(servoNameFor(activeRoomId, pkg));
   }, [activeRoomId, activeRoomPackage]);
 
+  // 자동화 규칙 켜기/끄기는 공간마다 따로 저장
+  useEffect(() => {
+    useAutomationStore.getState().setRoomId(activeRoomId);
+  }, [activeRoomId]);
+
   // 업로드 공간을 선택하면 꾸러미(Scene.tsx · mock.js 등)를 불러와 스토어에 적용
   useEffect(() => {
     if (activeRoomId.startsWith('builtin_')) {

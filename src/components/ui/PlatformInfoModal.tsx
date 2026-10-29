@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Home, BookOpen, Maximize, Cpu, AlertTriangle, Presentation } from 'lucide-react';
+import { X, Home, BookOpen, Maximize, Cpu, AlertTriangle, Presentation, ListChecks } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { BASE_DEVICE_INFO } from '@/core/types/iot';
 import { RoomItem } from './RoomsSidebar';
@@ -168,12 +168,21 @@ export function PlatformInfoModal({ isOpen, onClose, roomList, activeRoomId, onS
               <Home className="w-3.5 h-3.5" /> 첫 화면으로
             </button>
             <a
+              href="/개별%20프로젝트%20제작%20매뉴얼.html"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1.5"
+              title="9단계로 따라 하는 학생용 제작 매뉴얼"
+            >
+              <ListChecks className="w-3.5 h-3.5" /> 제작 매뉴얼
+            </a>
+            <a
               href="/manual.html"
               target="_blank"
               rel="noreferrer"
               className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
             >
-              <BookOpen className="w-3.5 h-3.5" /> 매뉴얼 열기
+              <BookOpen className="w-3.5 h-3.5" /> 자세한 매뉴얼
             </a>
             <a
               href="/intro.html"

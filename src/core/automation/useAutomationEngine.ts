@@ -83,14 +83,17 @@ export function useAutomationEngine(): void {
     const unsubscribe = useIoTStore.subscribe((s, prev) => {
       if (s.activeRoomPackage?.meta.id !== prev.activeRoomPackage?.meta.id) armed.clear();
     });
+    const unsubscribeRoom = useAutomationStore.subscribe((s, prev) => {
+      if (s.roomId !== prev.roomId) armed.clear(); // 기본 공간끼리 바꿀 때도
+    });
 
     const timer = setInterval(() => {
-      const { active } = useAutomationStore.getState();
+      const { isActive } = useAutomationStore.getState();
       const pkg = useIoTStore.getState().activeRoomPackage;
       const snap = snapshot();
       const now = new Date();
       AUTOMATION_RULES.forEach((rule) => {
-        if (!active[rule.id] || missingDevices(rule, pkg).length) return;
+        if (!isActive(rule.id) || missingDevices(rule, pkg).length) return;
         if (rule.kind === 'sensor') {
           if (shouldFire(rule, snap, armed)) runRule(rule);
         } else if (isTimeDue(rule, now, lastRunDay.get(rule.id))) {
@@ -103,6 +106,7 @@ export function useAutomationEngine(): void {
     return () => {
       clearInterval(timer);
       unsubscribe();
+      unsubscribeRoom();
     };
   }, []);
 }

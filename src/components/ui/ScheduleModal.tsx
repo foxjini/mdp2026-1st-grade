@@ -17,7 +17,8 @@ interface ScheduleModalProps {
 // 자동화 스케줄 & 규칙: 켜 둔 규칙은 2초마다 지금 공간의 센서 · 시각을 검사해 실제로 실행 (useAutomationEngine)
 export function ScheduleModal({ isOpen, onClose }: ScheduleModalProps) {
   const roomPackage = useIoTStore((s) => s.activeRoomPackage);
-  const { active, lastRun, setActive } = useAutomationStore();
+  const { lastRun, setActive, isActive: ruleActive } = useAutomationStore();
+  useAutomationStore((s) => s.activeByRoom); // 켜기/끄기가 바뀌면 다시 그림
   const voiceOn = useVoiceStore((s) => s.enabled && s.categories.automation);
   const [result, setResult] = useState<{ id: string; ok: boolean; message: string } | null>(null);
 
@@ -38,7 +39,7 @@ export function ScheduleModal({ isOpen, onClose }: ScheduleModalProps) {
             </div>
             <div>
               <h3 className="text-base font-extrabold text-slate-900">스마트 공간 자동화 스케줄 & 규칙</h3>
-              <p className="text-xs text-slate-400 font-medium">켜 둔 규칙은 지금 공간의 센서 · 시각을 2초마다 검사해 실제로 실행됩니다</p>
+              <p className="text-xs text-slate-400 font-medium">켜 둔 규칙은 지금 공간의 센서 · 시각을 2초마다 검사해 실제로 실행됩니다 · 켜기/끄기는 <b>이 공간에만</b> 적용</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -63,7 +64,7 @@ export function ScheduleModal({ isOpen, onClose }: ScheduleModalProps) {
         {/* 규칙 리스트 */}
         <div className="flex flex-col gap-2.5 overflow-y-auto">
           {AUTOMATION_RULES.map((rule) => {
-            const isActive = !!active[rule.id];
+            const isActive = ruleActive(rule.id);
             const missing = missingDevices(rule, roomPackage);
             const skipped = missing.length > 0;
             const devices = rule.anyDevices || rule.devices;

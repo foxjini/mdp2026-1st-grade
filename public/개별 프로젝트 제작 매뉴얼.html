@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>개별 프로젝트 제작 매뉴얼 - 인천전자마이스터고 3D IoT 전시 플랫폼</title>
+  <style>
+    /* -------------------------------------------------------------
+       Meta Brand Presentation Theme Tokens
+       Clean White Base + Meta Blue (#0064E0, #0866FF) + Deep Navy
+       ------------------------------------------------------------- */
+    :root {
+      --meta-blue: #0064E0;
+      --meta-blue-hover: #0052B8;
+      --meta-vivid-blue: #0866FF;
+      --meta-sky-blue: #E7F3FF;
+      --meta-navy: #0C1E3C;
+      --meta-dark: #1C2B33;
+      --meta-slate: #4E5D78;
+      --meta-gray-light: #F0F2F5;
+      --meta-gray-subtle: #F7F8FA;
+      --meta-border: #E4E6EB;
+      --meta-border-subtle: #D8DADF;
+      --meta-green: #00A36C;
+      --meta-green-light: #E8F8F0;
+      --meta-amber: #D97706;
+      --meta-amber-light: #FEF3C7;
+      --meta-purple: #7B3FE4;
+      --meta-purple-light: #F3E8FF;
+      --card-shadow: 0 10px 30px rgba(0, 100, 224, 0.06), 0 1px 4px rgba(0, 0, 0, 0.04);
+      --card-shadow-hover: 0 16px 40px rgba(0, 100, 224, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--meta-gray-light);
+      color: var(--meta-dark);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* -------------------------------------------------------------
+       Top Meta Presentation Bar & Navigation
+       ------------------------------------------------------------- */
+    header.meta-header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--meta-border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+    }
+
+    .meta-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .meta-logo-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: #FFFFFF;
+      border: 1px solid var(--meta-border);
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 100, 224, 0.15);
+    }
+    .meta-logo-badge img { width: 32px; height: 32px; object-fit: contain; }
+
+    .meta-title-wrap h1 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--meta-navy);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.3px;
+    }
+
+    .meta-title-wrap p {
+      font-size: 11.5px;
+      color: var(--meta-slate);
+      font-weight: 500;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .slide-step-badge {
+      font-size: 12px;
+      font-weight: 800;
+      background: var(--meta-sky-blue);
+      color: var(--meta-blue);
+      border: 1px solid rgba(0, 100, 224, 0.2);
+      padding: 5px 14px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-toggle-btn {
+      background: #FFFFFF;
+      border: 1px solid var(--meta-border-subtle);
+      color: var(--meta-slate);
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .mode-toggle-btn:hover {
+      background: var(--meta-gray-subtle);
+      color: var(--meta-navy);
+      border-color: var(--meta-blue);
+    }
+
+    /* Top Slide Progress Bar */
+    .progress-bar-container {
+      width: 100%;
+      height: 3px;
+      background: #E4E6EB;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--meta-blue), #00B2FF);
+      width: 12.5%;
+      transition: width 0.3s ease;
+    }
+
+    /* -------------------------------------------------------------
+       Main Presentation Stage (Slide Deck Layout)
+       ------------------------------------------------------------- */
+    main.presentation-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 20px 96px 20px;
+      width: 100%;
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .slide-card {
+      width: 100%;
+      background: #FFFFFF;
+      border-radius: 24px;
+      border: 1px solid var(--meta-border);
+      box-shadow: var(--card-shadow);
+      padding: 36px 44px;
+      margin-bottom: 24px;
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .slide-card.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Continuous Scroll Mode (When activated) */
+    body.scroll-mode .slide-card {
+      display: block !important;
+      opacity: 1 !important;
+      transform: none !important;
+      margin-bottom: 40px;
+    }
+
+    /* Slide Header Area */
+    .slide-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1.5px solid var(--meta-border);
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+      gap: 20px;
+    }
+
+    .slide-header-left {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .slide-num-pill {
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--meta-blue);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slide-header h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--meta-navy);
+      letter-spacing: -0.4px;
+      line-height: 1.3;
+    }
+
+    .slide-header p.slide-desc {
+      font-size: 13.5px;
+      color: var(--meta-slate);
+      font-weight: 500;
+    }
+
+    /* Content Layout Grids */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    /* Info Box & Cards */
+    .meta-box {
+      background: var(--meta-gray-subtle);
+      border: 1px solid var(--meta-border);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.2s;
+    }
+
+    .meta-box.highlight {
+      background: var(--meta-sky-blue);
+      border-color: rgba(0, 100, 224, 0.3);
+    }
+
+    .meta-box.success {
+      background: var(--meta-green-light);
+      border-color: rgba(0, 163, 108, 0.3);
+    }
+
+    .meta-box.warning {
+      background: var(--meta-amber-light);
+      border-color: rgba(217, 119, 6, 0.3);
+    }
+
+    .meta-box h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--meta-navy);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .meta-box p {
+      font-size: 13px;
+      color: var(--meta-slate);
+      line-height: 1.6;
+    }
+
+    .meta-box ul, .meta-box ol {
+      padding-left: 20px;
+      margin-top: 8px;
+    }
+
+    .meta-box li {
+      font-size: 12.5px;
+      color: var(--meta-dark);
+      margin-bottom: 6px;
+      line-height: 1.6;
+    }
+
+    /* Meta Master Banner */
+    .master-banner {
+      background: linear-gradient(135deg, #0050B8 0%, #0064E0 60%, #00B2FF 100%);
+      color: #FFFFFF;
+      border-radius: 20px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      box-shadow: 0 14px 35px rgba(0, 100, 224, 0.25);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .master-banner h3 {
+      font-size: 19px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .master-banner p {
+      font-size: 13.5px;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1.65;
+      margin-bottom: 18px;
+      max-width: 860px;
+    }
+
+    .master-copy-btn {
+      background: #FFFFFF;
+      color: var(--meta-blue);
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+      transition: all 0.2s;
+    }
+
+    .master-copy-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .master-copy-btn.copied {
+      background: var(--meta-green);
+      color: #FFFFFF;
+    }
+
+    /* Prompt Box with Meta Blue Card Styling */
+    .prompt-box {
+      background: #FFFFFF;
+      border: 1px solid var(--meta-border);
+      border-left: 5px solid var(--meta-blue);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 16px 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      transition: all 0.2s;
+    }
+
+    .prompt-box:hover {
+      box-shadow: var(--card-shadow);
+    }
+
+    .prompt-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .prompt-title-text {
+      font-size: 14.5px;
+      font-weight: 800;
+      color: var(--meta-navy);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prompt-badge {
+      font-size: 11px;
+      font-weight: 700;
+      background: var(--meta-sky-blue);
+      color: var(--meta-blue);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .copy-btn {
+      background: var(--meta-blue);
+      color: #FFFFFF;
+      border: none;
+      padding: 7px 15px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+      background: var(--meta-blue-hover);
+      transform: translateY(-1px);
+    }
+
+    .copy-btn.copied {
+      background: var(--meta-green);
+    }
+
+    pre.code-block {
+      background: #0F172A;
+      color: #E2E8F0;
+      padding: 16px;
+      border-radius: 12px;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.6;
+      overflow-x: auto;
+      max-height: 280px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      border: 1px solid #1E293B;
+    }
+
+    /* Tables */
+    table.meta-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    table.meta-table th {
+      background: var(--meta-sky-blue);
+      color: var(--meta-navy);
+      font-weight: 700;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 2px solid var(--meta-border);
+    }
+
+    table.meta-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--meta-border);
+      color: var(--meta-dark);
+    }
+
+    table.meta-table tr:hover {
+      background: var(--meta-gray-subtle);
+    }
+
+    /* Code Tags & File Chips */
+    code {
+      font-family: Consolas, monospace;
+      font-size: 12.5px;
+      background: #EBF2FA;
+      color: var(--meta-blue);
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-weight: 600;
+    }
+
+    .file-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: Consolas, monospace;
+      font-size: 11.5px;
+      background: #F0F4F9;
+      color: var(--meta-navy);
+      border: 1px solid var(--meta-border);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-weight: 600;
+      margin: 2px 0;
+    }
+
+    /* -------------------------------------------------------------
+       Bottom Floating Slide Controller Dock
+       ------------------------------------------------------------- */
+    .slide-dock {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--meta-border);
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05);
+      border-radius: 20px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    body.scroll-mode .slide-dock {
+      display: none;
+    }
+
+    .dock-btn {
+      background: var(--meta-gray-subtle);
+      border: 1px solid var(--meta-border);
+      color: var(--meta-navy);
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      white-space: nowrap;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .dock-btn:hover:not(:disabled) {
+      background: var(--meta-blue);
+      color: #FFFFFF;
+      border-color: var(--meta-blue);
+    }
+
+    .dock-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .dock-dots {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .dock-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--meta-border);
+      background: #FFFFFF;
+      color: var(--meta-slate);
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .dock-dot:hover {
+      border-color: var(--meta-blue);
+      color: var(--meta-blue);
+    }
+
+    .dock-dot.active {
+      background: var(--meta-blue);
+      color: #FFFFFF;
+      border-color: var(--meta-blue);
+      box-shadow: 0 2px 8px rgba(0, 100, 224, 0.3);
+    }
+
+    .dock-info {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--meta-slate);
+      padding: 0 4px;
+      white-space: nowrap;
+    }
+
+    .fullscreen-btn {
+      background: transparent;
+      border: none;
+      color: var(--meta-slate);
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .fullscreen-btn:hover {
+      background: var(--meta-gray-subtle);
+      color: var(--meta-navy);
+    }
+
+    /* 부록 B: 전/후 사례 이미지 */
+    .case-figure { margin: 0; background: var(--meta-gray-subtle); border: 1px solid var(--meta-border); border-radius: 16px; overflow: hidden; }
+    .case-figure img { display: block; width: 100%; height: auto; }
+    .case-figure figcaption { padding: 10px 14px; font-size: 12.5px; color: var(--meta-slate); line-height: 1.6; }
+
+    /* 부록 A: 흐름 단계 · 도우미 폼 */
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .flow-step {
+      background: var(--meta-gray-subtle);
+      border: 1px solid var(--meta-border);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--meta-dark);
+    }
+    .flow-step b { color: var(--meta-blue); font-size: 16px; }
+    .flow-step span { font-weight: 700; line-height: 1.4; }
+    .flow-step small { color: var(--meta-slate); font-size: 11.5px; }
+    .flow-step.accent { background: var(--meta-green-light); border-color: rgba(0, 163, 108, 0.3); }
+    .helper-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      margin-top: 12px;
+    }
+    .helper-form label, .helper-form .hf-label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--meta-navy);
+    }
+    .helper-form .hf-wide { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
+    .helper-form input[type="text"], .helper-form textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px 10px;
+      border: 1px solid var(--meta-border);
+      border-radius: 10px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 400;
+      background: #FFFFFF;
+      color: var(--meta-dark);
+    }
+    .helper-form .hf-checks { display: flex; flex-wrap: wrap; gap: 8px 16px; }
+    .helper-form .hf-checks label { flex-direction: row; align-items: center; gap: 6px; font-weight: 600; color: var(--meta-dark); }
+    .helper-build-btn { margin-top: 14px; }
+    .check-list { list-style: none; padding-left: 0 !important; }
+    .appendix-link { color: var(--meta-blue); font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+    /* Responsive Adjustments */
+    @media (max-width: 900px) {
+      .hide-narrow { display: none !important; }
+      .slide-card {
+        padding: 24px 20px;
+      }
+      /* 표 안의 긴 코드 · 메시지가 화면 밖으로 나가지 않게 */
+      table.meta-table th, table.meta-table td {
+        padding: 8px 8px;
+        overflow-wrap: anywhere;
+      }
+      table.meta-table code {
+        word-break: break-all;
+      }
+      .grid-2, .grid-3, .helper-form, .flow-steps {
+        grid-template-columns: 1fr;
+      }
+      .slide-dock {
+        width: calc(100% - 32px);
+        justify-content: space-between;
+        bottom: 12px;
+      }
+      .dock-dots {
+        display: none;
+      }
+    }
+
+    /* -------------------------------------------------------------
+       개별 프로젝트 제작 매뉴얼 전용 (짧은 단계형 구성)
+       ------------------------------------------------------------- */
+    .flow9 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .flow-card {
+      display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 16px; cursor: pointer;
+      background: var(--meta-gray-subtle); border: 1.5px solid var(--meta-border); text-decoration: none; color: var(--meta-dark);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .flow-card:hover { border-color: var(--meta-blue); box-shadow: var(--card-shadow-hover); }
+    .flow-card b { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--meta-blue); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-size: 19px; }
+    .flow-card span { font-size: 15.5px; font-weight: 800; color: var(--meta-navy); line-height: 1.35; flex: 1; }
+    .flow-card small { font-size: 12px; color: var(--meta-slate); white-space: nowrap; }
+    .flow-card.accent { background: var(--meta-sky-blue); border-color: rgba(0, 100, 224, 0.35); }
+    .flow-card.done { background: var(--meta-green-light); border-color: rgba(0, 163, 108, 0.35); }
+    .flow-card.done b { background: var(--meta-green); }
+    .stack { display: flex; flex-direction: column; gap: 12px; }
+    ol.todo { counter-reset: todo; list-style: none; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+    ol.todo > li { counter-increment: todo; position: relative; padding-left: 40px; font-size: 15px; line-height: 1.6; color: var(--meta-dark); }
+    ol.todo > li::before {
+      content: counter(todo); position: absolute; left: 0; top: 1px; width: 28px; height: 28px; border-radius: 9px;
+      background: var(--meta-navy); color: #FFFFFF; font-weight: 800; font-size: 13.5px; display: flex; align-items: center; justify-content: center;
+    }
+    ol.todo.small > li { font-size: 14px; }
+    .check { background: var(--meta-green-light); border: 1px solid rgba(0, 163, 108, 0.28); border-radius: 12px; padding: 10px 14px; font-size: 14px; line-height: 1.55; }
+    .tip { background: var(--meta-amber-light); border: 1px solid rgba(217, 119, 6, 0.25); border-radius: 12px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
+    .formula { font-size: 16px; line-height: 1.8; font-weight: 600; }
+    .formula b { color: var(--meta-blue); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13.5px; }
+    h3.sub { font-size: 15px; font-weight: 800; color: var(--meta-navy); margin-bottom: 8px; }
+    .files { display: flex; flex-wrap: wrap; gap: 8px; }
+    code.cmd { display: inline-block; margin-top: 4px; padding: 4px 10px; background: var(--meta-navy); color: #FFFFFF; border-radius: 8px; }
+    .prompt-box.compact pre.code-block { max-height: 150px; font-size: 12px; }
+    #p-idea { max-height: 400px; font-size: 12.5px; }
+    .stack > .prompt-box { margin: 0; }
+    .link { color: var(--meta-blue); font-weight: 800; cursor: pointer; }
+    ul.checklist { list-style: none; padding-left: 0 !important; }
+    .slide-card { min-height: calc(100vh - 190px); }
+    body.scroll-mode .slide-card { min-height: 0; }
+    @media (max-height: 820px) and (min-width: 901px) {
+      .slide-card { padding: 24px 34px; }
+      .slide-header { padding-bottom: 12px; margin-bottom: 14px; }
+      .slide-header h2 { font-size: 21px; }
+      ol.todo > li { font-size: 14px; }
+      .meta-box { padding: 14px 16px; }
+      .flow-card { padding: 10px 12px; }
+      #p-idea { max-height: 300px; font-size: 11.5px; }
+      .prompt-box.compact pre.code-block { max-height: 118px; }
+      table.meta-table td, table.meta-table th { padding: 6px 10px; font-size: 13.5px; }
+      main.presentation-stage { padding-top: 14px; }
+      .prompt-box { padding: 14px 16px; }
+      .prompt-header { margin-bottom: 8px; }
+      .check, .tip { padding: 8px 12px; }
+      .stack { gap: 10px; }
+    }
+    @media (max-width: 900px) {
+      .flow9 { grid-template-columns: 1fr; }
+      .slide-card { min-height: 0; }
+      .grid-2 { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. 상단 바 -->
+  <header class="meta-header">
+    <div class="meta-brand">
+      <div class="meta-logo-badge"><img src="data:image/png;base64,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" alt="인천전자마이스터고등학교"></div>
+      <div class="meta-title-wrap">
+        <h1>
+          <span>인천전자마이스터고 3D IoT 전시 플랫폼</span>
+          <span style="font-weight:400; color:var(--meta-slate);">|</span>
+          <span style="color:var(--meta-blue);">개별 프로젝트 제작 매뉴얼</span>
+        </h1>
+        <p>주제 → 부품 → 공간 → 아이디어 → AI → 업로드 → Pico → 자동화 → 점검 · 9단계로 끝내기</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="slide-step-badge" id="header-step-indicator"><span>START</span><span style="color:var(--meta-slate);">/</span><span>⑨</span></div>
+      <button class="mode-toggle-btn" onclick="toggleScrollMode()" id="scroll-toggle-btn" title="슬라이드 발표 ↔ 전체 문서 연속 스크롤 전환">
+        <span>📄 전체 스크롤 모드</span>
+      </button>
+      <a href="manual.html" target="_blank" class="mode-toggle-btn hide-narrow" title="규격 · 디자인 · 펌웨어 자세한 설명">
+        <span>📘 자세한 매뉴얼</span>
+      </a>
+      <a href="http://localhost:3001/" data-dashboard target="_blank" class="mode-toggle-btn" style="background:var(--meta-blue); color:#fff; border-color:var(--meta-blue);" title="3D 대시보드로 이동">
+        <span>🚀 3D 대시보드 열기</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-fill"></div></div>
+
+  <main class="presentation-stage">
+  <!-- =========================================================
+       0. 전체 순서 한눈에
+       ========================================================= -->
+  <article class="slide-card active" id="slide-1">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>START</span><span style="color:var(--meta-slate);">·</span><span>전체 순서</span></div>
+        <h2>개별 프로젝트, 이 9단계만 따라 하세요</h2>
+        <p class="slide-desc">위에서부터 순서대로. 각 단계의 ✅ 를 확인한 뒤 다음으로 넘어갑니다. 전시회: <strong>11월 20일</strong></p>
+      </div>
+    </div>
+    <div class="flow9">
+      <a class="flow-card" onclick="goToSlide(2)"><b>①</b><span>주제 정하기</span><small>팀 회의 · 한 문장</small></a>
+      <a class="flow-card" onclick="goToSlide(3)"><b>②</b><span>부품 · 핀 정하기</span><small>쓸 장치와 핀 메모</small></a>
+      <a class="flow-card" onclick="goToSlide(4)"><b>③</b><span>새 공간 추가</span><small>대시보드 왼쪽</small></a>
+      <a class="flow-card accent" onclick="goToSlide(5)"><b>④</b><span>아이디어 쓰기 + AI 프롬프트 복사</span><small>템플릿 빈칸 채우기</small></a>
+      <a class="flow-card" onclick="goToSlide(6)"><b>⑤</b><span>바이브 코딩</span><small>AI 에게 파일 4개 받기</small></a>
+      <a class="flow-card" onclick="goToSlide(7)"><b>⑥</b><span>업로드 · 확인</span><small>오류는 바로 AI 에게</small></a>
+      <a class="flow-card" onclick="goToSlide(8)"><b>⑦</b><span>배선 · Pico 연결</span><small>선생님과 함께</small></a>
+      <a class="flow-card" onclick="goToSlide(9)"><b>⑧</b><span>자동화 규칙 점검</span><small>안 맞는 규칙 끄기</small></a>
+      <a class="flow-card done" onclick="goToSlide(10)"><b>⑨</b><span>디버깅 · 최종 점검</span><small>전시 전 체크리스트</small></a>
+    </div>
+    <div class="grid-3" style="margin-top:18px;">
+      <div class="meta-box highlight"><h3>🔢 숫자로 쓰기</h3><p>"더우면" ✗ → "<strong>27℃ 이상</strong>이면" ✓. AI 는 우리가 쓴 숫자대로 만듭니다.</p></div>
+      <div class="meta-box warning"><h3>🔴 오류는 그대로 복사</h3><p>빨간 메시지를 <strong>그대로</strong> AI 에게 보내면 대부분 한 번에 고쳐집니다.</p></div>
+      <div class="meta-box success"><h3>🪜 조금씩 고치기</h3><p>처음엔 동작만 → 다음에 모양 → 마지막에 멋. <strong>같은 AI 대화창</strong>에서 이어서.</p></div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ① 주제 정하기
+       ========================================================= -->
+  <article class="slide-card" id="slide-2">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ①</span><span style="color:var(--meta-slate);">·</span><span>팀 회의</span></div>
+        <h2>주제 정하기 — 한 문장으로</h2>
+        <p class="slide-desc">"누가 · 어떤 문제를 · 무엇으로 알아채서 · 어떻게 해결하는지"</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <div class="meta-box highlight">
+          <h3>📝 한 문장 공식</h3>
+          <p class="formula">[<b>누가</b>] 의 [<b>문제</b>] 를 [<b>센서</b>] 로 알아채고 [<b>장치</b>] 로 해결하는 [<b>공간 이름</b>]</p>
+        </div>
+        <ol class="todo">
+          <li>팀원이 겪는 <strong>불편한 상황</strong>을 3개 적습니다.</li>
+          <li>그중 <strong>센서로 알아챌 수 있는 것</strong> 하나를 고릅니다.</li>
+          <li>위 공식에 넣어 한 문장으로 만듭니다.</li>
+        </ol>
+      </div>
+      <div class="stack">
+        <div class="meta-box">
+          <h3>💡 예시</h3>
+          <ul>
+            <li>시험 기간 학생의 <b>소음 · 더위</b>를 소음 센서 · 온도 센서로 알아채고 <b>상태등 · 환기창</b>으로 해결하는 <b>스마트 독서실</b></li>
+            <li>혼자 있는 반려동물의 <b>배고픔</b>을 무게 센서로 알아채고 <b>급식기 뚜껑(서보)</b>으로 해결하는 <b>스마트 펫룸</b></li>
+          </ul>
+        </div>
+        <div class="check">✅ <strong>확인</strong> — 3D 화면에 보여 줄 <strong>장면</strong>(방 · 물건 · 움직임)이 머릿속에 그려지나요?</div>
+        <div class="tip">🙋 막히면: 대시보드 공간 목록의 <strong>스마트 독서실(예제)</strong>을 열어 보세요. 완성된 모습을 볼 수 있습니다.</div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ② 부품 · 핀 정하기
+       ========================================================= -->
+  <article class="slide-card" id="slide-3">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ②</span><span style="color:var(--meta-slate);">·</span><span>종이에 설계</span></div>
+        <h2>부품 · 핀 정하기 — 쓸 것만 고르기</h2>
+        <p class="slide-desc">지금은 정하기만 합니다. 실제 배선은 ⑦ 에서 합니다.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <h3 class="sub">기본 장치 4종 (핀은 바꿀 수 없음)</h3>
+        <table class="meta-table">
+          <thead><tr><th>장치</th><th>핀</th><th>이런 데 써요</th></tr></thead>
+          <tbody>
+            <tr><td>🌡️ DHT11 온습도</td><td><code>GP15</code></td><td>덥다 · 습하다</td></tr>
+            <tr><td>☀️ Cds 조도</td><td><code>GP26</code></td><td>밝다 · 어둡다</td></tr>
+            <tr><td>🦾 SG90 서보</td><td><code>GP16</code></td><td>문 · 창문 · 뚜껑 · 차단기 (0~180°)</td></tr>
+            <tr><td>🚦 RGB LED</td><td><code>GP18 · 19 · 20</code></td><td>상태등 · 조명 색</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div>
+        <h3 class="sub">확장 부품 (우리 주제에만 필요한 것)</h3>
+        <table class="meta-table">
+          <thead><tr><th>종류</th><th>추천 핀</th></tr></thead>
+          <tbody>
+            <tr><td>아날로그 (소음 · 수분 · 수위 · 가변저항)</td><td><code>GP27</code> · <code>GP28</code></td></tr>
+            <tr><td>디지털 입력 (버튼 · PIR · 불꽃)</td><td><code>GP13</code> · <code>GP14</code> · <code>GP22</code></td></tr>
+            <tr><td>디지털 출력 (부저 · 릴레이 · LED)</td><td><code>GP21</code> · <code>GP0~GP12</code></td></tr>
+          </tbody>
+        </table>
+        <div class="tip" style="margin-top:10px;">⚠ <strong>쓰면 안 되는 핀</strong>: 우리가 고른 기본 장치의 핀 + <code>GP23 · GP24 · GP25 · GP29</code></div>
+      </div>
+    </div>
+    <div class="meta-box success" style="margin-top:16px;">
+      <h3>✅ 결과: 부품 메모 (④ 에 그대로 씁니다)</h3>
+      <p class="mono">기본 장치: dht11, cds, sg90(= 환기창), rgb(= 상태등) &nbsp;/&nbsp; 확장: 소음 센서 → GP27 (key: noise, 단위 dB, 30~90)</p>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ③ 새 공간 추가
+       ========================================================= -->
+  <article class="slide-card" id="slide-4">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ③</span><span style="color:var(--meta-slate);">·</span><span>대시보드</span></div>
+        <h2>새 공간 추가</h2>
+        <p class="slide-desc">대시보드(<a class="link" data-dashboard href="http://localhost:3001/" target="_blank">열기</a>) 왼쪽 공간 목록에서 합니다. 팀당 <strong>한 번만</strong>.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <ol class="todo">
+        <li>왼쪽 <strong>+ 새 공간 추가</strong> 클릭</li>
+        <li><strong>공간 이름 · 팀 이름 · 설명</strong> 입력, 대표 아이콘 고르기</li>
+        <li>② 에서 정한 <strong>기본 장치만 체크</strong> (안 쓰는 장치는 체크 해제)</li>
+        <li>SG90 을 쓰면 <strong>서보모터 이름</strong> 입력 (예: 환기창, 급식기 뚜껑)</li>
+        <li><strong>Pico IP 는 비워 두기</strong> (⑦ 에서 입력)</li>
+        <li><strong>[공간 생성 후 코드 업로드 →]</strong> 클릭 → 코드 업로드 창이 열림</li>
+      </ol>
+      <div class="stack">
+        <div class="check">✅ <strong>확인</strong> — 공간 목록에 우리 공간이 생겼고, 코드 업로드 창 위쪽에 <strong>공간 ID</strong>(예: <code>room_mx1abc</code>)가 보입니다.</div>
+        <div class="meta-box">
+          <h3>📌 공간 ID 는 어디서?</h3>
+          <p>우리 공간 오른쪽 <strong>⋮</strong> → <strong>공간 ID 복사</strong>. ⑦ Pico 연결 때 필요합니다.</p>
+        </div>
+        <div class="meta-box">
+          <h3>🔁 나중에 다시 열 때</h3>
+          <p>공간 <strong>⋮</strong> → <strong>코드 업로드 · 관리</strong> (④ · ⑥) / <strong>Pico 연결 설정</strong> (⑦)</p>
+        </div>
+        <div class="tip">⚠ 같은 주제로 공간을 여러 번 만들지 마세요. 연습은 예제 공간 <strong>⋮ → 공간 복제하기</strong>로.</div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ④ 아이디어 쓰기 + AI 프롬프트 복사
+       ========================================================= -->
+  <article class="slide-card" id="slide-5">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ④</span><span style="color:var(--meta-slate);">·</span><span>가장 중요</span></div>
+        <h2>아이디어(주문서) 쓰기 → AI 프롬프트 복사</h2>
+        <p class="slide-desc">AI 는 여기 쓴 글만 보고 만듭니다. 빈칸을 <strong>숫자로</strong> 채우세요.</p>
+      </div>
+    </div>
+    <div class="grid-2" style="grid-template-columns: 1.25fr 1fr;">
+      <div class="prompt-box">
+        <div class="prompt-header">
+          <div class="prompt-title-text"><span>아이디어 빈칸 템플릿</span><span class="prompt-badge">복사 → 메모장에서 채우기</span></div>
+          <button class="copy-btn" onclick="copyFullPrompt('p-idea', this)">📋 복사</button>
+        </div>
+        <pre class="code-block" id="p-idea">[주제] 우리 팀은 ________ 를 위해 ________ 를 만듭니다.
+[사용 기본 장치] dht11 / cds / sg90 / rgb 중: ________ (안 쓰는 것은 적지 않기)
+[기본 장치 역할]
+- SG90 서보(GP16) = ________ (0° = ________, 90° = ________)
+- RGB LED = ________ (초록 = ________, 빨강 = ________)
+- DHT11 / Cds = ________ 에 사용
+[확장 센서] key: ________ / 이름: ________ / 단위: ____ / 범위: ____~____ / 핀: GP__ / ____ 이상이면 경고
+[규칙] (만약 ~이면 ~한다, 숫자로)
+1. ________ 이 ____ 이상이면 ________ 한다.
+2. ________ 이 ____ 미만이면 ________ 한다.
+[클릭] 3D 화면에서 ________ 를 누르면 ________ 한다. (명령 이름: ________)
+[3D 장면] 바닥: ________ / 가운데 주인공: ________ / 소품 3~5개: ________
+          마스코트(선택): 고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 학생 중 ________ 가 천천히 걸어 다님
+[mock 이야기] 부품 없이 시뮬레이션할 때: 0~20초 ________ → 20~30초 ________ → 다시 처음부터 (40초 반복)
+[하지 말 것] 외부 3D 모델 · 이미지 파일 사용 금지, 글자는 Html 배지로만</pre>
+      </div>
+      <div class="stack">
+        <ol class="todo">
+          <li>왼쪽 템플릿을 <strong>📋 복사</strong> → 메모장에서 빈칸 채우기 (② 부품 메모 활용)</li>
+          <li>(선택) 아래 <strong>디자인 규칙</strong>도 복사해 맨 끝에 붙이기</li>
+          <li>코드 업로드 창 <strong>① 아이디어 칸</strong>에 붙여넣기</li>
+          <li><strong>[AI 프롬프트 복사]</strong> 클릭 → 플랫폼 설명 + 공간 정보 + 아이디어가 함께 복사됨</li>
+        </ol>
+        <div class="prompt-box compact">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>디자인 규칙 (선택)</span><span class="prompt-badge">아이디어 맨 끝에</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-design', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-design">[디자인 규칙]
+1. 넓은 면은 PALETTE 의 차분한 색, 원색 · 순흑 금지. 강조색은 상태 표시에만.
+2. 모든 물체에 MAT 재질 (나무 MAT.oak, 패브릭 MAT.linen, 금속 MAT.brushedMetal, 식물 MAT.plant).
+3. 1 = 1m 실제 크기 (책상 높이 0.75). 가구는 RoundedBox 로 둥글게, 물체는 바닥에 붙게.
+4. 주인공 1개 + 소품 3~5개, 벽은 뒤쪽 · 왼쪽에만.
+5. 움직임은 THREE.MathUtils.damp 로 부드럽게 (통통 튀는 효과 금지).
+6. 숫자는 DataPin 배지로 (5개 이하, 겹치지 않게). 클릭할 물체는 HoverLift 로 감싸기.</pre>
+        </div>
+        <div class="check">✅ <strong>확인</strong> — [규칙] 에 <strong>숫자</strong>가 있고, 확장 센서 <strong>key</strong> 를 영어 소문자로 정했나요?</div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ⑤ 바이브 코딩
+       ========================================================= -->
+  <article class="slide-card" id="slide-6">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ⑤</span><span style="color:var(--meta-slate);">·</span><span>생성형 AI</span></div>
+        <h2>바이브 코딩 — AI 에게 파일 4개 받기</h2>
+        <p class="slide-desc">ChatGPT · Claude · Gemini 중 하나. <strong>한 대화창</strong>에서 끝까지 이어서 합니다.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <ol class="todo">
+          <li>AI 채팅을 <strong>새 대화</strong>로 열기</li>
+          <li>④ 에서 복사한 프롬프트를 <strong>붙여넣고 보내기</strong></li>
+          <li>답에 나온 <strong>코드 블록 4개</strong>를 각각 파일로 저장</li>
+        </ol>
+        <div class="files">
+          <span class="file-chip">room.json</span><span class="file-chip">Scene.tsx</span><span class="file-chip">mock.js</span><span class="file-chip">code.py</span>
+        </div>
+        <div class="tip">⚠ 메모장으로 저장할 때 <strong>파일 형식: 모든 파일</strong>을 고르세요. <code>room.json.txt</code> 처럼 .txt 가 붙으면 업로드가 안 됩니다.</div>
+      </div>
+      <div class="meta-box highlight">
+        <h3>✅ 받은 뒤 바로 확인할 4가지</h3>
+        <ol class="todo small">
+          <li>파일이 <strong>4개</strong> 다 있나요?</li>
+          <li>room.json 의 확장 센서 <strong>key</strong> 와 Scene.tsx · mock.js · code.py 의 key 가 <strong>똑같나요</strong>?</li>
+          <li>③ 에서 체크하지 않은 기본 장치를 쓰지 않았나요?</li>
+          <li>내가 쓴 <strong>숫자</strong>(기준값 · 각도 · 시간)가 코드에 들어갔나요?</li>
+        </ol>
+        <p class="small" style="margin-top:8px;">다르면 이렇게 말하세요: <em>"규칙 1 의 기준값 27℃ 가 코드에 없어요. 고쳐서 바뀐 파일 전체만 다시 보내 주세요."</em></p>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ⑥ 업로드 · 확인
+       ========================================================= -->
+  <article class="slide-card" id="slide-7">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ⑥</span><span style="color:var(--meta-slate);">·</span><span>코드 업로드 창</span></div>
+        <h2>업로드 · 시뮬레이션 확인 — 문제는 바로 AI 에게</h2>
+        <p class="slide-desc">부품이 없어도 <strong>시뮬레이션</strong>(mock.js)으로 먼저 확인합니다.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="stack">
+        <ol class="todo">
+          <li>코드 업로드 창 <strong>③</strong> 에 파일 4개를 <strong>끌어다 놓기</strong></li>
+          <li><strong>[닫고 3D 화면 확인]</strong></li>
+          <li>세 가지 확인 ↓</li>
+        </ol>
+        <div class="check">✅ 3D 화면에 우리 장면이 보인다 (빨간 오류 배지 없음)</div>
+        <div class="check">✅ 오른쪽 <strong>센서 출력</strong> 탭에 확장 센서 값이 바뀐다 ('수신 대기' 아님)</div>
+        <div class="check">✅ 3D 물체를 누르면 정한 동작을 한다 (인스펙터 '최근 확장 명령: 처리 완료')</div>
+      </div>
+      <div class="stack">
+        <div class="prompt-box compact">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>오류가 났을 때</span><span class="prompt-badge">빨간 메시지 붙여넣기</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-fix-error', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-fix-error">업로드했더니 아래 오류가 났어요. 원인을 한 줄로 설명하고, 고친 파일의 전체 코드만 다시 보내 주세요.
+오류 메시지:
+(여기에 빨간 메시지를 그대로 붙여넣기)</pre>
+        </div>
+        <div class="prompt-box compact">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>이 부분만 고치고 싶을 때</span><span class="prompt-badge">잘 되는 곳은 그대로</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-fix-part', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-fix-part">지금 동작은 그대로 두고 아래만 바꿔 주세요. 바뀐 파일의 전체 코드만 보내 주세요.
+1. (예: 책상을 가운데로 옮기고 1.2배 크게)
+2. (예: 소음이 60dB 이상이면 상태등이 1초에 2번 깜빡이게)</pre>
+        </div>
+        <div class="tip">🔁 고친 파일만 다시 끌어다 놓으면 됩니다. 디자인을 더 멋지게 → <a class="link" href="manual.html" target="_blank">자세한 매뉴얼</a> 부록 B</div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ⑦ 배선 · Pico 연결
+       ========================================================= -->
+  <article class="slide-card" id="slide-8">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ⑦</span><span style="color:var(--meta-slate);">·</span><span>선생님과 함께</span></div>
+        <h2>배선 · 우리 팀 Pico 연결</h2>
+        <p class="slide-desc">⑥ 시뮬레이션이 잘 되면 진짜 부품으로 바꿉니다.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <ol class="todo">
+        <li><strong>배선</strong>: 기본 장치는 정해진 핀(②), 확장 부품은 ② 메모의 핀에 연결</li>
+        <li>Pico 를 USB 로 전시 PC 에 연결 → <strong>CIRCUITPY</strong> 드라이브 확인 (예: E:)</li>
+        <li>선생님이 펌웨어 설치:<br><code class="cmd">npm run firmware:bundle -- 공간ID E:\</code></li>
+        <li>CIRCUITPY 의 <code>settings.toml</code> 에 <strong>Wi-Fi 이름 · 비밀번호</strong> 입력 (2.4GHz)</li>
+        <li>Pico 재부팅 → 시리얼 창에 <strong>Pico 2 W IP</strong> 확인</li>
+        <li>대시보드 우리 공간 <strong>⋮ → Pico 연결 설정</strong> → IP 입력 → <strong>[Pico 2 W 연결 저장]</strong></li>
+      </ol>
+      <div class="stack">
+        <div class="check">✅ 화면 위쪽에 <strong>Pico 2 W (IP) · 연결됨</strong></div>
+        <div class="check">✅ 센서를 손으로 가리거나 입김을 불면 값이 바뀐다</div>
+        <div class="check">✅ 3D 물체를 누르면 <strong>진짜 서보 · LED</strong> 가 움직인다</div>
+        <div class="tip">⚠ 펌웨어 설치 명령이 <strong>핀 충돌 · 문법 오류</strong>를 알려 주면, 그 메시지를 AI 에게 보내 code.py 를 고친 뒤 다시 업로드 → 다시 설치</div>
+        <div class="tip">🧪 Pico 가 아직 없으면 연습: <code>npm run mock:pico -- --room 공간ID --port 5051</code> → 연결 설정에 <code>127.0.0.1:5051</code></div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ⑧ 자동화 규칙 점검
+       ========================================================= -->
+  <article class="slide-card" id="slide-9">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ⑧</span><span style="color:var(--meta-slate);">·</span><span>📅 자동화 스케줄</span></div>
+        <h2>자동화 규칙 점검 — 우리 공간에 안 맞는 규칙 끄기</h2>
+        <p class="slide-desc">3D 화면 오른쪽 아래 <strong>📅</strong> 버튼. 켜기/끄기는 <strong>우리 공간에만</strong> 적용됩니다.</p>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <table class="meta-table">
+          <thead><tr><th>플랫폼 공통 규칙</th><th>하는 일</th></tr></thead>
+          <tbody>
+            <tr><td>고온 감지 자동 환기</td><td>28℃ 이상 → 승인 요청 → 서보 90°</td></tr>
+            <tr><td>일몰 · 야간 자동 조명</td><td>어두우면 RGB 파랑</td></tr>
+            <tr><td>고습도 환기</td><td>습도 70% 초과 → 서보 45°</td></tr>
+            <tr><td>취침 모드 (23:00)</td><td>무드등 보라색</td></tr>
+            <tr><td>보안 잠금 (00:00)</td><td>조명 끄기 · 서보 0°</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="stack">
+        <ol class="todo">
+          <li>규칙마다 <strong>우리 주제와 맞는지</strong> 봅니다. (예: 서보가 급식기 뚜껑이면 '고온 → 서보 90°' 는 끄기)</li>
+          <li>안 맞으면 <strong>끄기</strong>, 맞으면 <strong>[테스트 실행]</strong>으로 확인</li>
+        </ol>
+        <div class="meta-box highlight">
+          <h3>💡 우리 팀만의 자동화는?</h3>
+          <p>"소음 60dB 이상이면 빨강" 같은 규칙은 이 창이 아니라 <strong>④ 아이디어의 [규칙]</strong>에 씁니다. AI 가 code.py · mock.js 에 넣어 줍니다. 바꾸려면 ⑥ '이 부분만 고치기'로.</p>
+        </div>
+        <div class="check">✅ 공통 규칙과 우리 규칙이 <strong>같은 장치를 반대로</strong> 움직이지 않는다</div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       ⑨ 디버깅 · 최종 점검
+       ========================================================= -->
+  <article class="slide-card" id="slide-10">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>STEP ⑨</span><span style="color:var(--meta-slate);">·</span><span>전시 준비</span></div>
+        <h2>디버깅 · 전시 전 최종 점검</h2>
+        <p class="slide-desc">증상을 찾아 오른쪽 해결 방법대로. 그래도 안 되면 손 들고 선생님께.</p>
+      </div>
+    </div>
+    <div class="grid-2" style="grid-template-columns: 1.4fr 1fr;">
+      <table class="meta-table">
+        <thead><tr><th>이런 증상</th><th>이렇게 해결</th></tr></thead>
+        <tbody>
+          <tr><td>🔴 업로드 창 빨간 메시지</td><td>⑥ '오류가 났을 때' 프롬프트에 그대로 붙여 AI 에게</td></tr>
+          <tr><td>🔴 3D 화면에 'Scene.tsx 실행 오류'</td><td>배지 내용을 복사해 AI 에게 → Scene.tsx 만 다시 업로드</td></tr>
+          <tr><td>⏳ 값 대신 '수신 대기'</td><td>key 이름이 4개 파일에서 같은지 확인 (⑤ 확인 2번)</td></tr>
+          <tr><td>🟨 센서 출력에 노란 상자</td><td>room.json 에 그 센서가 없음 → AI 에게 "room.json 에 ___ 추가"</td></tr>
+          <tr><td>🖱️ 눌러도 반응 없음</td><td>제어 로그 탭 확인. '연결되어 있지 않아' → ③ 에서 그 장치 체크 안 함</td></tr>
+          <tr><td>📡 '응답 없음'</td><td>Pico 전원 · Wi-Fi · IP 확인. 잠시 기다리면 자동 재연결</td></tr>
+          <tr><td>🔌 실물만 안 움직임</td><td>배선 핀 확인 → <code>http://Pico IP/api/teams</code> 의 오류를 AI 에게</td></tr>
+          <tr><td>🐢 화면이 느림</td><td>왼쪽 아래 <strong>절전 그래픽</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="stack">
+        <div class="meta-box success">
+          <h3>📋 전시 전 체크리스트 (11/20)</h3>
+          <ul class="checklist">
+            <li>☐ 우리 공간에 오류 배지가 없다</li>
+            <li>☐ 시뮬레이션에서 40초 이야기(mock)가 자연스럽다</li>
+            <li>☐ Pico 연결됨, 실물과 3D 가 같이 움직인다</li>
+            <li>☐ 안 맞는 공통 규칙을 껐다</li>
+            <li>☐ 관람객에게 설명할 한 문장(①)을 외웠다</li>
+            <li>☐ 4개 파일을 USB 에도 저장했다 (코드 창 '현재 파일')</li>
+          </ul>
+        </div>
+        <div class="prompt-box compact">
+          <div class="prompt-header">
+            <div class="prompt-title-text"><span>실물에서만 안 될 때</span><span class="prompt-badge">AI 에게</span></div>
+            <button class="copy-btn" onclick="copyFullPrompt('p-fix-hw', this)">📋 복사</button>
+          </div>
+          <pre class="code-block" id="p-fix-hw">시뮬레이션은 잘 되는데 실제 Pico 에서만 안 됩니다. code.py 만 고쳐서 전체 코드를 보내 주세요.
+증상: (예: 소음 값이 항상 30)
+배선: (예: 소음 센서 OUT → GP27)
+/api/teams 오류: (있으면 붙여넣기)</pre>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <!-- =========================================================
+       부록: 복사용 프롬프트 모음
+       ========================================================= -->
+  <article class="slide-card" id="slide-11">
+    <div class="slide-header">
+      <div class="slide-header-left">
+        <div class="slide-num-pill"><span>부록</span><span style="color:var(--meta-slate);">·</span><span>복사해서 쓰기</span></div>
+        <h2>복사용 프롬프트 모음</h2>
+        <p class="slide-desc">단계별로 쓰는 문장을 한곳에 모았습니다. 📋 를 누르면 복사됩니다.</p>
+      </div>
+    </div>
+    <table class="meta-table">
+      <thead><tr><th style="width:16%;">언제</th><th>프롬프트</th><th style="width:10%;"></th></tr></thead>
+      <tbody>
+        <tr><td>④ 아이디어</td><td>아이디어 빈칸 템플릿 (주제 · 부품 · 규칙 · 장면 · mock 이야기)</td><td><button class="copy-btn" onclick="copyFullPrompt('p-idea', this)">📋</button></td></tr>
+        <tr><td>④ 디자인</td><td>디자인 규칙 (차분한 색 · 재질 · 실제 크기 · 부드러운 움직임)</td><td><button class="copy-btn" onclick="copyFullPrompt('p-design', this)">📋</button></td></tr>
+        <tr><td>⑥ 오류</td><td>업로드 오류 메시지 → 원인 한 줄 + 고친 파일 전체</td><td><button class="copy-btn" onclick="copyFullPrompt('p-fix-error', this)">📋</button></td></tr>
+        <tr><td>⑥ 수정</td><td>지금 동작은 그대로, 이 부분만 바꾸기</td><td><button class="copy-btn" onclick="copyFullPrompt('p-fix-part', this)">📋</button></td></tr>
+        <tr><td>⑥ 멋 더하기</td><td id="p-polish-text">관람객이 "와!" 할 연출 1~2개 (예: 경고가 풀리면 상태등이 부드럽게 초록으로)</td><td><button class="copy-btn" onclick="copyFullPrompt('p-polish', this)">📋</button></td></tr>
+        <tr><td>⑨ 실물</td><td>시뮬레이션은 되는데 Pico 에서만 안 될 때</td><td><button class="copy-btn" onclick="copyFullPrompt('p-fix-hw', this)">📋</button></td></tr>
+      </tbody>
+    </table>
+    <pre class="code-block" id="p-polish" style="display:none;">지금 동작은 그대로 두고, 관람객이 "와!" 할 연출을 1~2개만 넣어 주세요. Scene.tsx 전체 코드만 보내 주세요.
+- 연출은 센서 값이나 클릭 결과와 연결 (예: 경고가 풀리면 상태등이 부드럽게 초록으로 돌아옴)
+- 0.5~1초 안에 끝나는 부드러운 움직임 (THREE.MathUtils.damp), 통통 튀는 효과 금지
+- 원하면 마스코트 추가: import { StudentChibi } from '@/components/3d/characters' 후
+  &lt;StudentChibi waypoints={[[x1, z1], [x2, z2], [x3, z3]]} name="___" isModalOpen={isModalOpen} /&gt; (가구에서 0.4m 이상 떨어진 길)</pre>
+    <div class="grid-3" style="margin-top:16px;">
+      <div class="meta-box"><h3>📘 더 자세히</h3><p><a class="link" href="manual.html" target="_blank">자세한 매뉴얼</a> — 규격 · 디자인(부록 B) · 펌웨어 설명</p></div>
+      <div class="meta-box"><h3>🎓 처음이라면</h3><p><a class="link" href="intro.html" target="_blank">오리엔테이션</a> — 디지털 트윈 · 시스템 구성</p></div>
+      <div class="meta-box"><h3>🚀 대시보드</h3><p><a class="link" data-dashboard href="http://localhost:3001/" target="_blank">대시보드 열기</a> — 예제: 스마트 독서실</p></div>
+    </div>
+  </article>
+  </main>
+
+  <footer class="slide-dock">
+    <button class="dock-btn" id="prev-btn" onclick="changeSlide(-1)">◀ 이전</button>
+    <div class="dock-dots" id="dock-dots-container"></div>
+    <div class="dock-info" id="dock-page-counter">1 / 11</div>
+    <button class="dock-btn" id="next-btn" onclick="changeSlide(1)">다음 ▶</button>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="전체 화면 (F)">⛶</button>
+  </footer>
+
+  <script>
+    const totalSlides = document.querySelectorAll('.slide-card').length;
+    // 슬라이드 이름 (헤더 · 도크): 0 = 전체 순서, 1~9 = 단계, 마지막 = 부록
+    const LABELS = ['START', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '부록'];
+    let currentSlide = 1;
+    let isScrollMode = false;
+
+    const dots = document.getElementById('dock-dots-container');
+    LABELS.slice(0, totalSlides).forEach((label, i) => {
+      const d = document.createElement('div');
+      d.className = 'dock-dot' + (i === 0 ? ' active' : '');
+      d.textContent = i === 0 ? '0' : i === totalSlides - 1 ? '+' : label;
+      d.title = label;
+      d.onclick = () => goToSlide(i + 1);
+      dots.appendChild(d);
+    });
+
+    function updateSlideView() {
+      document.querySelectorAll('.slide-card').forEach((s, i) => s.classList.toggle('active', i + 1 === currentSlide));
+      document.getElementById('header-step-indicator').innerHTML =
+        `<span>${LABELS[currentSlide - 1]}</span><span style="color:var(--meta-slate);">/</span><span>⑨</span>`;
+      document.getElementById('progress-fill').style.width = (currentSlide / totalSlides) * 100 + '%';
+      document.getElementById('dock-page-counter').innerText = `${currentSlide} / ${totalSlides}`;
+      document.getElementById('prev-btn').disabled = currentSlide === 1;
+      document.getElementById('next-btn').disabled = currentSlide === totalSlides;
+      document.querySelectorAll('.dock-dot').forEach((d, i) => d.classList.toggle('active', i + 1 === currentSlide));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function changeSlide(direction) {
+      if (isScrollMode) return;
+      const next = currentSlide + direction;
+      if (next >= 1 && next <= totalSlides) {
+        currentSlide = next;
+        updateSlideView();
+      }
+    }
+
+    function goToSlide(slideNum) {
+      if (isScrollMode) {
+        const target = document.getElementById(`slide-${slideNum}`);
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+      if (slideNum >= 1 && slideNum <= totalSlides) {
+        currentSlide = slideNum;
+        updateSlideView();
+      }
+    }
+
+    function toggleScrollMode() {
+      isScrollMode = !isScrollMode;
+      document.body.classList.toggle('scroll-mode', isScrollMode);
+      document.getElementById('scroll-toggle-btn').innerHTML = isScrollMode
+        ? '<span>🖥️ 슬라이드 모드로 전환</span>'
+        : '<span>📄 전체 스크롤 모드</span>';
+      if (!isScrollMode) updateSlideView();
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+      else if (document.exitFullscreen) document.exitFullscreen();
+    }
+
+    // 키보드: ← → · 스페이스 · F (전체 화면)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        changeSlide(1);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        changeSlide(-1);
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    });
+
+    // 프롬프트 복사 (숨겨 둔 프롬프트도 textContent 로)
+    function copyFullPrompt(elementId, btn) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      const text = (el.innerText && el.offsetParent !== null ? el.innerText : el.textContent).trim();
+      const done = () => {
+        const originalText = btn.innerHTML;
+        btn.classList.add('copied');
+        btn.innerHTML = '✓ 복사 완료!';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerHTML = originalText;
+        }, 2500);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text) && done());
+      } else if (fallbackCopy(text)) done();
+    }
+    // 파일로 직접 열었을 때 등 클립보드 API 를 못 쓰면
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+
+    // 대시보드 링크: 플랫폼 서버에서 열면 같은 서버, 파일로 열면 전시 PC 주소
+    if (location.protocol.startsWith('http')) {
+      document.querySelectorAll('a[data-dashboard]').forEach((a) => (a.href = '/'));
+    }
+
+    updateSlideView();
+  </script>
+</body>
+</html>
