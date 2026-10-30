@@ -374,8 +374,17 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
         isModalOpen={isModalOpen}
       />
 
-      {/* ── 마스코트: 교복 입은 학생 (플랫폼 캐릭터 부품) ── */}
-      <StudentChibi waypoints={STUDENT_PATH} name="독서실 학생" isModalOpen={isModalOpen} />
+      {/* ── 마스코트: 교복 입은 여학생 (플랫폼 캐릭터 부품), 누르면 독서실 상태 안내 ── */}
+      <StudentChibi
+        waypoints={STUDENT_PATH}
+        name="독서실 학생"
+        say={() =>
+          breakOn
+            ? '지금은 쉬는 시간이에요. 스트레칭 하고 와요!'
+            : `쉿, 공부 중이에요. 지금 소음은 ${Math.round(noise)}데시벨, 온도는 ${tempSensor.value.toFixed(0)}도예요.`
+        }
+        isModalOpen={isModalOpen}
+      />
     </group>
   );
 }

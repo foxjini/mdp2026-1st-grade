@@ -8,7 +8,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useFrame, ThreeEvent } from '@react-three/fiber';
 import { Html, Outlines } from '@react-three/drei';
-import { useVoiceStore } from '@/core/voice/voice';
+import { useVoiceStore, announce } from '@/core/voice/voice';
 import { useGraphicsStore } from '@/core/graphics/useGraphicsStore';
 import { PALETTE, usePrefersReducedMotion } from '@/core/sdk/design';
 
@@ -36,7 +36,9 @@ export interface MascotProps {
   scale?: number;
   /** 이름표 */
   name?: string;
-  /** 클릭하면 실행 (예: 공간 상태 음성 안내) — 캐릭터는 멈춰서 손을 흔듦 */
+  /** 클릭하면 읽어 줄 말 (문장, 또는 그때의 센서 값으로 문장을 만드는 함수). 없으면 이름으로 인사 */
+  say?: string | (() => string);
+  /** 클릭하면 실행 — 캐릭터는 멈춰서 손을 흔듦. 주면 say · 기본 인사 대신 이 함수가 음성 안내를 맡음 */
   onClick?: () => void;
   isModalOpen?: boolean;
 }
@@ -62,6 +64,7 @@ export function MascotBase({
   pause = [2, 5],
   scale = 1.25,
   name,
+  say,
   onClick,
   isModalOpen = false,
   captionHeight,
@@ -207,7 +210,10 @@ export function MascotBase({
     e.stopPropagation();
     st.current.hold = 4.5; // 멈춰서 관람객을 보고
     st.current.wave = 2.2; // 손 인사
-    onClick?.();
+    if (onClick) return onClick();
+    // 관람객이 직접 누른 것이라 음성 설정과 관계없이 읽음
+    const text = typeof say === 'function' ? say() : say ?? (name ? `안녕하세요! ${name}입니다.` : '안녕하세요!');
+    announce(null, text, true);
   };
 
   return (

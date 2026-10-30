@@ -2355,7 +2355,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
 조건:
 - 반드시 데이터 · 명령과 연결 (예: 명령이 성공하면 표시등이 한 번 은은하게 퍼짐, 경고가 풀리면 색이 부드럽게 돌아옴)
 - 0.4~1.2초 안에 끝나는 짧은 연출, 반복 오브젝트 30개 이하
-- 원한다면 플랫폼 마스코트를 배치 (&lt;CatButler · CowFarmer · FactoryBot · StudentChibi · StudentBoy waypoints={[[x1, z1], [x2, z2]]} name="..." isModalOpen={isModalOpen} /&gt;, import from '@/components/3d/characters') — 가구를 피한 통로를 천천히 걸어 다님
+- 원한다면 플랫폼 마스코트를 배치 (&lt;CatButler · CowFarmer · FactoryBot · StudentChibi · StudentBoy waypoints={[[x1, z1], [x2, z2]]} name="..." say={() =&gt; `센서 값을 넣은 한 문장`} isModalOpen={isModalOpen} /&gt;, import from '@/components/3d/characters') — 가구를 피한 통로를 천천히 걸어 다님
 - 과한 효과(화면 전체 번쩍임 · 빙글빙글 · 무지개색)는 금지
 넣은 연출과 그 연출을 일으키는 조건을 먼저 설명해 주세요.
 
@@ -2399,7 +2399,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
           <tr><td><code>HoverLift</code></td><td>누를 수 있는 물체 표시 (살짝 떠오름 · 커서)</td><td><code>&lt;HoverLift onClick={() =&gt; sendCommand('feed', true)}&gt;…&lt;/HoverLift&gt;</code></td></tr>
           <tr><td><code>useSmoothValue</code></td><td>센서 값 스무딩 (끊김 · 튐 대비)</td><td><code>const lv = useSmoothValue(level); … lv.current</code> (useFrame 안)</td></tr>
           <tr><td><code>DocentBot</code></td><td>음성 안내에 입모양 · 자막이 맞춰지는 안내 로봇</td><td><code>import { DocentBot } from '@/components/3d/DocentBot'</code></td></tr>
-          <tr><td>마스코트 캐릭터</td><td>고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 여학생 · 안경 쓴 남학생. <code>waypoints</code> 경로를 천천히 걸어 다니고, 누르면 손 인사 (경로는 가구에서 0.4 m 이상 떨어지게)</td><td><code>import { StudentChibi } from '@/components/3d/characters'</code><br><code>&lt;StudentChibi waypoints={[[-1.5, 1.7], [1.5, 1.7]]} name="학생" isModalOpen={isModalOpen} /&gt;</code></td></tr>
+          <tr><td>마스코트 캐릭터</td><td>고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 여학생 · 안경 쓴 남학생. <code>waypoints</code> 경로를 천천히 걸어 다니고, 누르면 손 인사 + <code>say</code> 문장을 음성으로 말함 (경로는 가구에서 0.4 m 이상 떨어지게)</td><td><code>import { StudentChibi } from '@/components/3d/characters'</code><br><code>&lt;StudentChibi waypoints={[[-1.5, 1.7], [1.5, 1.7]]} name="학생" isModalOpen={isModalOpen} /&gt;</code></td></tr>
         </tbody>
       </table>
       <div class="grid-2">

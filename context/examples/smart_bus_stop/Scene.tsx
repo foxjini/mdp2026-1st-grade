@@ -409,8 +409,17 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
         </mesh>
       </group>
 
-      {/* 마스코트: 안경 쓴 남학생이 정류장 앞 인도를 천천히 걸어 다님 */}
-      <StudentBoy waypoints={WALK_PATH} name="버스 기다리는 학생" speed={0.3} pause={[2, 4]} isModalOpen={isModalOpen} />
+      {/* 마스코트: 안경 쓴 남학생이 정류장 앞 인도를 천천히 걸어 다님, 누르면 버스 · 날씨 안내 */}
+      <StudentBoy
+        waypoints={WALK_PATH}
+        name="버스 기다리는 학생"
+        speed={0.3}
+        pause={[2, 4]}
+        say={() =>
+          `헤헤, 버스는 ${Math.round(eta)}분 뒤에 와요! 지금 ${tempSensor.value.toFixed(0)}도, ${heaterOn ? '벤치 히터가 켜져 있어요.' : cold ? '조금 쌀쌀해요.' : '날씨가 딱 좋아요.'}`
+        }
+        isModalOpen={isModalOpen}
+      />
 
       {/* 버스 (소형 셔틀 크기: 길이 3.2 · 높이 1.4) */}
       <group ref={busRef} position={[BUS_WAIT_X, 0, ROAD_Z]}>
