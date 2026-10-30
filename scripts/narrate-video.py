@@ -75,6 +75,30 @@ def run(cmd, **kw):
     return subprocess.run(cmd, check=True, capture_output=True, **kw)
 
 
+def probe_size(f):
+    # ffmpeg -i 의 Stream ... Video: ... 1920x1080 줄에서 영상 크기
+    err = subprocess.run([FFMPEG, '-hide_banner', '-i', str(f)], capture_output=True).stderr.decode('utf-8', 'replace')
+    m = re.search(r'Video:.*?\b(\d{2,5})x(\d{2,5})\b', err)
+    if not m:
+        sys.exit(f'영상 크기를 읽지 못했습니다: {f}')
+    return int(m.group(1)), int(m.group(2))
+
+
+def stream_length(f, kind):
+    # 결과 파일의 영상(v) · 음성(a) 길이 (복사만 해서 빠름): 마지막 time= 값
+    err = subprocess.run([FFMPEG, '-hide_banner', '-i', str(f), '-map', f'0:{kind}:0', '-c', 'copy', '-f', 'null', '-'],
+                         capture_output=True).stderr.decode('utf-8', 'replace')
+    if kind == 'v':  # 영상은 프레임(패킷) 수로 셈 — ffmpeg 버전마다 time= 값이 한 프레임씩 달라서
+        out = subprocess.run([FFMPEG, '-v', 'error', '-i', str(f), '-map', '0:v:0', '-c', 'copy', '-f', 'framecrc', '-'],
+                             capture_output=True).stdout.decode('utf-8', 'replace')
+        return sum(1 for l in out.splitlines() if l and not l.startswith('#')) / FPS
+    ts = re.findall(r'time=(\d+):(\d+):(\d+(?:\.\d+)?)', err)
+    if not ts:
+        return 0.0
+    h, m, sec = ts[-1]
+    return int(h) * 3600 + int(m) * 60 + float(sec)
+
+
 def probe_duration(f):
     # ffmpeg -i 의 'Duration: 00:07:49.37' 줄에서 길이 (ffmpeg 는 출력 파일이 없으면 오류로 끝나므로 check 없이)
     if not Path(f).exists():
@@ -124,9 +148,14 @@ def tts_edge(text, voice, speed, out_wav):
 
 
 def tts_test(text, voice, speed, out_wav):
-    # 점검용: 한국어 말하기 속도(초당 약 7.5 글자)에 맞춘 길이의 무음
+    # 점검용: 한국어 말하기 속도(초당 약 7.5 글자)에 맞춘 길이의 작은 '삐' 소리 (시작 시각을 기계로 잴 수 있게)
     secs = max(0.8, len(text) / 7.5 / speed)
-    write_silence(out_wav, secs)
+    n = int(secs * RATE)
+    import math, struct
+    tone = b''.join(struct.pack('<h', int(3000 * math.sin(2 * math.pi * 440 * i / RATE))) for i in range(n))
+    with wave.open(str(out_wav), 'wb') as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE)
+        w.writeframes(tone)
 
 
 ENGINES = {'google': tts_google, 'edge': tts_edge, 'test': tts_test}
@@ -203,44 +232,45 @@ def main():
     fr = lambda t: int(round(t * FPS))
     total_frames = fr(D)
     bounds = [0] + [min(fr(x['t']), total_frames) for x in lines] + [total_frames]
-    segs = []  # (시작 프레임, 프레임 수, 늘릴 프레임 수, 문장 또는 None)
+    # 멈출 화면(hf): 대본의 hold → 없으면 그 문장 자막이 아직 보이는 마지막 프레임(end 직전) → 없으면 구간 끝
+    #   음성은 구간 시작부터 그 화면까지 + 멈춘 시간 동안 나오고, hf 뒤 화면(페이지 전환 · 장 넘김)은 음성이 끝난 뒤 이어짐
+    segs = []  # (시작 프레임, 프레임 수, 늘릴 프레임 수, 문장 또는 None, 멈출 프레임)
     for k in range(len(bounds) - 1):
         s, e = bounds[k], bounds[k + 1]
         x = lines[k - 1] if k > 0 else None
         if e <= s:
             continue
-        extra = 0
+        extra, hf = 0, e - 1
         if x is not None:
+            if 'hold' in x and s <= fr(x['hold']) < e:
+                hf = fr(x['hold'])
+            elif 'end' in x and s < fr(x['end']) - 10 < e - 1:
+                hf = fr(x['end']) - 10  # 0.33초 앞: 장 끝 페이드(0.3초)에 걸리지 않게
             need = LEAD + x['adur'] + GAP
-            extra = max(0, fr(need) - (e - s))
-        segs.append((s, e - s, extra, x))
+            extra = max(0, fr(need) - (hf - s + 1))
+        segs.append((s, e - s, extra, x, hf))
 
     work = Path(tempfile.mkdtemp(prefix='narrate-'))
     try:
-        # 3) 영상 구간 만들기 (모자라면 마지막 화면 멈춤)
-        parts, new_start, t_new = [], {}, 0
-        for i, (s, n, extra, x) in enumerate(segs):
-            p = work / f'seg{i:03d}.mp4'
-            # 프레임 n 개만 자른 뒤(trim) 모자란 만큼 마지막 화면을 복제(tpad)
-            vf = f'fps={FPS},trim=end_frame={n},setpts=PTS-STARTPTS'
-            if extra:
-                vf += f',tpad=stop_mode=clone:stop={extra}'
-            run(['ffmpeg', '-y', '-loglevel', 'error', '-ss', f'{s / FPS:.4f}', '-i', str(src),
-                 '-vf', vf + ',format=yuv420p', '-an', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20', str(p)])
-            parts.append(p)
+        # 3) 새 시각 계산 (구간 끝 화면을 extra 프레임만큼 멈춤)
+        #    hold: 대본에 멈출 화면 시각이 있으면 그 프레임, 없으면 구간 마지막(다음 문장 직전) 프레임
+        new_start, t_new, hold, hold_at = {}, 0, {}, {}
+        for s, n, extra, x, hf in segs:
             new_start[s] = t_new
             if x is not None:
                 x['new_t'] = t_new / FPS
+            hold_at[s] = hf
+            if extra:
+                hold[hf] = extra  # 이 원본 프레임을 extra 번 더 씀
             t_new += n + extra
         total_new = t_new / FPS
-        (work / 'list.txt').write_text(''.join(f"file '{p.as_posix()}'\n" for p in parts), encoding='utf-8')
         print(f'영상 길이 {D:.1f}초 → {total_new:.1f}초 (멈춘 화면 합계 {total_new - D:.1f}초)')
 
         def remap(t):
             f = fr(t)
-            for s, n, extra, _ in segs:
+            for s, n, extra, _, _ in segs:
                 if s <= f < s + n:
-                    return (new_start[s] + (f - s)) / FPS
+                    return (new_start[s] + (f - s) + (extra if f > hold_at[s] else 0)) / FPS
             return total_new
 
         # 4) 음성 트랙 (모노 48kHz)
@@ -259,17 +289,51 @@ def main():
             if end > pos:
                 w.writeframes(b'\x00\x00' * (end - pos))
 
-        # 5) 합치기 — 윈도우 노트북 호환: H.264 Main@4.0 + AAC, 장(챕터) 트랙 없음
+        # 5) 합치기 — 원본을 프레임 단위로 풀어 파이프로 넘기며 멈춤 프레임을 끼워 넣음
+        #    (구간별 인코딩 + concat 은 ffmpeg 7 에서 멈춤 프레임이 빠져 음성이 점점 늦어졌음)
+        #    결과는 윈도우 노트북 호환: H.264 Main@4.0 + AAC, 장(챕터) 트랙 없음
         out = Path(a.out)
         out.mkdir(parents=True, exist_ok=True)
         mp4 = out / f'{OUT_NAME}.mp4'
         tmp_mp4 = work / 'out.mp4'
-        run(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', str(work / 'list.txt'), '-i', str(track),
-             '-map', '0:v', '-map', '1:a', '-map_chapters', '-1', '-map_metadata', '-1',
-             '-c:v', 'libx264', '-profile:v', 'main', '-level:v', '4.0', '-refs', '3', '-maxrate', '3M', '-bufsize', '6M',
-             '-preset', 'slow', '-crf', '26', '-g', '60', '-pix_fmt', 'yuv420p',
-             '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '128k', '-ar', str(RATE),
-             '-movflags', '+faststart', str(tmp_mp4)])
+        W, H = probe_size(src)
+        fsize = W * H * 3 // 2
+        dec = subprocess.Popen([FFMPEG, '-v', 'error', '-i', str(src), '-an', '-vf', f'fps={FPS}', '-pix_fmt', 'yuv420p',
+                                '-f', 'rawvideo', '-'], stdout=subprocess.PIPE, bufsize=fsize * 4)
+        enc = subprocess.Popen([FFMPEG, '-y', '-v', 'error', '-f', 'rawvideo', '-pix_fmt', 'yuv420p', '-s', f'{W}x{H}',
+                                '-r', str(FPS), '-i', '-', '-i', str(track),
+                                '-map', '0:v', '-map', '1:a', '-map_chapters', '-1', '-map_metadata', '-1',
+                                '-c:v', 'libx264', '-profile:v', 'main', '-level:v', '4.0', '-refs', '3', '-maxrate', '3M',
+                                '-bufsize', '6M', '-preset', 'slow', '-crf', '26', '-g', '60', '-pix_fmt', 'yuv420p',
+                                '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '128k', '-ar', str(RATE),
+                                '-movflags', '+faststart', str(tmp_mp4)], stdin=subprocess.PIPE, bufsize=fsize * 4)
+        written, i, last = 0, 0, None
+        try:
+            while written < t_new:
+                buf = dec.stdout.read(fsize)
+                if len(buf) < fsize:
+                    break
+                if i < total_frames:  # 원본이 계산보다 길면 남는 프레임은 버림
+                    enc.stdin.write(buf); written += 1
+                    for _ in range(hold.get(i, 0)):
+                        enc.stdin.write(buf); written += 1
+                    last = buf
+                i += 1
+                if i % (FPS * 30) == 0:
+                    print(f'  영상 {written / FPS:5.0f}초 / {total_new:.0f}초', flush=True)
+            while written < t_new and last is not None:  # 원본이 계산보다 짧으면 마지막 화면으로 채움
+                enc.stdin.write(last); written += 1
+        finally:
+            dec.stdout.close(); dec.wait()
+            enc.stdin.close(); enc.wait()
+        if enc.returncode != 0 or written != t_new:
+            sys.exit(f'영상 만들기 실패 (쓴 프레임 {written} / 계산 {t_new})')
+        # 싱크 점검: 영상 · 음성 길이가 같아야 함
+        vlen, alen = stream_length(tmp_mp4, 'v'), stream_length(tmp_mp4, 'a')
+        ok = abs(vlen - total_new) < 0.5 / FPS and abs(alen - total_new) < 0.15
+        print(f'싱크 점검: 영상 {vlen:.1f}초 · 음성 {alen:.1f}초 · 계산 {total_new:.1f}초 {"✅" if ok else "❌"}')
+        if not ok:
+            sys.exit('영상과 음성 길이가 다릅니다. 결과를 저장하지 않았습니다.')
         shutil.move(str(tmp_mp4), mp4)
 
         # 6) 자막 (화면 자막 문장, 새 시각)
