@@ -194,7 +194,7 @@ export function PlatformInfoModal({ isOpen, onClose, roomList, activeRoomId, onS
               <Presentation className="w-3.5 h-3.5" /> 오리엔테이션
             </a>
             <a
-              href="/videos/%EA%B0%9C%EB%B3%84%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8_%EC%A0%9C%EC%9E%91%EA%B3%BC%EC%A0%95.mp4"
+              href="/videos/bus_stop_project_guide.mp4"
               target="_blank"
               rel="noreferrer"
               className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
