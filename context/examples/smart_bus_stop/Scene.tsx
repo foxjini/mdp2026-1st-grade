@@ -6,7 +6,7 @@
 // · 버스는 도로 왼쪽 끝에서 대기 → bus_eta 가 0 이 되면 정류장 앞에 5초 정차 → 오른쪽으로 떠난 뒤 다음 버스가 다시 대기
 // · [와! ①] heater 가 0 → 1 이 되는 순간: 벤치 아래 바닥에 따뜻한 빛 고리가 한 번 퍼짐 (1.0초)
 // · [와! ②] bus_eta 가 1 이하로 바뀌는 순간: 정류장 표지판이 초록으로 한 번 은은하게 빛나고 발밑에 고리가 퍼짐 (0.8초)
-// · 교복 학생 마스코트가 정류장 앞 인도를 천천히 걸어 다님
+// · 안경 쓴 남학생 마스코트가 정류장 앞 인도를 천천히 걸어 다님
 import React, { useRef } from 'react';
 import * as THREE from 'three';
 import { useFrame } from '@react-three/fiber';
@@ -23,7 +23,7 @@ import {
   HoverLift,
   usePrefersReducedMotion,
 } from '@/core/sdk';
-import { StudentChibi } from '@/components/3d/characters';
+import { StudentBoy } from '@/components/3d/characters';
 
 const COLD_C = 22;
 
@@ -409,8 +409,8 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
         </mesh>
       </group>
 
-      {/* 마스코트: 교복 학생이 정류장 앞 인도를 천천히 걸어 다님 */}
-      <StudentChibi waypoints={WALK_PATH} name="버스 기다리는 학생" speed={0.3} pause={[2, 4]} isModalOpen={isModalOpen} />
+      {/* 마스코트: 안경 쓴 남학생이 정류장 앞 인도를 천천히 걸어 다님 */}
+      <StudentBoy waypoints={WALK_PATH} name="버스 기다리는 학생" speed={0.3} pause={[2, 4]} isModalOpen={isModalOpen} />
 
       {/* 버스 (소형 셔틀 크기: 길이 3.2 · 높이 1.4) */}
       <group ref={busRef} position={[BUS_WAIT_X, 0, ROAD_Z]}>

@@ -986,7 +986,7 @@
 2. ________ 이 ____ 미만이면 ________ 한다.
 [클릭] 3D 화면에서 ________ 를 누르면 ________ 한다. (명령 이름: ________)
 [3D 장면] 바닥: ________ / 가운데 주인공: ________ / 소품 3~5개: ________
-          마스코트(선택): 고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 학생 중 ________ 가 천천히 걸어 다님
+          마스코트(선택): 고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 여학생 · 안경 쓴 남학생 중 ________ 가 천천히 걸어 다님
 [mock 이야기] 부품 없이 시뮬레이션할 때: 0~20초 ________ → 20~30초 ________ → 다시 처음부터 (40초 반복)
 [하지 말 것] 외부 3D 모델 · 이미지 파일 사용 금지, 글자는 Html 배지로만</pre>
       </div>
@@ -1575,7 +1575,7 @@
 조건:
 - 반드시 데이터 · 명령과 연결 (예: 명령이 성공하면 표시등이 한 번 은은하게 퍼짐, 경고가 풀리면 색이 부드럽게 돌아옴)
 - 0.4~1.2초 안에 끝나는 짧은 연출, 반복 오브젝트 30개 이하
-- 원한다면 플랫폼 마스코트를 배치 (&lt;CatButler · CowFarmer · FactoryBot · StudentChibi waypoints={[[x1, z1], [x2, z2]]} name="..." isModalOpen={isModalOpen} /&gt;, import from '@/components/3d/characters') — 가구를 피한 통로를 천천히 걸어 다님
+- 원한다면 플랫폼 마스코트를 배치 (&lt;CatButler · CowFarmer · FactoryBot · StudentChibi · StudentBoy waypoints={[[x1, z1], [x2, z2]]} name="..." isModalOpen={isModalOpen} /&gt;, import from '@/components/3d/characters') — 가구를 피한 통로를 천천히 걸어 다님
 - 과한 효과(화면 전체 번쩍임 · 빙글빙글 · 무지개색)는 금지
 넣은 연출과 그 연출을 일으키는 조건을 먼저 설명해 주세요.
 
@@ -1625,7 +1625,7 @@
             <tr><td><code>DataPin</code></td><td>센서 값 배지 (경고 · '수신 대기' 자동)</td></tr>
             <tr><td><code>HoverLift</code></td><td>누를 수 있는 물체 (마우스를 올리면 살짝 떠오름)</td></tr>
             <tr><td><code>useSmoothValue</code></td><td>센서 값을 부드럽게 (끊기면 마지막 값 유지)</td></tr>
-            <tr><td>마스코트</td><td>고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 학생 — 천천히 걷고 누르면 인사</td></tr>
+            <tr><td>마스코트</td><td>고양이 집사 · 젖소 농부 · 작업 로봇 · 교복 여학생 · 안경 쓴 남학생 — 천천히 걷고 누르면 인사</td></tr>
           </tbody>
         </table>
         <div class="prompt-box compact">
@@ -1716,7 +1716,7 @@ export default function Scene({ isModalOpen = false }: { isModalOpen?: boolean }
     <pre class="code-block" id="p-polish" style="display:none;">지금 동작은 그대로 두고, 관람객이 "와!" 할 연출을 1~2개만 넣어 주세요. Scene.tsx 전체 코드만 보내 주세요.
 - 연출은 센서 값이나 클릭 결과와 연결 (예: 경고가 풀리면 상태등이 부드럽게 초록으로 돌아옴)
 - 0.5~1초 안에 끝나는 부드러운 움직임 (THREE.MathUtils.damp), 통통 튀는 효과 금지
-- 원하면 마스코트 추가: import { StudentChibi } from '@/components/3d/characters' 후
+- 원하면 마스코트 추가: import { StudentChibi } from '@/components/3d/characters' 후 (여학생, 안경 쓴 남학생은 StudentBoy)
   &lt;StudentChibi waypoints={[[x1, z1], [x2, z2], [x3, z3]]} name="___" isModalOpen={isModalOpen} /&gt; (가구에서 0.4m 이상 떨어진 길)</pre>
     <p class="appx-links">📘 <a class="link" href="manual.html" target="_blank">자세한 매뉴얼</a> (규격 · SDK · 펌웨어) · 🎓 <a class="link" href="intro.html" target="_blank">오리엔테이션</a> (디지털 트윈 · 시스템 구성) · 🚀 <a class="link" data-dashboard href="http://localhost:3001/" target="_blank">대시보드</a> (예제: 스마트 독서실)</p>
   </article>

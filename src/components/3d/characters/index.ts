@@ -4,4 +4,5 @@ export { CatButler } from './CatButler';
 export { CowFarmer } from './CowFarmer';
 export { FactoryBot } from './FactoryBot';
 export { StudentChibi } from './StudentChibi';
+export { StudentBoy } from './StudentBoy';
 export type { MascotProps } from './MascotBase';
