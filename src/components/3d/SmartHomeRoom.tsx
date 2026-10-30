@@ -16,7 +16,6 @@ import { NeedsYouCallout3D } from './NeedsYouCallout3D';
 import { CatButler } from './characters';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { HoverLift, MAT, PALETTE, badgeStyle, useSmoothValue } from '@/core/sdk/design';
-import { announce } from '@/core/voice/voice';
 
 interface SmartHomeRoomProps {
   approvalStatus?: 'pending' | 'approved';
@@ -168,14 +167,13 @@ export function SmartHomeRoom({
   const sensors = useIoTStore((s) => s.sensors);
   const sunBeam = useMemo(() => new THREE.Color('#FFF1D6'), []);
 
-  // 도슨트를 누르면 지금 상태를 음성 · 자막으로 안내 (사용자가 직접 누른 경우라 설정과 관계없이)
+  // 고양이 집사를 누르면 지금 상태를 음성 · 자막으로 안내 (MascotBase 가 say 를 읽음)
   const greet = () => {
     const t = sensors.dht11_temp;
     const h = sensors.dht11_humi;
-    const msg = t.isStale
+    return t.isStale
       ? '안녕하세요, 스마트 거실 허브입니다. 지금은 센서 값을 기다리는 중입니다.'
       : `안녕하세요, 스마트 거실 허브입니다. 지금 온도는 ${t.value.toFixed(1)}도, 습도는 ${h.value.toFixed(0)}퍼센트입니다.`;
-    announce(null, msg, true);
   };
 
   return (
@@ -401,7 +399,7 @@ export function SmartHomeRoom({
       <CdsSensorNode isModalOpen={isModalOpen} />
 
       {/* 12. 마스코트 고양이 집사: 거실을 천천히 산책, 누르면 멈춰서 손 인사 + 지금 상태 안내 */}
-      <CatButler waypoints={HOME_PATH} name="고양이 집사" onClick={greet} isModalOpen={isModalOpen} />
+      <CatButler waypoints={HOME_PATH} name="고양이 집사" say={greet} isModalOpen={isModalOpen} />
 
       {/* 13. 3D 승인 말풍선 */}
       <NeedsYouCallout3D approvalStatus={approvalStatus} onApprove={onApprove} onReview={onReview} isModalOpen={isModalOpen} />

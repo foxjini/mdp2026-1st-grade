@@ -38,7 +38,7 @@ export interface MascotProps {
   name?: string;
   /** 클릭하면 읽어 줄 말 (문장, 또는 그때의 센서 값으로 문장을 만드는 함수). 없으면 이름으로 인사 */
   say?: string | (() => string);
-  /** 클릭하면 실행 — 캐릭터는 멈춰서 손을 흔듦. 주면 say · 기본 인사 대신 이 함수가 음성 안내를 맡음 */
+  /** 클릭하면 말과 함께 실행할 추가 동작 (예: 명령 보내기). 음성은 언제나 say 가 맡음 */
   onClick?: () => void;
   isModalOpen?: boolean;
 }
@@ -210,9 +210,19 @@ export function MascotBase({
     e.stopPropagation();
     st.current.hold = 4.5; // 멈춰서 관람객을 보고
     st.current.wave = 2.2; // 손 인사
-    if (onClick) return onClick();
-    // 관람객이 직접 누른 것이라 음성 설정과 관계없이 읽음
-    const text = typeof say === 'function' ? say() : say ?? (name ? `안녕하세요! ${name}입니다.` : '안녕하세요!');
+    try {
+      onClick?.();
+    } catch (err) {
+      console.warn('[마스코트] onClick 오류', err);
+    }
+    // 관람객이 직접 누른 것이라 음성 설정과 관계없이 읽음 (say 함수에 오류가 있으면 이름 인사로)
+    const hello = name ? `안녕하세요! ${name}입니다.` : '안녕하세요!';
+    let text = hello;
+    try {
+      text = (typeof say === 'function' ? say() : say) || hello;
+    } catch (err) {
+      console.warn('[마스코트] say 오류', err);
+    }
     announce(null, text, true);
   };
 

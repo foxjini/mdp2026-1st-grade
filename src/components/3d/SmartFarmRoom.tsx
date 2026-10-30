@@ -12,7 +12,6 @@ import { LightObject } from '@/components/3d/LightObject';
 import { CdsSensorNode } from '@/components/3d/CdsSensorNode';
 import { Html, Instance, Instances, RoundedBox } from '@react-three/drei';
 import { MAT, PALETTE, badgeStyle, useSmoothValue } from '@/core/sdk/design';
-import { announce } from '@/core/voice/voice';
 import { CowFarmer } from './characters';
 
 interface SmartFarmRoomProps {
@@ -228,9 +227,7 @@ export function SmartFarmRoom({ isModalOpen = false }: SmartFarmRoomProps) {
         waypoints={FARM_PATH}
         name="젖소 농부"
         isModalOpen={isModalOpen}
-        onClick={() =>
-          announce(null, `음메! 스마트 팜 온실이에요. 흙의 수분은 ${Math.round(soilMoisture)}퍼센트, 온도는 ${temp.toFixed(1)}도예요.`, true)
-        }
+        say={() => `음메! 스마트 팜 온실이에요. 흙의 수분은 ${Math.round(soilMoisture)}퍼센트, 온도는 ${temp.toFixed(1)}도예요.`}
       />
 
       {/* 7. 스마트팜 조명(식물 생장등) 및 Cds 조도센서 노드 */}

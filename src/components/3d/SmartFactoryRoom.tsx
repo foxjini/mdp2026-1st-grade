@@ -8,7 +8,6 @@ import { LightObject } from '@/components/3d/LightObject';
 import { CdsSensorNode } from '@/components/3d/CdsSensorNode';
 import { Html } from '@react-three/drei';
 import { PALETTE, badgeStyle } from '@/core/sdk/design';
-import { announce } from '@/core/voice/voice';
 import { FactoryBot } from './characters';
 
 interface SmartFactoryRoomProps {
@@ -387,12 +386,8 @@ export function SmartFactoryRoom({ isModalOpen = false }: SmartFactoryRoomProps)
         waypoints={FACTORY_PATH}
         name="작업 로봇"
         isModalOpen={isModalOpen}
-        onClick={() =>
-          announce(
-            null,
-            `안녕하세요, 작업 로봇이에요. 분류 게이트는 ${gateOpen ? '열려' : '닫혀'} 있고, 지금까지 ${sortedCount}개를 분류했어요.`,
-            true
-          )
+        say={() =>
+          `안녕하세요, 작업 로봇이에요. 분류 게이트는 ${gateOpen ? '열려' : '닫혀'} 있고, 지금까지 ${sortedCount}개를 분류했어요.`
         }
       />
 
