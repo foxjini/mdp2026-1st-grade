@@ -31,6 +31,19 @@ import { BUILTIN_ROOMS, metaToRoomItem, roomsApi } from '@/core/rooms/roomsApi';
 import { Loader2, ArrowLeft, SlidersHorizontal, Calendar, Eye } from 'lucide-react';
 
 // R3F 3D Canvas는 브라우저 전용이므로 SSR 완전 해제
+// 공간이 하나도 없을 때(샘플을 모두 삭제하고 팀 공간도 아직 없음) 화면이 깨지지 않게 쓰는 빈 공간
+const EMPTY_ROOM: RoomItem = {
+  id: '',
+  name: '공간 없음',
+  sensorsDesc: '',
+  iconType: 'sparkles',
+  iconBg: '',
+  iconColor: '',
+  source: 'uploaded',
+  picoIp: '',
+  mode: 'simulation',
+};
+
 const SceneCanvas = dynamic(
   () => import('@/components/3d/SceneCanvas').then((mod) => mod.SceneCanvas),
   {
@@ -48,8 +61,11 @@ const SceneCanvas = dynamic(
 
 
 export default function HomePage() {
-  const [activeRoomId, setActiveRoomId] = useState('builtin_home');
-  const [roomList, setRoomList] = useState<RoomItem[]>(BUILTIN_ROOMS);
+  // 공간 목록은 서버에서 불러온 뒤 정함 (전시용으로 삭제한 샘플 공간이 잠깐 보이지 않게)
+  const [activeRoomId, setActiveRoomId] = useState('');
+  const [roomList, setRoomList] = useState<RoomItem[]>([]);
+  const [roomsLoaded, setRoomsLoaded] = useState(false);
+  const [hiddenSamples, setHiddenSamples] = useState<string[]>([]);
   const [activeNavTab, setActiveNavTab] = useState('space');
   const [activeCenterTab, setActiveCenterTab] = useState<'inspector' | 'output' | 'thread'>('inspector');
 
@@ -88,7 +104,7 @@ export default function HomePage() {
   const applyRoomConnection = useIoTStore((s) => s.applyRoomConnection);
   const resetActuators = useIoTStore((s) => s.resetActuators);
 
-  const currentRoom = roomList.find((r) => r.id === activeRoomId) || roomList[0];
+  const currentRoom = roomList.find((r) => r.id === activeRoomId) || roomList[0] || EMPTY_ROOM;
 
   // 공간을 바꾸면 시뮬레이션 서보/LED 를 새로 시작 (하드웨어 공간은 곧 그 Pico 의 실제 값으로 갱신됨)
   useEffect(() => {
@@ -136,13 +152,22 @@ export default function HomePage() {
   // 전시 PC(rooms-data/)에 저장된 팀 공간 목록 불러오기
   const refreshRooms = useCallback(async () => {
     try {
-      const [metas, builtin] = await Promise.all([roomsApi.list(), roomsApi.builtinConnections()]);
-      const builtinRooms = BUILTIN_ROOMS.map((r) => ({ ...r, ...(builtin[r.id] || {}) }));
+      const [metas, { connections, hidden }] = await Promise.all([roomsApi.list(), roomsApi.builtinConnections()]);
+      const builtinRooms = BUILTIN_ROOMS.filter((r) => !hidden.includes(r.id)).map((r) => ({ ...r, ...(connections[r.id] || {}) }));
       // 기본 공간 → 기본 예제 꾸러미 공간 → 팀 공간 순서
       const items = metas.map(metaToRoomItem);
-      setRoomList([...builtinRooms, ...items.filter((r) => r.isExample), ...items.filter((r) => !r.isExample)]);
+      const list = [...builtinRooms, ...items.filter((r) => r.isExample), ...items.filter((r) => !r.isExample)];
+      setRoomList(list);
+      setHiddenSamples(hidden);
+      // 선택한 공간이 없어졌으면 첫 공간으로
+      setActiveRoomId((prev) => (list.some((r) => r.id === prev) ? prev : list[0]?.id ?? ''));
     } catch (err) {
       addLog('warn', `팀 공간 목록을 불러오지 못했습니다: ${err instanceof Error ? err.message : err}`, 'SYSTEM');
+      // 서버에 닿지 않으면 플랫폼 기본 공간만이라도 보여 줌
+      setRoomList((prev) => (prev.length ? prev : BUILTIN_ROOMS));
+      setActiveRoomId((prev) => prev || BUILTIN_ROOMS[0].id);
+    } finally {
+      setRoomsLoaded(true);
     }
   }, [addLog]);
 
@@ -163,7 +188,7 @@ export default function HomePage() {
 
   // 업로드 공간을 선택하면 꾸러미(Scene.tsx · mock.js 등)를 불러와 스토어에 적용
   useEffect(() => {
-    if (activeRoomId.startsWith('builtin_')) {
+    if (!activeRoomId || activeRoomId.startsWith('builtin_')) {
       setActiveRoomPackage(null);
       return;
     }
@@ -212,7 +237,7 @@ export default function HomePage() {
 
   // 학교 마크 → [첫 화면으로]: 첫 공간 · 기본 시점 · 장치 인스펙터 탭
   const goHome = () => {
-    selectRoom(BUILTIN_ROOMS[0].id);
+    if (roomList[0]) selectRoom(roomList[0].id);
     setActiveNavTab('space');
     setActiveCenterTab('inspector');
   };
@@ -326,19 +351,35 @@ export default function HomePage() {
 
   const handleDeleteRoom = async (roomId: string) => {
     const target = findRoom(roomId);
-    if (!target || target.source !== 'uploaded' || target.isExample) {
-      showToast('기본 예제 공간은 삭제할 수 없습니다.');
-      return;
-    }
-    if (!window.confirm(`"${target.name}" 공간과 업로드된 코드를 모두 삭제할까요?`)) return;
+    if (!target) return;
+    const sample = target.source === 'builtin' || target.isExample;
+    const question = sample
+      ? `샘플 공간 "${target.name}"을(를) 목록에서 삭제할까요?\n(전시회에서 학생 작품만 보이게 할 때. 사이드바의 [샘플 공간 되살리기]로 다시 보이게 할 수 있습니다)`
+      : `"${target.name}" 공간과 업로드된 코드를 모두 삭제할까요?`;
+    if (!window.confirm(question)) return;
     try {
       await roomsApi.remove(roomId);
-      setRoomList((prev) => prev.filter((r) => r.id !== roomId));
-      if (activeRoomId === roomId) setActiveRoomId(BUILTIN_ROOMS[0].id);
+      const rest = roomList.filter((r) => r.id !== roomId);
+      setRoomList(rest);
+      if (sample) setHiddenSamples((prev) => [...prev, roomId]);
+      if (activeRoomId === roomId) setActiveRoomId(rest[0]?.id ?? '');
       showToast(`"${target.name}"이(가) 삭제되었습니다.`);
       addLog('info', `공간 삭제: ${target.name}`, 'USER');
     } catch (err) {
       showToast(`삭제 실패: ${err instanceof Error ? err.message : err}`);
+    }
+  };
+
+  // 전시용으로 삭제한 샘플 공간(기본 공간 · 기본 예제)을 모두 되살림
+  const handleRestoreSamples = async () => {
+    if (!window.confirm(`삭제한 샘플 공간 ${hiddenSamples.length}개를 다시 목록에 보이게 할까요?`)) return;
+    try {
+      await roomsApi.restoreSamples();
+      await refreshRooms();
+      showToast('샘플 공간을 되살렸습니다.');
+      addLog('info', '샘플 공간 되살리기', 'USER');
+    } catch (err) {
+      showToast(`되살리기 실패: ${err instanceof Error ? err.message : err}`);
     }
   };
 
@@ -388,6 +429,8 @@ export default function HomePage() {
         onRenameRoom={handleRenameRoom}
         onDuplicateRoom={handleDuplicateRoom}
         onDeleteRoom={handleDeleteRoom}
+        hiddenSampleCount={hiddenSamples.length}
+        onRestoreSamples={handleRestoreSamples}
         onOpenCodeModal={() => setShowCodeModal(true)}
         onOpenConnectionModal={() => setShowIpModal(true)}
         onCopyRoomId={async (roomId) => {
@@ -433,6 +476,24 @@ export default function HomePage() {
             cameraTrigger={cameraTrigger}
             isModalOpen={anyModalOpen}
           />
+
+          {/* 공간이 하나도 없을 때 (샘플 공간을 모두 삭제하고 팀 공간도 아직 없음) */}
+          {roomsLoaded && roomList.length === 0 && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+              <div className="pointer-events-auto max-w-sm text-center bg-white/90 backdrop-blur rounded-3xl border border-slate-200 shadow-sm px-8 py-7">
+                <div className="text-base font-bold text-slate-900">아직 전시할 공간이 없습니다</div>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">
+                  왼쪽 사이드바의 [새 공간 추가]로 팀 공간을 만들고 코드를 업로드하세요.
+                </p>
+                <button
+                  onClick={() => setShowAddRoomModal(true)}
+                  className="mt-4 px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold hover:bg-blue-700"
+                >
+                  새 공간 추가
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* 3D 뷰 캔버스 하단 오버레이 버튼들 */}
           {/* 좌하단: 전체 조감도 토글 버튼 (입체 투시 ↔ 상공 탑다운 조감도) */}

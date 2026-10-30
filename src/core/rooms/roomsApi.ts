@@ -44,8 +44,13 @@ export const roomsApi = {
   removeFile: (id: string, name: string) =>
     call<RoomPackage>(`/api/rooms/${id}`, { method: 'PATCH', body: JSON.stringify({ removeFile: name }) }),
   remove: (id: string) => call<{ ok: true }>(`/api/rooms/${id}`, { method: 'DELETE' }),
+  // 기본 공간 Pico 연결 설정 + 전시용으로 삭제한 샘플 공간 id
   builtinConnections: () =>
-    call<{ connections: Record<string, RoomConnection> }>('/api/rooms/builtin').then((d) => d.connections),
+    call<{ connections: Record<string, RoomConnection>; hidden?: string[] }>('/api/rooms/builtin').then((d) => ({
+      connections: d.connections,
+      hidden: d.hidden ?? [],
+    })),
+  restoreSamples: () => call<{ ok: true }>('/api/rooms/builtin', { method: 'POST', body: JSON.stringify({ action: 'restore' }) }),
   patchBuiltin: (id: string, conn: Partial<RoomConnection>) =>
     call<{ connection: RoomConnection }>(`/api/rooms/builtin/${id}`, { method: 'PATCH', body: JSON.stringify(conn) }).then(
       (d) => d.connection

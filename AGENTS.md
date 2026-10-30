@@ -20,7 +20,7 @@ Pico 마다 IP 가 다르며, 플랫폼에서 공간을 선택하면 그 공간�
 ## 3. AI 에이전트 규칙
 - **학생 팀 코드 요청**: 반드시 `context/CONTEXT_ROOM_PACKAGE_SPEC.md` 규격의 4개 파일만 작성한다. `src/`, `firmware/` 원본을 수정하라고 안내하지 않는다.
   - 참고 예제: `context/examples/smart_farm/` (실제 동작 검증된 4개 파일), 디자인 킷 모범 사례는 `context/examples/smart_study_room/` (플랫폼 기본 예제 공간 '스마트 독서실'로 자동 등록), 제작 과정 영상의 결과물은 `context/examples/smart_bus_stop/` (기본 예제 공간 '스마트 버스정류장 쉼터', 서보 없는 구성)
-  - 기본 예제 꾸러미 공간은 `src/core/server/roomStore.ts` 의 `EXAMPLE_ROOMS` · `scripts/bundle-firmware.mjs` 에 같이 등록한다 (수정 · 삭제 불가, 복제 가능)
+  - 기본 예제 꾸러미 공간은 `src/core/server/roomStore.ts` 의 `EXAMPLE_ROOMS` · `scripts/bundle-firmware.mjs` 에 같이 등록한다 (수정 불가, 복제 가능). 전시회용으로 샘플 공간(기본 3공간 · 기본 예제)을 삭제하면 `rooms-data/_hidden.json` 에 기록되어 다시 만들어지지 않고, 사이드바 [샘플 공간 되살리기]로 복원한다
   - 3D 요령: `context/CONTEXT_3D_SCENE_GUIDE.md` / 핀 · 펌웨어: `context/CONTEXT_CIRCUITPYTHON_MAP.md`
 - **플랫폼 자체 유지보수** (교사 요청 시): 구조는 `context/CONTEXT_SYSTEM_SPEC.md` 참고.
   - 규격이 바뀌면 `src/core/sdk/index.ts`, `src/core/runtime/compileRoom.ts`(허용 모듈), `src/core/rooms/templates.ts`, `firmware/circuitpython/code.py`(Base 객체), `firmware/mock_pico_server.js`, `context/CONTEXT_ROOM_PACKAGE_SPEC.md` 를 함께 맞춘다.

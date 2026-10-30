@@ -16,6 +16,7 @@ import {
   X,
   Upload,
   Wifi,
+  RotateCcw,
 } from 'lucide-react';
 import { BaseDeviceId, RoomConnection, RoomIconType } from '@/core/types/iot';
 import { ROOM_ICONS } from './roomIcons';
@@ -48,6 +49,9 @@ interface RoomsSidebarProps {
   onRenameRoom?: (roomId: string, newName: string) => void;
   onDuplicateRoom?: (roomId: string) => void;
   onDeleteRoom?: (roomId: string) => void;
+  /** 전시용으로 삭제한 샘플 공간(기본 공간 · 기본 예제) 수 — 1개 이상이면 [샘플 공간 되살리기] 표시 */
+  hiddenSampleCount?: number;
+  onRestoreSamples?: () => void;
   onOpenCodeModal?: (roomId: string) => void;
   onOpenConnectionModal?: (roomId: string) => void;
   onCopyRoomId?: (roomId: string) => void;
@@ -66,6 +70,8 @@ export function RoomsSidebar({
   onRenameRoom = () => {},
   onDuplicateRoom = () => {},
   onDeleteRoom = () => {},
+  hiddenSampleCount = 0,
+  onRestoreSamples = () => {},
   onOpenCodeModal = () => {},
   onOpenConnectionModal = () => {},
   onCopyRoomId = () => {},
@@ -125,7 +131,8 @@ export function RoomsSidebar({
 
         {/* 2. 상단 퀵 카드 2종 (메인 허브 & 자동화 스케줄) */}
         <div className="flex flex-col gap-2.5">
-          {/* 거실 메인 라운지 카드 */}
+          {/* 거실 메인 라운지 카드 (거실 샘플 공간을 삭제했으면 숨김) */}
+          {roomList.some((r) => r.id === 'builtin_home') && (
           <div
             onClick={() => onSelectRoom('builtin_home')}
             className="group p-3 rounded-2xl bg-white border border-slate-200/80 shadow-[0_2px_8px_rgba(0,0,0,0.02)] hover:border-slate-300 hover:shadow-sm cursor-pointer transition-all flex items-center gap-3"
@@ -142,6 +149,7 @@ export function RoomsSidebar({
               </span>
             </div>
           </div>
+          )}
 
           {/* 자동화 스케줄 카드 (클릭 시 스케줄 모달 오픈) */}
           <div
@@ -167,6 +175,17 @@ export function RoomsSidebar({
           <span>공간 목록</span>
           <span>{roomList.length}개 구역</span>
         </div>
+
+        {/* 전시용으로 삭제한 샘플 공간 되살리기 */}
+        {hiddenSampleCount > 0 && (
+          <button
+            onClick={onRestoreSamples}
+            className="w-full py-1.5 px-3 rounded-xl text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:bg-white transition-all flex items-center justify-center gap-1.5"
+          >
+            <RotateCcw className="w-3 h-3" />
+            <span>샘플 공간 되살리기 ({hiddenSampleCount}개)</span>
+          </button>
+        )}
 
         {/* 4. + 새 공간 추가 점선 버튼 */}
         <button
@@ -369,8 +388,7 @@ export function RoomsSidebar({
                         onDeleteRoom(room.id);
                         setOpenMenuRoomId(null);
                       }}
-                      disabled={room.source === 'builtin' || room.isExample}
-                      title={room.source === 'builtin' || room.isExample ? '기본 예제 공간은 삭제할 수 없습니다.' : undefined}
+                      title={room.source === 'builtin' || room.isExample ? '샘플 공간을 목록에서 지웁니다 (사이드바에서 되살릴 수 있음)' : undefined}
                       className="w-full px-2.5 py-1.5 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-40 disabled:hover:bg-transparent rounded-xl transition-colors flex items-center gap-2"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

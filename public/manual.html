@@ -1741,7 +1741,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
         <thead><tr><th>순서</th><th>할 일</th><th>명령 / 위치</th></tr></thead>
         <tbody>
           <tr><td><strong>1</strong></td><td>전시 PC 에서 플랫폼 실행</td><td><code>npm run build</code> → <code>npm start</code> → <code>http://localhost:3001</code></td></tr>
-          <tr><td><strong>2</strong></td><td>각 팀 공간을 하나씩 열어 오류 배지가 없는지 확인</td><td>왼쪽 공간 목록</td></tr>
+          <tr><td><strong>2</strong></td><td>각 팀 공간을 하나씩 열어 오류 배지가 없는지 확인. 학생 작품만 보이게 하려면 샘플 공간(거실 · 팜 · 팩토리 · 독서실 · 버스정류장)을 <strong>⋮ → 공간 삭제</strong> (되돌리기: 목록 위 <strong>샘플 공간 되살리기</strong>)</td><td>왼쪽 공간 목록</td></tr>
           <tr><td><strong>3</strong></td><td>공간마다 Pico IP 정하기 (예: 팜 .51, 공장 .52 …) → 각 공간 <strong>⋮ → Pico 연결 설정</strong>에 저장</td><td><code>npm run firmware:bundle</code> 로 공간 ID · IP 목록 확인</td></tr>
           <tr><td><strong>4</strong></td><td>Pico 를 하나씩 USB 로 연결해 그 공간 펌웨어 설치 (핀 충돌 · 문법 검사 · 고정 IP 포함)</td><td><code>npm run firmware:bundle -- 공간ID E:\</code> (E: = 그 Pico 의 CIRCUITPY)</td></tr>
           <tr><td><strong>5</strong></td><td><code>settings.toml</code> 에 전시장 Wi-Fi 입력, <code>lib/</code> 라이브러리 확인 (스크립트가 필요 lib 안내)</td><td>CIRCUITPY 드라이브</td></tr>
@@ -1766,7 +1766,7 @@ npm run mock:pico -- --room 공간ID_B --port 5052</pre>
         </div>
         <div class="meta-box">
           <h3>Q1-1. 목록의 '예제' 공간을 고칠 수 있나요?</h3>
-          <p>스마트 거실 허브 · 팜 온실 · 팩토리 · <strong>스마트 독서실</strong> · <strong>스마트 버스정류장 쉼터</strong>는 기본 예제라 이름 변경 · 업로드 · 삭제가 막혀 있습니다. 스마트 독서실 · 버스정류장 쉼터는 공간 꾸러미 예제(<code>context/examples/smart_study_room/</code> · <code>smart_bus_stop/</code>)라 ⋮ → <strong>공간 복제하기</strong>로 사본을 만들면 우리 팀 공간처럼 고쳐 쓸 수 있습니다. Pico 연결 설정은 예제 공간에서도 바꿀 수 있습니다.</p>
+          <p>스마트 거실 허브 · 팜 온실 · 팩토리 · <strong>스마트 독서실</strong> · <strong>스마트 버스정류장 쉼터</strong>는 기본 예제라 이름 변경 · 업로드가 막혀 있습니다. 전시회에서 학생 작품만 보이게 하려면 <strong>⋮ → 공간 삭제</strong>로 목록에서 지울 수 있고, 목록 위 <strong>샘플 공간 되살리기</strong>로 언제든 다시 보이게 할 수 있습니다. 스마트 독서실 · 버스정류장 쉼터는 공간 꾸러미 예제(<code>context/examples/smart_study_room/</code> · <code>smart_bus_stop/</code>)라 ⋮ → <strong>공간 복제하기</strong>로 사본을 만들면 우리 팀 공간처럼 고쳐 쓸 수 있습니다. Pico 연결 설정은 예제 공간에서도 바꿀 수 있습니다.</p>
         </div>
         <div class="meta-box">
           <h3>Q2. 업로드를 아무나 못 하게 하려면?</h3>

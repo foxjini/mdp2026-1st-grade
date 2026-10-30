@@ -195,6 +195,7 @@ async function writeMeta(meta: RoomMeta): Promise<void> {
 
 // 예제 원본 → rooms-data 복사. 처음 한 번, 또는 원본 파일이 바뀌었을 때만 (저장된 Pico IP · 모드는 유지)
 async function seedExampleRooms(): Promise<void> {
+  const hidden = await readHiddenSamples();
   for (const [id, rel] of Object.entries(EXAMPLE_ROOMS)) {
     const dir = path.join(process.cwd(), rel);
     const sources: Partial<Record<RoomFileName, string>> = {};
@@ -207,6 +208,7 @@ async function seedExampleRooms(): Promise<void> {
       .update(ROOM_FILE_NAMES.map((n) => sources[n]).join('\0'))
       .digest('hex')
       .slice(0, 12);
+    if (hidden.includes(id)) continue; // 전시용으로 삭제한 예제는 다시 만들지 않음
     const prev = await readMeta(id);
     if (prev?.example && prev.exampleHash === hash) continue;
     const raw = JSON.parse(sources['room.json'] as string) as Record<string, unknown>;
@@ -286,6 +288,35 @@ export async function readBuiltinConnections(): Promise<Record<string, RoomConne
   } catch {
     return {};
   }
+}
+
+// ------------------------------------------------------------------------------
+// 전시용으로 삭제한 샘플 공간(기본 공간 · 기본 예제): rooms-data/_hidden.json
+// ------------------------------------------------------------------------------
+const HIDDEN_FILE = () => path.join(ROOMS_DIR, '_hidden.json');
+const SAMPLE_IDS = () => [...BUILTIN_ROOM_IDS, ...Object.keys(EXAMPLE_ROOMS)];
+
+export async function readHiddenSamples(): Promise<string[]> {
+  try {
+    const raw = JSON.parse(await fs.readFile(HIDDEN_FILE(), 'utf8'));
+    return Array.isArray(raw) ? raw.filter((id) => SAMPLE_IDS().includes(id)) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function hideSampleRoom(id: string): Promise<void> {
+  const hidden = await readHiddenSamples();
+  if (hidden.includes(id)) return;
+  await fs.mkdir(ROOMS_DIR, { recursive: true });
+  await fs.writeFile(HIDDEN_FILE(), JSON.stringify([...hidden, id], null, 2), 'utf8');
+}
+
+// 삭제한 샘플 공간을 모두 되살림 (기본 예제는 원본 폴더에서 다시 복사)
+export async function restoreSampleRooms(): Promise<void> {
+  await fs.rm(HIDDEN_FILE(), { force: true });
+  examplesReady = null;
+  await ensureExampleRooms();
 }
 
 export async function updateBuiltinConnection(id: string, patch: Record<string, unknown>): Promise<RoomConnection> {
@@ -394,9 +425,11 @@ export async function duplicateRoom(id: string): Promise<RoomPackage> {
   return getRoom(copy.meta.id);
 }
 
+// 기본 공간(builtin_*)은 플랫폼 코드라 목록에서만 숨기고, 기본 예제는 폴더를 지운 뒤 다시 만들지 않게 기록
 export async function deleteRoom(id: string): Promise<void> {
   assertRoomId(id);
-  if ((await readMeta(id))?.example) throw new RoomError(EXAMPLE_LOCKED, 403);
+  if (BUILTIN_ROOM_IDS.includes(id) || EXAMPLE_ROOMS[id]) await hideSampleRoom(id);
+  if (BUILTIN_ROOM_IDS.includes(id)) return;
   await fs.rm(roomDir(id), { recursive: true, force: true });
 }
 
