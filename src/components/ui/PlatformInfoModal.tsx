@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { X, Home, BookOpen, Maximize, Cpu, AlertTriangle, Presentation, ListChecks } from 'lucide-react';
+import { X, Home, BookOpen, Maximize, Cpu, AlertTriangle, Presentation, ListChecks, PlayCircle } from 'lucide-react';
 import { useIoTStore } from '@/core/store/useIoTStore';
 import { BASE_DEVICE_INFO } from '@/core/types/iot';
 import { RoomItem } from './RoomsSidebar';
@@ -192,6 +192,15 @@ export function PlatformInfoModal({ isOpen, onClose, roomList, activeRoomId, onS
               title="1학년용 오리엔테이션 발표 자료 (디지털 트윈 · 시스템 구성 · 사용법)"
             >
               <Presentation className="w-3.5 h-3.5" /> 오리엔테이션
+            </a>
+            <a
+              href="/videos/%EA%B0%9C%EB%B3%84%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8_%EC%A0%9C%EC%9E%91%EA%B3%BC%EC%A0%95.mp4"
+              target="_blank"
+              rel="noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5"
+              title="스마트 버스정류장 쉼터를 9단계로 만드는 과정 (약 8분)"
+            >
+              <PlayCircle className="w-3.5 h-3.5" /> 제작 과정 영상
             </a>
             <button
               onClick={() => {
