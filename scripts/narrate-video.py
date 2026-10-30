@@ -17,13 +17,17 @@
   python3 scripts/narrate-video.py --dry-run                   # 문장 수 · 글자 수만 확인
   python3 scripts/narrate-video.py --engine test --out /tmp/x  # 무음 가짜 음성으로 전체 과정 점검
 
-필요: Python 3.9+, ffmpeg · ffprobe (PATH)
+필요: Python 3.9+, ffmpeg (PATH 에 없으면 pip install imageio-ffmpeg 로 받은 것을 씀)
+윈도우 학교 PC 준비 (한 번만):
+  pip install edge-tts imageio-ffmpeg
+  python scripts/narrate-video.py --engine edge
 """
 import argparse
 import base64
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -43,18 +47,43 @@ LEAD = 0.15         # 구간 시작 후 음성이 나오기까지 (초)
 DEFAULT_VOICE = {'google': 'ko-KR-Neural2-A', 'edge': 'ko-KR-SunHiNeural', 'test': 'test'}
 
 
+def find_ffmpeg():
+    # PATH → pip install imageio-ffmpeg → 윈도우 흔한 설치 위치 순서로 찾기 (ffprobe 는 쓰지 않음)
+    exe = shutil.which('ffmpeg')
+    if exe:
+        return exe
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        pass
+    for d in (r'C:\ffmpeg\bin', os.path.expandvars(r'%LOCALAPPDATA%\Microsoft\WinGet\Links'), r'C:\Program Files\ffmpeg\bin'):
+        f = Path(d) / 'ffmpeg.exe'
+        if f.exists():
+            return str(f)
+    sys.exit('ffmpeg 를 찾을 수 없습니다. 아래 중 하나를 한 뒤 다시 실행하세요.\n'
+             '  1) 가장 쉬움:  pip install imageio-ffmpeg\n'
+             '  2) 또는:      winget install --id Gyan.FFmpeg -e   (설치 후 터미널을 닫았다 다시 열기)')
+
+
+FFMPEG = None  # main() 에서 find_ffmpeg() 로 정함
+
+
 def run(cmd, **kw):
+    if cmd and cmd[0] == 'ffmpeg':
+        cmd = [FFMPEG] + cmd[1:]
     return subprocess.run(cmd, check=True, capture_output=True, **kw)
 
 
 def probe_duration(f):
-    out = run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', str(f)]).stdout
-    return float(out.decode().strip())
-
-
-def probe_chapters(f):
-    out = run(['ffprobe', '-v', 'error', '-show_chapters', '-of', 'json', str(f)]).stdout
-    return [(float(c['start_time']), float(c['end_time']), c.get('tags', {}).get('title', '')) for c in json.loads(out)['chapters']]
+    # ffmpeg -i 의 'Duration: 00:07:49.37' 줄에서 길이 (ffmpeg 는 출력 파일이 없으면 오류로 끝나므로 check 없이)
+    if not Path(f).exists():
+        sys.exit(f'영상 파일이 없습니다: {f}')
+    err = subprocess.run([FFMPEG, '-hide_banner', '-i', str(f)], capture_output=True).stderr.decode('utf-8', 'replace')
+    m = re.search(r'Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)', err)
+    if not m:
+        sys.exit(f'영상 길이를 읽지 못했습니다: {f}\n{err[-400:]}')
+    return int(m.group(1)) * 3600 + int(m.group(2)) * 60 + float(m.group(3))
 
 
 # ── 음성 합성 ────────────────────────────────────────────────────────────
@@ -134,6 +163,13 @@ def main():
     ap.add_argument('--dry-run', action='store_true')
     a = ap.parse_args()
     voice = a.voice or DEFAULT_VOICE[a.engine]
+    global FFMPEG
+    FFMPEG = find_ffmpeg()
+    if a.engine == 'edge' and not a.dry_run and not shutil.which('edge-tts'):
+        try:
+            import edge_tts  # noqa: F401
+        except ImportError:
+            sys.exit('edge-tts 가 없습니다. pip install edge-tts 를 한 뒤 다시 실행하세요.')
 
     doc = json.loads(Path(a.script).read_text(encoding='utf-8'))
     lines = sorted(doc['lines'], key=lambda x: x['t'])
@@ -143,9 +179,9 @@ def main():
     if want and abs(D - want) > 0.5:
         sys.exit(f'{src.name} 길이가 {D:.1f}초로, 대본이 만든 무음 원본({want:.1f}초)과 다릅니다. 이미 음성을 넣은 영상 같습니다.\n'
                  '무음 원본을 git 에서 되살린 뒤 다시 실행하세요: git log --oneline -- public/videos/bus_stop_project_guide.mp4')
-    chapters = probe_chapters(src)  # 호환판에는 장 정보가 없음 (0개)
     chars = sum(len(x['say']) for x in lines)
-    print(f'원본 {src.name}: {D:.1f}초 · 장 {len(chapters)}개 · 문장 {len(lines)}개 · {chars}자 · {a.engine}/{voice} · 속도 {a.speed}')
+    print(f'ffmpeg: {FFMPEG}')
+    print(f'원본 {src.name}: {D:.1f}초 · 문장 {len(lines)}개 · {chars}자 · {a.engine}/{voice} · 속도 {a.speed}')
     if a.dry_run:
         for x in lines:
             print(f"  {x['t']:7.2f}s  {x['say']}")
