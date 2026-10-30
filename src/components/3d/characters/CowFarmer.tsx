@@ -104,13 +104,13 @@ export function CowFarmer(props: MascotProps) {
             </group>
           ))}
 
-          {/* 꼬리 (끝에 술) */}
-          <group ref={rig.tail} position={[0, 0.38, -0.22]}>
-            <mesh position={[0, -0.05, -0.05]} rotation={[-0.6, 0, 0]}>
-              <cylinderGeometry args={[0.012, 0.012, 0.14, 6]} />
+          {/* 꼬리: 엉덩이에서 아래 · 뒤로 늘어지고 끝에 술 */}
+          <group ref={rig.tail} position={[0, 0.38, -0.21]}>
+            <mesh position={[0, -0.07, -0.039]} rotation={[0.503, 0, 0]}>
+              <cylinderGeometry args={[0.013, 0.013, 0.16, 6]} />
               <Soft color={WHITE} />
             </mesh>
-            <mesh position={[0, -0.11, -0.1]}>
+            <mesh position={[0, -0.145, -0.08]}>
               <sphereGeometry args={[0.03, 10, 8]} />
               <Soft color={SPOT} />
             </mesh>

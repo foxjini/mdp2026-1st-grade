@@ -124,12 +124,12 @@ export function FactoryBot(props: MascotProps) {
                 <Soft color="#E0AE1E" rough={0.35} />
               </mesh>
             </group>
-            {/* 안테나 */}
-            <mesh position={[0.17, 0.48, 0]}>
+            {/* 안테나 (안전모 위로 솟게) */}
+            <mesh position={[0.09, 0.62, 0]}>
               <cylinderGeometry args={[0.006, 0.006, 0.1, 6]} />
               <meshStandardMaterial color={JOINT} />
             </mesh>
-            <mesh position={[0.17, 0.54, 0]}>
+            <mesh position={[0.09, 0.68, 0]}>
               <sphereGeometry args={[0.022, 12, 10]} />
               <meshStandardMaterial color={ACCENT} emissive={ACCENT} emissiveIntensity={1.4} />
             </mesh>

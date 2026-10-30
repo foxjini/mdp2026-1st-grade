@@ -16,7 +16,7 @@ interface VoiceState {
   enabled: boolean;
   categories: Record<VoiceCategory, boolean>;
   rate: number;
-  pitch: number;          // 1.15 = 조금 높고 밝게
+  pitch: number;          // 1.0 = 목소리 그대로 (높을수록 밝게)
   voiceURI: string;       // '' = 자동 추천 (Google 한국의 우선)
   lastSpoken: string;
   lastVoice: string;      // 실제로 읽은 목소리 이름 (설정 창 표시)
@@ -37,8 +37,8 @@ export const useVoiceStore = create<VoiceState>()(
     (set) => ({
       enabled: false,
       categories: { approval: true, control: true, automation: true, connection: true },
-      rate: 1.1,
-      pitch: 1.15,
+      rate: 1.0,
+      pitch: 1.0,
       voiceURI: '',
       lastSpoken: '',
       lastVoice: '',
@@ -56,6 +56,16 @@ export const useVoiceStore = create<VoiceState>()(
       name: 'iot-voice-settings',
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({ enabled: s.enabled, categories: s.categories, rate: s.rate, pitch: s.pitch, voiceURI: s.voiceURI }),
+      version: 1,
+      // v0 의 기본값(속도 1.1 · 높낮이 1.15)을 그대로 쓰던 PC 는 새 기본값 1.0 으로, 직접 바꾼 값은 그대로
+      migrate: (persisted, version) => {
+        const s = (persisted ?? {}) as Partial<VoiceState>;
+        if (version < 1) {
+          if (s.rate === 1.1) s.rate = 1.0;
+          if (s.pitch === 1.15) s.pitch = 1.0;
+        }
+        return s as VoiceState;
+      },
     }
   )
 );

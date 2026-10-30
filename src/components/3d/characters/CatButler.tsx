@@ -91,13 +91,21 @@ export function CatButler(props: MascotProps) {
             </group>
           ))}
 
-          {/* 꼬리 (살랑) */}
-          <group ref={rig.tail} position={[0, 0.3, -0.15]}>
-            <mesh position={[0, 0.12, -0.08]} rotation={[0.5, 0, 0]}>
-              <capsuleGeometry args={[0.032, 0.22, 6, 12]} />
+          {/* 꼬리 (살랑): 엉덩이에서 뒤로 → 위로 휘는 두 마디, 끝은 밝은 털 */}
+          <group ref={rig.tail} position={[0, 0.3, -0.12]}>
+            <mesh position={[0, 0.031, -0.063]} rotation={[-1.107, 0, 0]}>
+              <capsuleGeometry args={[0.03, 0.14, 6, 12]} />
               <Soft color={FUR} sheen />
             </mesh>
-            <mesh position={[0, 0.26, -0.15]}>
+            <mesh position={[0, 0.063, -0.125]}>
+              <sphereGeometry args={[0.031, 12, 10]} />
+              <Soft color={FUR} sheen />
+            </mesh>
+            <mesh position={[0, 0.141, -0.144]} rotation={[-0.245, 0, 0]}>
+              <capsuleGeometry args={[0.029, 0.16, 6, 12]} />
+              <Soft color={FUR} sheen />
+            </mesh>
+            <mesh position={[0, 0.222, -0.164]}>
               <sphereGeometry args={[0.036, 12, 10]} />
               <Soft color={FUR_LIGHT} sheen />
             </mesh>
@@ -110,9 +118,9 @@ export function CatButler(props: MascotProps) {
               <Soft color={FUR} sheen />
               <Ol />
             </mesh>
-            {/* 이마 줄무늬 */}
+            {/* 이마 줄무늬 (머리 곡면에 납작하게 붙여 뒤로 눕힘) */}
             {[-0.065, 0, 0.065].map((x) => (
-              <mesh key={x} position={[x, 0.43, 0.165]} rotation={[0.75, 0, -x * 3]} scale={[0.22, 1, 0.12]}>
+              <mesh key={x} position={[x, 0.425, 0.182]} rotation={[-0.8, 0, -x * 3]} scale={[0.22, 1, 0.1]}>
                 <sphereGeometry args={[0.06, 10, 8]} />
                 <Soft color="#D98A4E" />
               </mesh>
@@ -151,10 +159,11 @@ export function CatButler(props: MascotProps) {
               <sphereGeometry args={[0.028, 12, 10]} />
               <meshStandardMaterial color="#7A3440" roughness={0.6} />
             </mesh>
+            {/* 수염: 주둥이 양옆에서 바깥 · 뒤로 가로로 뻗는 3가닥 (원기둥을 눕혀서) */}
             {[-1, 1].map((d) =>
-              [0.17, 0.14].map((y, k) => (
-                <mesh key={`${d}-${k}`} position={[d * 0.2, y, 0.2]} rotation={[0, 0, d * (k ? -0.15 : 0.1)]}>
-                  <cylinderGeometry args={[0.003, 0.003, 0.13, 4]} />
+              [0.18, 0.16, 0.14].map((y, k) => (
+                <mesh key={`${d}-${k}`} position={[d * 0.157, y, 0.226]} rotation={[0, d * 0.3, Math.PI / 2 + d * (k - 1) * 0.16]}>
+                  <cylinderGeometry args={[0.0035, 0.0035, 0.14, 5]} />
                   <meshBasicMaterial color="#6B5446" />
                 </mesh>
               ))

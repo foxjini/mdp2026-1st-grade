@@ -129,7 +129,7 @@ export function VoiceControl() {
           </div>
 
           <div className={`flex flex-col gap-1 ${enabled ? '' : 'opacity-50'}`}>
-            <span className="text-[11px] font-bold text-slate-500">목소리 높낮이 {pitch.toFixed(2)} (높을수록 밝게)</span>
+            <span className="text-[11px] font-bold text-slate-500">목소리 높낮이 {pitch.toFixed(2)} (기본 1.00 · 높을수록 밝게)</span>
             <input
               type="range"
               min="0.8"
@@ -144,7 +144,7 @@ export function VoiceControl() {
           </div>
 
           <div className={`flex flex-col gap-1 ${enabled ? '' : 'opacity-50'}`}>
-            <span className="text-[11px] font-bold text-slate-500">말하기 속도 {rate.toFixed(1)}배</span>
+            <span className="text-[11px] font-bold text-slate-500">말하기 속도 {rate.toFixed(1)}배 (기본 1.0배)</span>
             <input
               type="range"
               min="0.8"

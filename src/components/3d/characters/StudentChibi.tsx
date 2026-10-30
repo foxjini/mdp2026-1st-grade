@@ -51,11 +51,12 @@ export function StudentChibi(props: MascotProps) {
             <Soft color={BLAZER} rough={0.6} />
             <Ol />
           </mesh>
-          <mesh position={[0, 0.52, 0.11]} rotation={[0.35, 0, Math.PI]}>
-            <coneGeometry args={[0.06, 0.12, 3]} />
+          {/* 셔츠 V: 가슴 곡면에 붙인 납작한 삼각형 (꼭짓점 아래) */}
+          <mesh position={[0, 0.515, 0.124]} rotation={[-0.37, 0, -Math.PI / 2]}>
+            <circleGeometry args={[0.062, 3]} />
             <Soft color="#FAF8F5" rough={0.6} />
           </mesh>
-          <mesh position={[0, 0.49, 0.135]} rotation={[0.3, 0, 0]}>
+          <mesh position={[0, 0.49, 0.13]} rotation={[-0.18, 0, 0]}>
             <boxGeometry args={[0.03, 0.11, 0.012]} />
             <Soft color="#B9373F" rough={0.5} />
           </mesh>
@@ -109,6 +110,11 @@ export function StudentChibi(props: MascotProps) {
               <sphereGeometry args={[0.258, 30, 22, 0, Math.PI * 2, 0, Math.PI * 0.62]} />
               <Soft color={HAIR} rough={0.35} />
               <Ol thickness={0.008} />
+            </mesh>
+            {/* 뒷머리: 뒤통수 아래 · 목덜미까지 덮는 단발 (얼굴 쪽은 머리 속에 숨음) */}
+            <mesh position={[0, 0.2, -0.06]} scale={[1.08, 0.9, 0.95]} castShadow>
+              <sphereGeometry args={[0.25, 28, 20]} />
+              <Soft color={HAIR} rough={0.35} />
             </mesh>
             {/* 앞머리 (한 덩어리로 매끈하게) */}
             <mesh position={[0, 0.41, 0.16]} rotation={[0.75, 0, 0]} scale={[2.6, 0.75, 1.15]}>
