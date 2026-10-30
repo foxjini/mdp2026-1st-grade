@@ -26,7 +26,10 @@ const ALL_BASE_DEVICES = ['dht11', 'cds', 'sg90', 'rgb'];
 const BUILTIN = { builtin_home: '스마트 거실 허브', builtin_farm: '스마트 팜 온실', builtin_factory: '스마트 팩토리 공정' };
 // 기본 예제 꾸러미 공간 (src/core/server/roomStore.ts 의 EXAMPLE_ROOMS 와 동일하게 유지)
 // 플랫폼을 아직 실행하지 않아 rooms-data 에 없으면 저장소의 예제 폴더에서 읽음
-const EXAMPLE_ROOMS = { example_study_room: 'context/examples/smart_study_room' };
+const EXAMPLE_ROOMS = {
+  example_study_room: 'context/examples/smart_study_room',
+  example_bus_stop: 'context/examples/smart_bus_stop',
+};
 
 // src/core/types/iot.ts BASE_DEVICE_INFO · src/core/server/roomStore.ts reservedPins() 와 동일하게 유지
 const BASE_DEVICE_PINS = {

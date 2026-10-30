@@ -1,0 +1,40 @@
+{
+  "id": "example_bus_stop",
+  "name": "스마트 버스정류장 쉼터",
+  "team": "예제",
+  "iconType": "car",
+  "sensorsDesc": "온습도 · 조도 · 사람 감지 · 히터 LED",
+  "baseDevices": [
+    "dht11",
+    "cds",
+    "rgb"
+  ],
+  "picoIp": "",
+  "customSensors": [
+    {
+      "key": "person",
+      "name": "사람 감지(PIR)",
+      "unit": "",
+      "min": 0,
+      "max": 1
+    },
+    {
+      "key": "bus_eta",
+      "name": "버스 도착까지",
+      "unit": "분",
+      "min": 0,
+      "max": 10
+    },
+    {
+      "key": "heater",
+      "name": "벤치 히터 상태",
+      "unit": "",
+      "min": 0,
+      "max": 1
+    }
+  ],
+  "pins": [
+    "GP14",
+    "GP21"
+  ]
+}

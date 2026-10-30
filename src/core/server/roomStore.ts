@@ -31,6 +31,7 @@ const BUILTIN_ROOM_IDS = ['builtin_home', 'builtin_farm', 'builtin_factory'];
 // (scripts/bundle-firmware.mjs 의 EXAMPLE_ROOMS 와 동일하게 유지)
 export const EXAMPLE_ROOMS: Record<string, string> = {
   example_study_room: 'context/examples/smart_study_room',
+  example_bus_stop: 'context/examples/smart_bus_stop', // 제작 과정 영상에서 만든 공간
 };
 const EXAMPLE_LOCKED = '기본 예제 공간은 바꿀 수 없습니다. ⋮ → 복제해서 우리 팀 공간으로 쓰세요.';
 
