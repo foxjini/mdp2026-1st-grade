@@ -145,9 +145,10 @@ export function CatButler(props: MascotProps) {
               </group>
             ))}
             {/* 눈 (깜빡임) · 볼 · 코 · 입 · 수염 */}
-            <group ref={rig.eyes}>
-              <CuteEye x={-0.1} y={0.27} z={0.23} size={0.058} />
-              <CuteEye x={0.1} y={0.27} z={0.23} size={0.058} />
+            {/* 눈 그룹을 눈 높이에: 깜빡임(세로 축소)이 제자리에서 일어나게 */}
+            <group ref={rig.eyes} position={[0, 0.27, 0]}>
+              <CuteEye x={-0.1} y={0} z={0.23} size={0.058} />
+              <CuteEye x={0.1} y={0} z={0.23} size={0.058} />
             </group>
             <Blush x={-0.17} y={0.18} z={0.2} />
             <Blush x={0.17} y={0.18} z={0.2} />

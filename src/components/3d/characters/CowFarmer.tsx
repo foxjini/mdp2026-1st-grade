@@ -144,9 +144,10 @@ export function CowFarmer(props: MascotProps) {
               <meshStandardMaterial color="#7A3440" />
             </mesh>
             {/* 눈 · 볼 */}
-            <group ref={rig.eyes}>
-              <CuteEye x={-0.1} y={0.29} z={0.21} size={0.05} />
-              <CuteEye x={0.1} y={0.29} z={0.21} size={0.05} />
+            {/* 눈 그룹을 눈 높이에: 깜빡임(세로 축소)이 제자리에서 일어나게 */}
+            <group ref={rig.eyes} position={[0, 0.29, 0]}>
+              <CuteEye x={-0.1} y={0} z={0.21} size={0.05} />
+              <CuteEye x={0.1} y={0} z={0.21} size={0.05} />
             </group>
             <Blush x={-0.19} y={0.2} z={0.17} />
             <Blush x={0.19} y={0.2} z={0.17} />

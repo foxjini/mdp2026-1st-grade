@@ -177,6 +177,7 @@ export function MascotBase({
 
     // 5. 눈 깜빡임 (0.14초)
     // nextBlink 직전 0.14초 동안 눈을 감음
+    // rig.eyes 그룹은 반드시 눈 높이에 두고 눈은 그 안 y=0 에 (그룹 원점 기준으로 세로가 줄어듦)
     if (t > s.nextBlink) s.nextBlink = t + 2.8 + Math.random() * 3;
     const closing = !reduce && s.nextBlink - t < 0.14;
     if (rig.eyes.current) {

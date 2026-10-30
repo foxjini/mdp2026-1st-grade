@@ -128,9 +128,10 @@ export function StudentChibi(props: MascotProps) {
               </mesh>
             ))}
             {/* 눈 · 볼 · 입 */}
-            <group ref={rig.eyes}>
-              <CuteEye x={-0.09} y={0.25} z={0.215} size={0.05} color="#4A2E22" />
-              <CuteEye x={0.09} y={0.25} z={0.215} size={0.05} color="#4A2E22" />
+            {/* 눈 그룹을 눈 높이에: 깜빡임(세로 축소)이 제자리에서 일어나게 */}
+            <group ref={rig.eyes} position={[0, 0.25, 0]}>
+              <CuteEye x={-0.09} y={0} z={0.215} size={0.05} color="#4A2E22" />
+              <CuteEye x={0.09} y={0} z={0.215} size={0.05} color="#4A2E22" />
             </group>
             <Blush x={-0.15} y={0.17} z={0.2} />
             <Blush x={0.15} y={0.17} z={0.2} />
