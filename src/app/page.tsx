@@ -21,6 +21,8 @@ import { VoiceAnnouncer } from '@/components/VoiceAnnouncer';
 import { GraphicsToggle } from '@/components/ui/GraphicsToggle';
 import { PanelDrawer } from '@/components/ui/PanelDrawer';
 import { useLayoutStore } from '@/core/ui/useLayoutStore';
+import { pickCycleRooms } from '@/core/ui/useRoomCycle';
+import { RoomCycleChip } from '@/components/ui/RoomCycleChip';
 import { josa, servoNameFor } from '@/core/rooms/servoName';
 import { useAutomationStore } from '@/core/automation/useAutomationStore';
 import { useAutomationEngine } from '@/core/automation/useAutomationEngine';
@@ -94,6 +96,10 @@ export default function HomePage() {
   const toggleRight = useLayoutStore((s) => s.toggleRight);
   const setRightOpen = useLayoutStore((s) => s.setRightOpen);
   const leftOpen = !layoutMounted || savedLeftOpen;
+  // 전시용 작품 자동 순환 (켜짐 · 간격도 이 PC 에 저장)
+  const autoCycle = useLayoutStore((s) => s.autoCycle) && layoutMounted;
+  const cycleSeconds = useLayoutStore((s) => s.cycleSeconds);
+  const setAutoCycle = useLayoutStore((s) => s.setAutoCycle);
   const rightOpen = !layoutMounted || savedRightOpen;
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
 
@@ -227,12 +233,30 @@ export default function HomePage() {
   const findRoom = (roomId: string) => roomList.find((r) => r.id === roomId);
 
   // 공간 선택 (사이드바 · 플랫폼 소개 창 공용): 카메라 기본 시점으로
-  const selectRoom = (id: string) => {
+  // silent: 작품 자동 순환이 넘길 때는 토스트를 띄우지 않음
+  const selectRoom = (id: string, { silent = false } = {}) => {
     setActiveRoomId(id);
     setCameraPreset('default');
     setCameraTrigger((prev) => prev + 1);
     const found = findRoom(id);
-    if (found) showToast(`"${found.name}" 구역으로 모니터링이 전환되었습니다.`);
+    if (found && !silent) showToast(`"${found.name}" 구역으로 모니터링이 전환되었습니다.`);
+  };
+
+  // 작품 자동 순환 켜기/끄기: 교대로 보여 줄 공간이 2개 이상일 때만
+  const handleToggleCycle = () => {
+    if (autoCycle) {
+      setAutoCycle(false);
+      showToast('작품 자동 순환을 껐습니다.');
+      return;
+    }
+    const rooms = pickCycleRooms(roomList);
+    if (rooms.length < 2) {
+      showToast('교대로 보여 줄 공간이 2개 이상 필요합니다.');
+      return;
+    }
+    setAutoCycle(true);
+    const students = rooms.every((r) => r.source === 'uploaded' && !r.isExample);
+    showToast(`작품 자동 순환: ${students ? '학생 작품' : '공간'} ${rooms.length}개를 ${cycleSeconds}초마다 교대로 보여 줍니다.`);
   };
 
   // 학교 마크 → [첫 화면으로]: 첫 공간 · 기본 시점 · 장치 인스펙터 탭
@@ -413,6 +437,9 @@ export default function HomePage() {
         setActiveNavTab={handleNavTabChange}
         onOpenIpModal={() => setShowIpModal(true)}
         onOpenAbout={() => setShowInfoModal(true)}
+        onToggleCycle={handleToggleCycle}
+        autoCycle={autoCycle}
+        cycleSeconds={cycleSeconds}
       />
 
       {/* 2. 좌측 모니터링 공간 목록 사이드바 (스마트 공간) */}
@@ -476,6 +503,16 @@ export default function HomePage() {
             cameraTrigger={cameraTrigger}
             isModalOpen={anyModalOpen}
           />
+
+          {/* 작품 자동 순환 안내 칩 (다음 작품 · 남은 시간 · 간격) */}
+          {autoCycle && (
+            <RoomCycleChip
+              roomList={roomList}
+              activeRoomId={activeRoomId}
+              paused={anyModalOpen}
+              onNext={(id) => selectRoom(id, { silent: true })}
+            />
+          )}
 
           {/* 공간이 하나도 없을 때 (샘플 공간을 모두 삭제하고 팀 공간도 아직 없음) */}
           {roomsLoaded && roomList.length === 0 && (

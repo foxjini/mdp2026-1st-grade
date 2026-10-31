@@ -15,6 +15,7 @@ import {
   Maximize,
   RotateCcw,
   Sparkles,
+  Repeat,
 } from 'lucide-react';
 
 interface NavRailProps {
@@ -22,9 +23,21 @@ interface NavRailProps {
   onOpenAbout: () => void;
   activeNavTab: string;
   setActiveNavTab: (tab: string) => void;
+  /** 작품 자동 순환 켜기/끄기 (켤 때 공간 수 확인은 page 가 맡음) */
+  onToggleCycle: () => void;
+  autoCycle: boolean;
+  cycleSeconds: number;
 }
 
-export function NavRail({ onOpenIpModal, onOpenAbout, activeNavTab, setActiveNavTab }: NavRailProps) {
+export function NavRail({
+  onOpenIpModal,
+  onOpenAbout,
+  activeNavTab,
+  setActiveNavTab,
+  onToggleCycle,
+  autoCycle,
+  cycleSeconds,
+}: NavRailProps) {
   const isAutoRotate = useIoTStore((s) => s.isAutoRotate);
   const setAutoRotate = useIoTStore((s) => s.setAutoRotate);
   const { isExhibitionMode, toggleExhibition } = useExhibitionToggle();
@@ -133,6 +146,21 @@ export function NavRail({ onOpenIpModal, onOpenAbout, activeNavTab, setActiveNav
 
       {/* 2. 하단 유틸리티 툴바 */}
       <div className="flex flex-col items-center gap-2.5 w-full">
+        {/* 작품 자동 순환: 공간 목록의 학생 작품을 교대로 표시 */}
+        <button
+          onClick={onToggleCycle}
+          className={`relative w-11 h-11 rounded-2xl flex items-center justify-center transition-all border ${
+            autoCycle
+              ? 'bg-violet-50 text-violet-600 border-violet-200 shadow-sm'
+              : 'bg-white text-slate-400 hover:text-slate-700 border-slate-200/70 shadow-sm'
+          }`}
+          title={autoCycle ? `작품 자동 순환 끄기 (지금 ${cycleSeconds}초마다)` : `작품 자동 순환 켜기 — 학생 작품을 ${cycleSeconds}초마다 교대로 표시`}
+          aria-pressed={autoCycle}
+        >
+          <Repeat className="w-4 h-4" />
+          {autoCycle && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-violet-500 ring-2 ring-white" />}
+        </button>
+
         {/* 3D 자동 회전 (Auto-Rotate) 토글 */}
         <button
           onClick={() => setAutoRotate(!isAutoRotate)}
